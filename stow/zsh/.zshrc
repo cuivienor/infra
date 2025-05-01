@@ -77,6 +77,10 @@ fi
 
 . "$HOME/.local/share/../bin/env"
 
+# NPM configuration
+
+export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+
 # Gives shell completion for relevant git files
 # Got from (https://www.reddit.com/r/zsh/comments/ass2tc/gitadd_completion_with_full_paths_listed_at_once/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
 # TODO: Move to a better location
