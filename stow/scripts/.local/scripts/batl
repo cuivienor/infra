@@ -19,4 +19,4 @@ fi
 # usually find myself doing this for `--help` commands
 # TODO: might be worth infering the language since this could
 # be useful for other types of command (i.e. a long json payload returned from a curl request etc.)
-eval "$last_command" | bat --file-name "$last_command" -l man
+eval "$last_command" | bat --paging=always --file-name "$last_command" -l man
