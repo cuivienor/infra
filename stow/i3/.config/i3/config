@@ -50,6 +50,7 @@ tiling_drag modifier titlebar
 
 # start a terminal
 bindsym $mod+Return exec ghostty
+bindsym $mod+Shift+h exec --no-startup-id ~/.local/scripts/launch_chat_window.bash
 
 # kill focused window
 bindsym $mod+Shift+q kill
