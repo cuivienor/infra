@@ -14,6 +14,7 @@ else
   i3-msg "[title=$window_title] resize set width 75 ppt"
   i3-msg "[title=$window_title] move position center"
   i3-msg "[title=$window_title] move up 28 ppt"
+  i3-msg "[title=$window_title] sticky enable"
   i3-msg "[title=$window_title] move scratchpad"
   i3-msg "[title=$window_title] scratchpad show"
 fi
