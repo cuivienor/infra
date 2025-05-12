@@ -40,7 +40,11 @@ bindkey '\e[A' history-search-backward
 bindkey '\e[B' history-search-forward
 
 eval "$(zoxide init zsh)"
-plugins=(aliases alias-finder git git-auto-fetch gpg-agent sudo zsh-autosuggestions zsh-navigation-tools zsh-syntax-highlighting zsh-vi-mode)
+# source <(fzf --zsh)
+
+ZVM_INIT_MODE=sourcing # Fixes some vi mode issues with other plugins key bindins like fzf
+# https://github.com/jeffreytse/zsh-vi-mode/issues/24
+plugins=(aliases alias-finder git git-auto-fetch gpg-agent sudo zsh-autosuggestions zsh-navigation-tools zsh-syntax-highlighting zsh-vi-mode fzf)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -53,7 +57,6 @@ zstyle ':omz:plugins:alias-finder' exact yes
 export STARSHIP_CONFIG=$XDG_CONFIG_HOME/starship/starship.toml
 eval "$(starship init zsh)"
 
-source <(fzf --zsh)
 
 # Source custom aliases
 if [ -f "$ZSH_CUSTOM/aliases.bash" ]; then
