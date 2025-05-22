@@ -74,9 +74,9 @@ export MANROFFOPT="-c"
 export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
 
 # TODO: Doesn't actually work due to passphrase. Look into integrating with a keyring manager
-if [ -z "$(ssh-add -l 2>/dev/null)" ]; then
-	ssh-add ~/.ssh/id_ed25519
-fi
+# if [ -z "$(ssh-add -l 2>/dev/null)" ]; then
+# 	ssh-add ~/.ssh/id_ed25519
+# fi
 
 . "$HOME/.local/share/../bin/env"
 
