@@ -76,7 +76,7 @@ return {
 
 		-- Install golang specific config
 		require("dap-go").setup()
-		require("dap-python").setup()
+		require("dap-python").setup("uv")
 		require("dap-python").test_runner = "pytest"
 
 		-- Setup codelldb
@@ -129,6 +129,20 @@ return {
 			name = "Run file from root",
 			program = "${file}",
 			cwd = get_project_root(),
+			pythonPath = "python",
+		})
+		table.insert(dap.configurations.python, {
+			name = "Pytest: Current File",
+			type = "python",
+			request = "launch",
+			module = "pytest",
+			args = {
+				"${file}",
+				"-sv",
+				"--log-cli-level=INFO",
+				"--log-file=test_out.log",
+			},
+			-- console = "integratedTerminal",
 		})
 	end,
 }
