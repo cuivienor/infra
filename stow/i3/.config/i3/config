@@ -162,8 +162,8 @@ bindsym $mod+Shift+9 move container to workspace number $ws9
 bindsym $mod+Shift+0 move container to workspace number $ws10
 
 # Default workspaced for applications
-assign [class="Spotify"] $ws2
-assign [class="Chromium"] $ws3
+# assign [class="Spotify"] $ws2
+# assign [class="Chromium"] $ws3
 # assign [class="com.mitchellh.ghostty"] $ws1
 
 # reload the configuration file
@@ -264,6 +264,9 @@ exec --no-startup-id picom -b
 
 # Default applications to start
 exec --no-startup-id i3-msg "workspace $ws2; exec ~/.local/scripts/start-notes.bash"
-exec ghostty
-exec chromium
+exec --no-startup-id i3-msg "workspace $ws3; exec chromium"
+for_window [class="Chromium"] move to workspace $ws3
+exec --no-startup-id i3-msg "workspace $ws1; exec ghostty"
+exec --no-startup-id sleep 1; i3-msg "workspace $ws1"
+
 
