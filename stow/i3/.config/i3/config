@@ -264,9 +264,9 @@ exec --no-startup-id picom -b
 
 # Default applications to start
 exec --no-startup-id i3-msg "workspace $ws2; exec ~/.local/scripts/start-notes.bash"
-exec --no-startup-id i3-msg "workspace $ws3; exec chromium"
-for_window [class="Chromium"] move to workspace $ws3
+# for_window [class="Chromium"] move to workspace $ws3
 exec --no-startup-id i3-msg "workspace $ws1; exec ghostty"
+exec --no-startup-id i3-msg "workspace $ws3; exec chromium"
 exec --no-startup-id sleep 1; i3-msg "workspace $ws1"
 
 
