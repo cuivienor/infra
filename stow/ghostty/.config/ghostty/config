@@ -1,2 +1,8 @@
 theme = catppuccin-mocha
 
+# Font configuration
+font-family = MonoLisa
+font-size = 14
+font-feature = +calt
+font-feature = +liga
+
