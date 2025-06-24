@@ -3,3 +3,6 @@ stow/zsh/.config/zsh/plugins/
 catppuccin_mocha-zsh-syntax-highlighting.zsh
 .env
 .aider*
+
+# Corporate-specific configuration (not checked into version control)
+.corporate.zshrc

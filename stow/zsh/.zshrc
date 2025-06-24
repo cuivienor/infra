@@ -63,6 +63,12 @@ if [ -f "$ZSH_CUSTOM/aliases.bash" ]; then
 	source "$ZSH_CUSTOM/aliases.bash"
 fi
 
+# Source corporate-specific configuration if it exists
+# This file is not checked into version control
+if [ -f "$HOME/.corporate.zshrc" ]; then
+	source "$HOME/.corporate.zshrc"
+fi
+
 
 # Bat integrations
 
