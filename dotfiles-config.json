@@ -1,0 +1,119 @@
+{
+  "architectures": {
+    "linux": {
+      "description": "Full Linux desktop environment with window manager",
+      "packages": [
+        "zsh",
+        "starship", 
+        "systemd",
+        "tmux",
+        "rofi",
+        "screenlayout",
+        "scripts",
+        "picom",
+        "nvim",
+        "ghostty",
+        "i3",
+        "npm",
+        "X11",
+        "config",
+        "cspell"
+      ]
+    },
+    "macos": {
+      "description": "macOS compatible packages only",
+      "packages": [
+        "zsh",
+        "starship",
+        "tmux", 
+        "scripts",
+        "nvim",
+        "ghostty",
+        "npm",
+        "config",
+        "cspell"
+      ]
+    },
+    "corporate": {
+      "description": "Corporate environment with minimal packages",
+      "packages": [
+        "zsh",
+        "starship",
+        "tmux",
+        "nvim",
+        "npm",
+        "config"
+      ]
+    },
+    "minimal": {
+      "description": "Minimal setup with just essential configs",
+      "packages": [
+        "zsh",
+        "tmux",
+        "nvim"
+      ]
+    }
+  },
+  "package_info": {
+    "zsh": {
+      "description": "Z shell configuration and plugins",
+      "platforms": ["linux", "macos", "corporate", "minimal"]
+    },
+    "starship": {
+      "description": "Cross-shell prompt",
+      "platforms": ["linux", "macos", "corporate"]
+    },
+    "systemd": {
+      "description": "Linux systemd user services",
+      "platforms": ["linux"]
+    },
+    "tmux": {
+      "description": "Terminal multiplexer configuration",
+      "platforms": ["linux", "macos", "corporate", "minimal"]
+    },
+    "rofi": {
+      "description": "Application launcher and dmenu replacement",
+      "platforms": ["linux"]
+    },
+    "screenlayout": {
+      "description": "Display layout scripts",
+      "platforms": ["linux"]
+    },
+    "scripts": {
+      "description": "Utility scripts",
+      "platforms": ["linux", "macos"]
+    },
+    "picom": {
+      "description": "X11 compositor configuration",
+      "platforms": ["linux"]
+    },
+    "nvim": {
+      "description": "Neovim configuration",
+      "platforms": ["linux", "macos", "corporate", "minimal"]
+    },
+    "ghostty": {
+      "description": "Ghostty terminal emulator configuration",
+      "platforms": ["linux", "macos"]
+    },
+    "i3": {
+      "description": "i3 window manager configuration",
+      "platforms": ["linux"]
+    },
+    "npm": {
+      "description": "Node.js package manager configuration",
+      "platforms": ["linux", "macos", "corporate"]
+    },
+    "X11": {
+      "description": "X11 display server configuration",
+      "platforms": ["linux"]
+    },
+    "config": {
+      "description": "General configuration files",
+      "platforms": ["linux", "macos", "corporate"]
+    },
+    "cspell": {
+      "description": "Code spell checker configuration",
+      "platforms": ["linux", "macos"]
+    }
+  }
+} 

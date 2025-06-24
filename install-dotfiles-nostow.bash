@@ -9,6 +9,7 @@ set -euo pipefail
 # Get location of script assuming it is in a dotfiles directory
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STOW_DIR="$BASE_DIR/stow"
+CONFIG_FILE="$BASE_DIR/dotfiles-config.json"
 
 # Colors for output
 RED='\033[0;31m'
@@ -19,10 +20,12 @@ NC='\033[0m' # No Color
 
 # Function to display usage guide
 usage() {
-    echo "Usage: $0 [-n] [-d] [-f]"
+    echo "Usage: $0 [-n] [-d] [-f] [-a ARCH] [-l]"
     echo "-n    : Non-destructive (dry-run) mode, just display what would be done"
     echo "-d    : Unstow (delete) any symlinks managed by this repo"
     echo "-f    : Force mode, overwrite existing files/symlinks"
+    echo "-a    : Target architecture (linux, macos, corporate, minimal)"
+    echo "-l    : List available architectures and packages"
     exit 1
 }
 
@@ -41,6 +44,150 @@ log_warning() {
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to parse JSON (requires jq or python)
+parse_json() {
+    local json_file="$1"
+    local query="$2"
+    
+    if command_exists jq; then
+        jq -r ".$query" "$json_file" 2>/dev/null
+    elif command_exists python3; then
+        python3 -c "
+import json, sys
+try:
+    with open('$json_file', 'r') as f:
+        data = json.load(f)
+    result = data
+    for key in '$query'.split('.'):
+        if key.startswith('[') and key.endswith(']'):
+            index = int(key[1:-1])
+            result = result[index]
+        elif key and key != '':
+            result = result[key]
+    if isinstance(result, list):
+        for item in result:
+            print(item)
+    else:
+        print(result)
+except:
+    sys.exit(1)
+        " 2>/dev/null
+    else
+        log_error "JSON parsing requires either 'jq' or 'python3' to be installed"
+        return 1
+    fi
+}
+
+# Function to get packages for architecture
+get_packages_for_arch() {
+    local arch="$1"
+    local packages
+    
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        log_error "Configuration file not found: $CONFIG_FILE"
+        return 1
+    fi
+    
+    packages=$(parse_json "$CONFIG_FILE" "architectures.$arch.packages[]")
+    if [[ $? -ne 0 || -z "$packages" ]]; then
+        log_error "Failed to get packages for architecture: $arch"
+        return 1
+    fi
+    
+    echo "$packages"
+}
+
+# Function to list available architectures
+list_architectures() {
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        log_error "Configuration file not found: $CONFIG_FILE"
+        return 1
+    fi
+    
+    log_info "Available architectures:"
+    echo
+    
+    local archs
+    if command_exists jq; then
+        archs=$(jq -r '.architectures | keys[]' "$CONFIG_FILE" 2>/dev/null)
+    elif command_exists python3; then
+        archs=$(python3 -c "
+import json
+with open('$CONFIG_FILE', 'r') as f:
+    data = json.load(f)
+for arch in data['architectures'].keys():
+    print(arch)
+        " 2>/dev/null)
+    else
+        log_error "JSON parsing requires either 'jq' or 'python3' to be installed"
+        return 1
+    fi
+    
+    for arch in $archs; do
+        local desc
+        desc=$(parse_json "$CONFIG_FILE" "architectures.$arch.description")
+        local packages
+        packages=$(parse_json "$CONFIG_FILE" "architectures.$arch.packages[]" | wc -l)
+        printf "  %-12s - %s (%s packages)\n" "$arch" "$desc" "$packages"
+    done
+    
+    echo
+    log_info "Package details:"
+    echo
+    
+    local package_names
+    if command_exists jq; then
+        package_names=$(jq -r '.package_info | keys[]' "$CONFIG_FILE" 2>/dev/null)
+    elif command_exists python3; then
+        package_names=$(python3 -c "
+import json
+with open('$CONFIG_FILE', 'r') as f:
+    data = json.load(f)
+for pkg in data['package_info'].keys():
+    print(pkg)
+        " 2>/dev/null)
+    fi
+    
+    for pkg in $package_names; do
+        local desc
+        desc=$(parse_json "$CONFIG_FILE" "package_info.$pkg.description")
+        local platforms
+        platforms=$(parse_json "$CONFIG_FILE" "package_info.$pkg.platforms[]" | tr '\n' ',' | sed 's/,$//')
+        printf "  %-12s - %s [%s]\n" "$pkg" "$desc" "$platforms"
+    done
+}
+
+# Function to detect architecture automatically
+detect_architecture() {
+    local os
+    os=$(uname -s)
+    
+    case "$os" in
+        Linux*)
+            if [[ -n "${CORPORATE_ENV:-}" ]] || [[ -n "${WORK_ENV:-}" ]]; then
+                echo "corporate"
+            else
+                echo "linux"
+            fi
+            ;;
+        Darwin*)
+            if [[ -n "${CORPORATE_ENV:-}" ]] || [[ -n "${WORK_ENV:-}" ]]; then
+                echo "corporate"
+            else
+                echo "macos"
+            fi
+            ;;
+        *)
+            echo "minimal"
+            ;;
+    esac
 }
 
 # Function to create a symlink
@@ -217,13 +364,17 @@ unstow_module() {
 DRY_RUN="false"
 DELETE="false"
 FORCE="false"
+ARCHITECTURE=""
+LIST_ARCHITECTURES="false"
 
 # Parse command-line options
-while getopts "ndf" option; do
+while getopts "ndfa:l" option; do
     case $option in
     n) DRY_RUN="true" ;;
     d) DELETE="true" ;;
     f) FORCE="true" ;;
+    a) ARCHITECTURE="$OPTARG" ;;
+    l) LIST_ARCHITECTURES="true" ;;
     *) usage ;;
     esac
 done
@@ -231,9 +382,31 @@ done
 # Remove parsed options from positional parameters
 shift $((OPTIND - 1))
 
+# Handle list architectures option
+if [[ "$LIST_ARCHITECTURES" == "true" ]]; then
+    list_architectures
+    exit 0
+fi
+
 # Ensuring the base directory exists
 if [[ ! -d "$STOW_DIR" ]]; then
     log_error "Stow directory $STOW_DIR does not exist."
+    exit 1
+fi
+
+# Determine target architecture
+if [[ -z "$ARCHITECTURE" ]]; then
+    ARCHITECTURE=$(detect_architecture)
+    log_info "Auto-detected architecture: $ARCHITECTURE"
+else
+    log_info "Using specified architecture: $ARCHITECTURE"
+fi
+
+# Validate architecture and get package list
+PACKAGES_TO_INSTALL=$(get_packages_for_arch "$ARCHITECTURE")
+if [[ $? -ne 0 ]]; then
+    log_error "Invalid architecture: $ARCHITECTURE"
+    log_info "Use -l to list available architectures"
     exit 1
 fi
 
@@ -253,6 +426,13 @@ fi
 
 echo
 
+# Convert packages list to space-separated string for lookup
+PACKAGE_LIST=" $(echo "$PACKAGES_TO_INSTALL" | tr '\n' ' ') "
+
+log_info "Packages to process for architecture '$ARCHITECTURE':"
+printf "  %s\n" $PACKAGES_TO_INSTALL
+echo
+
 # Loop over each directory inside the stow directory
 for module_dir in "$STOW_DIR"/*/; do
     if [[ ! -d "$module_dir" ]]; then
@@ -260,6 +440,12 @@ for module_dir in "$STOW_DIR"/*/; do
     fi
     
     module_name="$(basename "$module_dir")"
+    
+    # Check if this package should be installed for the current architecture
+    if [[ "$PACKAGE_LIST" != *" $module_name "* ]]; then
+        log_info "Skipping $module_name (not included in $ARCHITECTURE architecture)"
+        continue
+    fi
     
     if [[ "$DELETE" == "true" ]]; then
         unstow_module "$module_dir" "$module_name"
@@ -275,4 +461,5 @@ if [[ "$DRY_RUN" == "true" ]]; then
     log_info "Dry run completed. Run without -n to apply changes."
 else
     echo
-    log_success "Operation completed successfully!" 
+    log_success "Operation completed successfully!"
+fi
