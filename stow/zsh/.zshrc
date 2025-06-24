@@ -39,8 +39,7 @@ setopt HIST_EXPIRE_DUPS_FIRST
 bindkey '\e[A' history-search-backward
 bindkey '\e[B' history-search-forward
 
-eval "$(zoxide init zsh)"
-# source <(fzf --zsh)
+# NOTE: zoxide init moved to after PATH setup is complete
 
 ZVM_INIT_MODE=sourcing # Fixes some vi mode issues with other plugins key bindins like fzf
 # https://github.com/jeffreytse/zsh-vi-mode/issues/24
@@ -54,8 +53,8 @@ zstyle ':omz:plugins:alias-finder' autoload yes
 zstyle ':omz:plugins:alias-finder' exact yes
 # zstyle ':omz:plugins:alias-finder' cheaper yes
 
+# NOTE: starship init moved to after PATH setup is complete
 export STARSHIP_CONFIG=$XDG_CONFIG_HOME/starship/starship.toml
-eval "$(starship init zsh)"
 
 
 # Source custom aliases
@@ -84,7 +83,26 @@ export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
 # 	ssh-add ~/.ssh/id_ed25519
 # fi
 
-. "$HOME/.local/share/../bin/env"
+# Source local environment if it exists
+if [ -f "$HOME/.local/bin/env" ]; then
+	. "$HOME/.local/bin/env"
+fi
+
+# Initialize tools that depend on PATH being fully set up
+# zoxide - smart cd replacement
+if command -v zoxide &> /dev/null; then
+	eval "$(zoxide init zsh)"
+fi
+
+# starship - cross-shell prompt
+if command -v starship &> /dev/null; then
+	eval "$(starship init zsh)"
+fi
+
+# fzf - fuzzy finder (uncomment if needed)
+# if command -v fzf &> /dev/null; then
+# 	source <(fzf --zsh)
+# fi
 
 # NPM configuration
 
