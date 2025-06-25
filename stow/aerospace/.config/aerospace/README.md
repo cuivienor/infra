@@ -13,10 +13,11 @@ This configuration replicates your i3 setup as closely as possible on macOS, wit
   - Workspace 4: Development (VSCode, IntelliJ)
   - Workspace 5: General
 
-- **Workspaces 6-10**: Secondary external monitor
+- **Workspaces 6-10**: Secondary external monitor (vertical orientation)
   - Workspace 6: Communication (Slack, Teams, Discord)
   - Workspace 7: System monitoring
   - Workspace 8-10: General
+  - **Note**: Default horizontal splits work great for vertical monitors
 
 **When Undocked (Single Built-in Display):**
 - **All Workspaces 1-10**: Available on built-in display
@@ -66,6 +67,7 @@ This configuration replicates your i3 setup as closely as possible on macOS, wit
 - **No gaps**: Seamless window tiling with zero gaps
 - **i3-like behavior**: Familiar key bindings and workflow
 - **Proper new windows**: Uses AppleScript to create new windows instead of focusing existing ones
+- **Vertical monitor optimized**: Default horizontal splits perfect for vertical secondary monitor
 
 ## Usage Tips
 
