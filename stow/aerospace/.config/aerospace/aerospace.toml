@@ -41,6 +41,10 @@ automatically-unhide-macos-hidden-apps = true
 # Start AeroSpace at login for seamless experience
 start-at-login = true
 
+# Workspace names with symbols (AeroSpace doesn't support custom workspace names in config)
+# The workspace symbols are shown in the README for reference
+# Workspaces: 1: 2: 3: 4: 5: 6: 7: 8: 9: 10:
+
 # Monitor assignment for dual monitor setup
 # When docked: Two external monitors (built-in closed/disabled)
 # When undocked: All workspaces available on single built-in display
@@ -222,13 +226,17 @@ if.app-id = 'com.mitchellh.ghostty'
 run = 'move-node-to-workspace 1'
 
 [[on-window-detected]]
+if.app-id = 'com.todesktop.230313mzl4w4u92'  # Cursor
+run = 'move-node-to-workspace 2'
+
+[[on-window-detected]]
 if.app-id = 'com.google.Chrome.app.Default'
 run = 'move-node-to-workspace 3'
 
 # Window assignment rules for common apps
 [[on-window-detected]]
 if.app-id = 'com.spotify.client'
-run = 'move-node-to-workspace 2'
+run = 'move-node-to-workspace 8'
 
 # Communication apps on secondary monitor workspace
 [[on-window-detected]]
@@ -243,13 +251,25 @@ run = 'move-node-to-workspace 6'
 if.app-id = 'com.discord.Discord'
 run = 'move-node-to-workspace 6'
 
-# Development tools on main monitor
+# Development tools on workspace 4
 [[on-window-detected]]
 if.app-id = 'com.microsoft.VSCode'
 run = 'move-node-to-workspace 4'
 
 [[on-window-detected]]
 if.app-id = 'com.jetbrains.intellij'
+run = 'move-node-to-workspace 4'
+
+[[on-window-detected]]
+if.app-id = 'com.jetbrains.intellij.ce'
+run = 'move-node-to-workspace 4'
+
+[[on-window-detected]]
+if.app-id = 'com.jetbrains.pycharm'
+run = 'move-node-to-workspace 4'
+
+[[on-window-detected]]
+if.app-id = 'com.docker.docker'
 run = 'move-node-to-workspace 4'
 
 # System monitoring on secondary monitor

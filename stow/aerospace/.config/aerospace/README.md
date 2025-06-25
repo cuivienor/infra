@@ -7,21 +7,23 @@ This configuration replicates your i3 setup as closely as possible on macOS, wit
 ### Workspace Assignment
 **When Docked (Two External Monitors):**
 - **Workspaces 1-5**: Primary external monitor
-  - Workspace 1: Terminal (Ghostty)
-  - Workspace 2: Music/Notes (Spotify)
-  - Workspace 3: Browser (Chrome)
-  - Workspace 4: Development (VSCode, IntelliJ)
-  - Workspace 5: General
+  - Workspace 1:  Terminal (Ghostty)
+  - Workspace 2:  Code Editor (Cursor)
+  - Workspace 3:  Browser (Chrome)
+  - Workspace 4:  Development Tools (VSCode, IntelliJ, Docker)
+  - Workspace 5:  Files/Documents
 
 - **Workspaces 6-10**: Secondary external monitor (vertical orientation)
-  - Workspace 6: Communication (Slack, Teams, Discord)
-  - Workspace 7: System monitoring
-  - Workspace 8-10: General
+  - Workspace 6:  Communication (Slack, Teams, Discord)
+  - Workspace 7:  System/Monitoring
+  - Workspace 8:  Media/Music (Spotify)
+  - Workspace 9:  Notes/Writing
+  - Workspace 10:  General/Misc
   - **Note**: Use `Cmd + Shift + T` to reorganize existing windows into horizontal layout (stacked windows) for vertical monitor
 
 **When Undocked (Single Built-in Display):**
 - **All Workspaces 1-10**: Available on built-in display
-  - Same workspace numbers, same app assignments
+  - Same workspace symbols and app assignments
   - Seamless transition between docked/undocked states
 
 ### Key Bindings
