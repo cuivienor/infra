@@ -68,6 +68,7 @@ This configuration replicates your i3 setup as closely as possible on macOS, wit
 - **i3-like behavior**: Familiar key bindings and workflow
 - **Proper new windows**: Uses AppleScript to create new windows instead of focusing existing ones
 - **Vertical monitor optimized**: Default horizontal splits perfect for vertical secondary monitor
+- **Focus follows mouse**: Uses AutoRaise for true focus-follows-mouse behavior
 
 ## Usage Tips
 
@@ -77,4 +78,15 @@ This configuration replicates your i3 setup as closely as possible on macOS, wit
 4. Use `Cmd + Ctrl + h/l` to quickly switch between external monitors when docked
 5. Communication apps (Slack, Teams) auto-assign to workspace 6 (secondary external when docked, built-in when undocked)
 6. Development tools auto-assign to workspace 4 (primary external when docked, built-in when undocked)
-7. **Muscle Memory**: Your i3 workspace habits transfer perfectly - `Cmd + 1` always gets you to your terminal workspace regardless of monitor setup 
+7. **Muscle Memory**: Your i3 workspace habits transfer perfectly - `Cmd + 1` always gets you to your terminal workspace regardless of monitor setup
+
+## Installation Requirements
+
+To get the full experience, install AutoRaise for focus-follows-mouse:
+
+**Manual Installation:**
+1. Download AutoRaise from: https://github.com/sbmpost/AutoRaise
+2. Follow the installation instructions in the repository
+3. AutoRaise will start automatically with AeroSpace once installed
+
+AutoRaise provides seamless focus-follows-mouse behavior just like i3. 

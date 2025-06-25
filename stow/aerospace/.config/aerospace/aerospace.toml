@@ -4,6 +4,9 @@
 # General behavior
 after-login-command = []
 after-startup-command = [
+    # Start AutoRaise for focus-follows-mouse
+    'exec-and-forget open -a "AutoRaise"',
+    
     # Start apps on specific workspaces like i3 - using AppleScript for new windows
     '''exec-and-forget osascript -e '
     tell application "Ghostty"
@@ -29,6 +32,11 @@ enable-normalization-opposite-orientation-for-nested-containers = true
 
 # Mouse follows focus when switching monitors (helpful for dual monitor setup)
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+
+# Focus follows mouse using AutoRaise
+# Install AutoRaise: brew install --cask autoraise
+# AutoRaise provides focus-follows-mouse functionality for macOS
+automatically-unhide-macos-hidden-apps = true
 
 # Start AeroSpace at login for seamless experience
 start-at-login = true
