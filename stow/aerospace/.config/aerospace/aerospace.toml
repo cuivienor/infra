@@ -1,0 +1,247 @@
+# AeroSpace Configuration - macOS Tiling Window Manager
+# Replicating i3 setup as closely as possible
+
+# General behavior
+after-login-command = []
+after-startup-command = [
+    # Start apps on specific workspaces like i3 - using AppleScript for new windows
+    '''exec-and-forget osascript -e '
+    tell application "Ghostty"
+        activate
+        tell application "System Events"
+            tell process "Ghostty"
+                keystroke "n" using {command down}
+            end tell
+        end tell
+    end tell'
+    ''',
+    '''exec-and-forget osascript -e '
+    tell application "Google Chrome"
+        make new window
+        activate
+    end tell'
+    ''',
+]
+
+# Enable mouse follows focus (like i3 behavior)
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+
+# Mouse follows focus when switching monitors (helpful for dual monitor setup)
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+
+# Start AeroSpace at login for seamless experience
+start-at-login = true
+
+# Monitor assignment for dual monitor setup
+# When docked: Two external monitors (built-in closed/disabled)
+# When undocked: All workspaces available on single built-in display
+[workspace-to-monitor-force-assignment]
+# Primary workspaces on main external monitor (when docked) or built-in (when undocked)
+1 = 'main'
+2 = 'main' 
+3 = 'main'
+4 = 'main'
+5 = 'main'
+# Secondary workspaces on secondary external monitor (when docked) or main (when undocked)
+6 = 'secondary'
+7 = 'secondary'
+8 = 'secondary'
+9 = 'secondary'
+10 = 'secondary'
+
+# Default layout
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+
+# Key bindings - replicating i3 setup exactly
+[key-mapping]
+preset = 'qwerty'
+
+# Main mode bindings (required)
+[mode.main.binding]
+# Terminal (cmd+return like i3 mod+return) - opens new window
+cmd-enter = '''exec-and-forget osascript -e '
+tell application "Ghostty"
+    activate
+    tell application "System Events"
+        tell process "Ghostty"
+            keystroke "n" using {command down}
+        end tell
+    end tell
+end tell'
+'''
+
+# Kill focused window (cmd+shift+q like i3 mod+shift+q)
+cmd-shift-q = 'close'
+
+# App launcher (cmd+d like i3 mod+d with rofi)
+# Use Spotlight or Raycast as replacement for rofi
+cmd-d = 'exec-and-forget open -a "Raycast"'
+
+# Focus navigation (cmd+hjkl like i3 mod+hjkl)
+cmd-h = 'focus left'
+cmd-j = 'focus down'
+cmd-k = 'focus up'
+cmd-l = 'focus right'
+
+# Alternative arrow key navigation
+cmd-left = 'focus left'
+cmd-down = 'focus down'
+cmd-up = 'focus up'
+cmd-right = 'focus right'
+
+# Move windows (cmd+shift+hjkl like i3 mod+shift+hjkl)
+cmd-shift-h = 'move left'
+cmd-shift-j = 'move down'
+cmd-shift-k = 'move up'
+cmd-shift-l = 'move right'
+
+# Alternative arrow key movement
+cmd-shift-left = 'move left'
+cmd-shift-down = 'move down'
+cmd-shift-up = 'move up'
+cmd-shift-right = 'move right'
+
+# Layout controls (replicating i3 layout commands)
+cmd-f = 'fullscreen'
+cmd-shift-space = 'layout floating tiling'  # Toggle floating like i3
+cmd-space = 'layout tiles horizontal vertical'  # Cycle layouts
+
+# Join with commands (replacement for split since normalization is enabled)
+cmd-minus = 'join-with left'
+cmd-shift-backslash = 'join-with up'
+
+# Workspace switching (cmd+1-0 like i3 mod+1-0)
+cmd-1 = 'workspace 1'
+cmd-2 = 'workspace 2'
+cmd-3 = 'workspace 3'
+cmd-4 = 'workspace 4'
+cmd-5 = 'workspace 5'
+cmd-6 = 'workspace 6'
+cmd-7 = 'workspace 7'
+cmd-8 = 'workspace 8'
+cmd-9 = 'workspace 9'
+cmd-0 = 'workspace 10'
+
+# Move container to workspace (cmd+shift+1-0 like i3 mod+shift+1-0)
+cmd-shift-1 = 'move-node-to-workspace 1'
+cmd-shift-2 = 'move-node-to-workspace 2'
+cmd-shift-3 = 'move-node-to-workspace 3'
+cmd-shift-4 = 'move-node-to-workspace 4'
+cmd-shift-5 = 'move-node-to-workspace 5'
+cmd-shift-6 = 'move-node-to-workspace 6'
+cmd-shift-7 = 'move-node-to-workspace 7'
+cmd-shift-8 = 'move-node-to-workspace 8'
+cmd-shift-9 = 'move-node-to-workspace 9'
+cmd-shift-0 = 'move-node-to-workspace 10'
+
+# Config reload/restart (cmd+shift+c/r like i3)
+cmd-shift-c = 'reload-config'
+cmd-shift-r = 'reload-config'
+
+# Resize mode trigger (cmd+r like i3 mod+r)
+cmd-r = 'mode resize'
+
+# Chat window launcher (replicating i3 mod+shift+h)
+cmd-shift-semicolon = 'exec-and-forget ~/.local/scripts/launch_chat_window.bash'
+
+# Browser new window (cmd+shift+enter)
+cmd-shift-enter = '''exec-and-forget osascript -e '
+tell application "Google Chrome"
+    make new window
+    activate
+end tell'
+'''
+
+# Monitor navigation (useful for dual monitor setup)
+cmd-ctrl-h = 'focus-monitor --wrap-around left'
+cmd-ctrl-l = 'focus-monitor --wrap-around right'
+cmd-ctrl-left = 'focus-monitor --wrap-around left'
+cmd-ctrl-right = 'focus-monitor --wrap-around right'
+
+# Move workspace to different monitor
+cmd-ctrl-shift-h = 'move-workspace-to-monitor --wrap-around left'
+cmd-ctrl-shift-l = 'move-workspace-to-monitor --wrap-around right'
+cmd-ctrl-shift-left = 'move-workspace-to-monitor --wrap-around left'
+cmd-ctrl-shift-right = 'move-workspace-to-monitor --wrap-around right'
+
+# Move window to different monitor and follow
+cmd-shift-ctrl-1 = 'move-node-to-monitor --wrap-around left'
+cmd-shift-ctrl-2 = 'move-node-to-monitor --wrap-around right'
+
+# Mode definitions
+[mode.resize.binding]
+# Resize bindings replicating i3 resize mode
+h = 'resize width -50'
+j = 'resize height +50'
+k = 'resize height -50'
+l = 'resize width +50'
+
+# Arrow keys for resize
+left = 'resize width -50'
+down = 'resize height +50'
+up = 'resize height -50'
+right = 'resize width +50'
+
+# Exit resize mode
+enter = 'mode main'
+esc = 'mode main'
+
+# Window rules (replicating i3 for_window rules)
+[[on-window-detected]]
+if.app-id = 'us.zoom.xos'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.google.Chrome'
+run = 'move-node-to-workspace 3'
+
+[[on-window-detected]]
+if.app-id = 'com.mitchellh.ghostty'
+run = 'move-node-to-workspace 1'
+
+[[on-window-detected]]
+if.app-id = 'com.google.Chrome.app.Default'
+run = 'move-node-to-workspace 3'
+
+# Window assignment rules for common apps
+[[on-window-detected]]
+if.app-id = 'com.spotify.client'
+run = 'move-node-to-workspace 2'
+
+# Communication apps on secondary monitor workspace
+[[on-window-detected]]
+if.app-id = 'com.tinyspeck.slackmacgap'
+run = 'move-node-to-workspace 6'
+
+[[on-window-detected]]
+if.app-id = 'com.microsoft.teams2'
+run = 'move-node-to-workspace 6'
+
+[[on-window-detected]]
+if.app-id = 'com.discord.Discord'
+run = 'move-node-to-workspace 6'
+
+# Development tools on main monitor
+[[on-window-detected]]
+if.app-id = 'com.microsoft.VSCode'
+run = 'move-node-to-workspace 4'
+
+[[on-window-detected]]
+if.app-id = 'com.jetbrains.intellij'
+run = 'move-node-to-workspace 4'
+
+# System monitoring on secondary monitor
+[[on-window-detected]]
+if.app-id = 'com.apple.ActivityMonitor'
+run = 'move-node-to-workspace 7'
+
+# Gaps configuration (minimal like i3)
+[gaps]
+inner.horizontal = 4
+inner.vertical = 4
+outer.left = 4
+outer.bottom = 4  
+outer.top = 4
+outer.right = 4 

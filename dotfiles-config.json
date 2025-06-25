@@ -29,6 +29,7 @@
         "scripts",
         "nvim",
         "ghostty",
+        "aerospace",
         "npm",
         "config",
         "cspell"
@@ -114,6 +115,10 @@
     "cspell": {
       "description": "Code spell checker configuration",
       "platforms": ["linux", "macos"]
+    },
+    "aerospace": {
+      "description": "AeroSpace tiling window manager for macOS",
+      "platforms": ["macos"]
     }
   }
 } 
