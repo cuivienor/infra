@@ -63,7 +63,7 @@ This configuration replicates your i3 setup as closely as possible on macOS, wit
 - **Mouse follows focus**: When switching monitors, mouse moves to center
 - **Auto-start**: AeroSpace starts at login
 - **Window rules**: Apps automatically assigned to appropriate workspaces
-- **Minimal gaps**: 4px gaps for clean appearance
+- **No gaps**: Seamless window tiling with zero gaps
 - **i3-like behavior**: Familiar key bindings and workflow
 - **Proper new windows**: Uses AppleScript to create new windows instead of focusing existing ones
 
