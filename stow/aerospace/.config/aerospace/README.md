@@ -17,7 +17,7 @@ This configuration replicates your i3 setup as closely as possible on macOS, wit
   - Workspace 6: Communication (Slack, Teams, Discord)
   - Workspace 7: System monitoring
   - Workspace 8-10: General
-  - **Note**: Default horizontal splits work great for vertical monitors
+  - **Note**: Use `Cmd + Shift + T` to reorganize existing windows into horizontal layout (stacked windows) for vertical monitor
 
 **When Undocked (Single Built-in Display):**
 - **All Workspaces 1-10**: Available on built-in display
@@ -42,8 +42,16 @@ This configuration replicates your i3 setup as closely as possible on macOS, wit
 - `Cmd + F`: Fullscreen
 - `Cmd + Shift + Space`: Toggle floating/tiling
 - `Cmd + Space`: Cycle layouts
-- `Cmd + -`: Join with left window (horizontal join)
-- `Cmd + Shift + \`: Join with upper window (vertical join)
+- `Cmd + -`: Join with left window (side-by-side)
+- `Cmd + Shift + \`: Join with upper window (stacked)
+- `Cmd + Shift + -`: Join with right window (alternative side-by-side)
+- `Cmd + Shift + =`: Join with lower window (alternative stacked)
+
+#### Monitor-Specific Layout Optimization
+- `Cmd + Shift + V`: Force vertical layout (side-by-side windows, ideal for main monitor)
+- `Cmd + Shift + T`: Force horizontal layout (stacked windows, ideal for secondary vertical monitor)
+
+**Note**: These commands flatten the workspace and reorganize ALL existing windows into the new layout.
 
 #### Monitor Navigation (Dual Monitor)
 - `Cmd + Ctrl + h/l`: Focus left/right monitor
@@ -67,7 +75,7 @@ This configuration replicates your i3 setup as closely as possible on macOS, wit
 - **No gaps**: Seamless window tiling with zero gaps
 - **i3-like behavior**: Familiar key bindings and workflow
 - **Proper new windows**: Uses AppleScript to create new windows instead of focusing existing ones
-- **Vertical monitor optimized**: Default horizontal splits perfect for vertical secondary monitor
+- **Monitor-optimized layouts**: Quick commands to set ideal layouts for each monitor orientation
 - **Focus follows mouse**: Uses AutoRaise for true focus-follows-mouse behavior
 
 ## Usage Tips

@@ -58,9 +58,9 @@ start-at-login = true
 9 = 'secondary'
 10 = 'secondary'
 
-# Default layout
+# Default layout (optimized for main monitor - horizontal screen)
 default-root-container-layout = 'tiles'
-default-root-container-orientation = 'horizontal'
+default-root-container-orientation = 'vertical'
 
 # Key bindings - replicating i3 setup exactly
 [key-mapping]
@@ -117,8 +117,14 @@ cmd-shift-space = 'layout floating tiling'  # Toggle floating like i3
 cmd-space = 'layout tiles horizontal vertical'  # Cycle layouts
 
 # Join with commands (replacement for split since normalization is enabled)
+# Main monitor (horizontal): vertical splits (side-by-side)
 cmd-minus = 'join-with left'
+# Secondary monitor (vertical): horizontal splits (stacked)
 cmd-shift-backslash = 'join-with up'
+
+# Smart split commands based on current workspace/monitor
+cmd-shift-minus = 'join-with right'  # Alternative vertical split
+cmd-shift-equal = 'join-with down'   # Alternative horizontal split
 
 # Workspace switching (cmd+1-0 like i3 mod+1-0)
 cmd-1 = 'workspace 1'
@@ -161,6 +167,12 @@ tell application "Google Chrome"
     activate
 end tell'
 '''
+
+# Layout optimization commands for different monitors
+# Force vertical layout (good for main monitor - horizontal screen)
+cmd-shift-v = ['flatten-workspace-tree', 'layout tiles vertical']
+# Force horizontal layout (good for secondary monitor - vertical screen)  
+cmd-shift-t = ['flatten-workspace-tree', 'layout tiles horizontal']
 
 # Monitor navigation (useful for dual monitor setup)
 cmd-ctrl-h = 'focus-monitor --wrap-around left'
