@@ -2,7 +2,11 @@ theme = catppuccin-mocha
 
 # Font configuration
 font-family = MonoLisa
-font-size = 14
+font-size = 16
 font-feature = +calt
 font-feature = +liga
+
+# Adjust spacing (macOS font rendering differences)
+adjust-cell-width = -1
+font-thicken = false
 
