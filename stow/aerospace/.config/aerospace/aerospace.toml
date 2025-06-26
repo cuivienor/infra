@@ -31,7 +31,8 @@ enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
 
 # Mouse follows focus when switching monitors (helpful for dual monitor setup)
-on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+# DISABLED: Causes unwanted workspace switching when using AutoRaise
+# on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 
 # Focus follows mouse using AutoRaise
 # Install AutoRaise: brew install --cask autoraise
