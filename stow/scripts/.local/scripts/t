@@ -22,46 +22,37 @@ tmux_init() {
 	fi
 }
 
-# Function to find project directories in src
+# Function to find project directories
 find_projects() {
-	local search_dirs=()
-	
-	# Always include the original directories
-	search_dirs+=("$HOME/dev" "$HOME")
-	
-	# Add src directories if they exist
-	[[ -d "$HOME/src" ]] && search_dirs+=("$HOME/src")
-	[[ -d "$HOME/dev/src" ]] && search_dirs+=("$HOME/dev/src")
-	[[ -d "$HOME/work/src" ]] && search_dirs+=("$HOME/work/src")
-	
-	# For ~/dev and ~/, use the original shallow search (exclude hidden directories)
-	find "$HOME/dev" "$HOME" -mindepth 1 -maxdepth 1 -type d ! -name ".*" 2>/dev/null
-	
-	# For src directories, do deep project detection
-	local src_dirs=()
-	[[ -d "$HOME/src" ]] && src_dirs+=("$HOME/src")
-	[[ -d "$HOME/dev/src" ]] && src_dirs+=("$HOME/dev/src")
-	[[ -d "$HOME/work/src" ]] && src_dirs+=("$HOME/work/src")
-	
-	if [[ ${#src_dirs[@]} -gt 0 ]]; then
-		for dir in "${src_dirs[@]}"; do
-			# Look for directories containing .git (actual projects) - but exclude the .git directories themselves
-			find "$dir" -type d -name ".git" -exec dirname {} \; 2>/dev/null | while read -r project_dir; do
-				# Only show if the project directory itself isn't hidden
-				if [[ $(basename "$project_dir") != .* ]]; then
-					echo "$project_dir"
-				fi
-			done
-			
-			# Also look for other project markers (exclude hidden directories from results)
-			find "$dir" -type f \( -name "package.json" -o -name "Gemfile" -o -name "Cargo.toml" -o -name "go.mod" -o -name "pyproject.toml" -o -name "pom.xml" \) -exec dirname {} \; 2>/dev/null | while read -r project_dir; do
-				# Only show if the project directory itself isn't hidden
-				if [[ $(basename "$project_dir") != .* ]]; then
-					echo "$project_dir"
-				fi
-			done
+	{
+		# Shallow search in ~ and ~/dev (1 level deep, exclude hidden dirs)
+		# Look for git repos at this level
+		[[ -d "$HOME/dev" ]] && fd -t d -d 2 -H '^\.git$' . "$HOME/dev" 2>/dev/null | while read -r git_dir; do
+			echo "$(dirname "$git_dir")"
 		done
-	fi
+		
+		fd -t d -d 2 -H '^\.git$' . "$HOME" 2>/dev/null | while read -r git_dir; do
+			echo "$(dirname "$git_dir")"
+		done
+		
+		# Search in src directories for git repositories at project level
+		local src_dirs=("$HOME/src" "$HOME/dev/src" "$HOME/work/src")
+		for src_dir in "${src_dirs[@]}"; do
+			if [[ -d "$src_dir" ]]; then
+				# Find git repositories - limit depth to avoid going too deep into project subdirectories
+				fd -t d -d 4 -H '^\.git$' . "$src_dir" 2>/dev/null | while read -r git_dir; do
+					project_dir=$(dirname "$git_dir")
+					# Calculate depth from src_dir to ensure we only get top-level projects
+					relative_path=${project_dir#$src_dir/}
+					depth=$(echo "$relative_path" | tr '/' '\n' | wc -l)
+					# Only include projects at reasonable depth (1-3 levels: direct, org/repo, or host/org/repo)
+					if [[ $depth -le 3 ]]; then
+						echo "$project_dir"
+					fi
+				done
+			fi
+		done
+	} | sort -u
 }
 
 if [[ $# -eq 1 ]]; then
