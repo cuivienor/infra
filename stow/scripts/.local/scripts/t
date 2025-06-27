@@ -28,20 +28,19 @@ find_projects() {
 		# Shallow search in ~ and ~/dev (1 level deep, exclude hidden dirs)
 		# Look for git repos at this level
 		[[ -d "$HOME/dev" ]] && fd -t d -d 2 -H '^\.git$' . "$HOME/dev" 2>/dev/null | while read -r git_dir; do
-			echo "$(dirname "$git_dir")"
+			echo "$(realpath "$(dirname "$git_dir")")"
 		done
-		
 		fd -t d -d 2 -H '^\.git$' . "$HOME" 2>/dev/null | while read -r git_dir; do
-			echo "$(dirname "$git_dir")"
+			echo "$(realpath "$(dirname "$git_dir")")"
 		done
-		
+
 		# Search in src directories for git repositories at project level
 		local src_dirs=("$HOME/src" "$HOME/dev/src" "$HOME/work/src")
 		for src_dir in "${src_dirs[@]}"; do
 			if [[ -d "$src_dir" ]]; then
 				# Find git repositories - limit depth to avoid going too deep into project subdirectories
 				fd -t d -d 4 -H '^\.git$' . "$src_dir" 2>/dev/null | while read -r git_dir; do
-					project_dir=$(dirname "$git_dir")
+					project_dir=$(realpath "$(dirname "$git_dir")")
 					# Calculate depth from src_dir to ensure we only get top-level projects
 					relative_path=${project_dir#$src_dir/}
 					depth=$(echo "$relative_path" | tr '/' '\n' | wc -l)
