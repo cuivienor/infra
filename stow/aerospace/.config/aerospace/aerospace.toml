@@ -4,9 +4,6 @@
 # General behavior
 after-login-command = []
 after-startup-command = [
-    # Start AutoRaise for focus-follows-mouse
-    'exec-and-forget open -a "AutoRaise"',
-    
     # Start apps on specific workspaces like i3 - using AppleScript for new windows
     '''exec-and-forget osascript -e '
     tell application "Ghostty"
@@ -50,16 +47,16 @@ start-at-login = true
 # When docked: Two external monitors (built-in closed/disabled)
 # When undocked: All workspaces available on single built-in display
 [workspace-to-monitor-force-assignment]
-# Primary workspaces on main external monitor (when docked) or built-in (when undocked)
+# Primary workspaces 1-8 on main external monitor (when docked) or built-in (when undocked)
 1 = 'main'
 2 = 'main' 
 3 = 'main'
 4 = 'main'
 5 = 'main'
-# Secondary workspaces on secondary external monitor (when docked) or main (when undocked)
-6 = 'secondary'
-7 = 'secondary'
-8 = 'secondary'
+6 = 'main'
+7 = 'main'
+8 = 'main'
+# Secondary workspaces 9,0 on secondary external monitor (when docked) or main (when undocked)
 9 = 'secondary'
 10 = 'secondary'
 
@@ -98,23 +95,11 @@ cmd-j = 'focus down'
 cmd-k = 'focus up'
 cmd-l = 'focus right'
 
-# Alternative arrow key navigation
-cmd-left = 'focus left'
-cmd-down = 'focus down'
-cmd-up = 'focus up'
-cmd-right = 'focus right'
-
 # Move windows (cmd+shift+hjkl like i3 mod+shift+hjkl)
 cmd-shift-h = 'move left'
 cmd-shift-j = 'move down'
 cmd-shift-k = 'move up'
 cmd-shift-l = 'move right'
-
-# Alternative arrow key movement
-cmd-shift-left = 'move left'
-cmd-shift-down = 'move down'
-cmd-shift-up = 'move up'
-cmd-shift-right = 'move right'
 
 # Layout controls (replicating i3 layout commands)
 cmd-f = 'fullscreen'
@@ -162,8 +147,8 @@ cmd-shift-r = 'reload-config'
 # Resize mode trigger (cmd+r like i3 mod+r)
 cmd-r = 'mode resize'
 
-# Chat window launcher (replicating i3 mod+shift+h)
-cmd-shift-semicolon = 'exec-and-forget ~/.local/scripts/launch_chat_window.bash'
+# Chat window launcher (replicating i3 mod+shift+h) 
+cmd-shift-backtick = 'exec-and-forget ~/.local/scripts/launch_chat_window_macos.bash'
 
 # Browser new window (cmd+shift+enter)
 cmd-shift-enter = '''exec-and-forget osascript -e '
@@ -222,9 +207,10 @@ run = 'layout floating'
 if.app-id = 'com.google.Chrome'
 run = 'move-node-to-workspace 3'
 
-[[on-window-detected]]
-if.app-id = 'com.mitchellh.ghostty'
-run = 'move-node-to-workspace 1'
+# [[on-window-detected]]
+# if.app-id = 'com.mitchellh.ghostty'
+# if.window-title-regex-substring = '^(?!.*Chat_Window).*$'
+# run = 'move-node-to-workspace 1'
 
 [[on-window-detected]]
 if.app-id = 'com.todesktop.230313mzl4w4u92'  # Cursor
@@ -238,6 +224,12 @@ run = 'move-node-to-workspace 3'
 [[on-window-detected]]
 if.app-id = 'com.spotify.client'
 run = 'move-node-to-workspace 8'
+
+# Chat window should always be floating and behave like a dialog
+[[on-window-detected]]
+if.app-id = 'com.mitchellh.ghostty'
+if.window-title-regex-substring = 'Chat_Window'
+run = ['layout floating']
 
 # Communication apps on secondary monitor workspace
 [[on-window-detected]]
