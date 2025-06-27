@@ -31,6 +31,7 @@
         "ghostty",
         "aerospace",
         "launchagents",
+        "karabiner",
         "npm",
         "config",
         "cspell"
@@ -123,6 +124,10 @@
     },
     "launchagents": {
       "description": "macOS LaunchAgent services",
+      "platforms": ["macos"]
+    },
+    "karabiner": {
+      "description": "Karabiner-Elements keyboard customization",
       "platforms": ["macos"]
     }
   }
