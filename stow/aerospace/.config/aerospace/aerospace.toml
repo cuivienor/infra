@@ -104,7 +104,7 @@ cmd-shift-l = 'move right'
 # Layout controls (replicating i3 layout commands)
 cmd-f = 'fullscreen'
 cmd-shift-space = 'layout floating tiling'  # Toggle floating like i3
-cmd-space = 'layout tiles horizontal vertical'  # Cycle layouts
+# cmd-space = 'layout tiles horizontal vertical'  # Cycle layouts
 
 # Join with commands (replacement for split since normalization is enabled)
 # Main monitor (horizontal): vertical splits (side-by-side)
@@ -141,7 +141,6 @@ cmd-shift-9 = 'move-node-to-workspace 9'
 cmd-shift-0 = 'move-node-to-workspace 10'
 
 # Config reload/restart (cmd+shift+c/r like i3)
-cmd-shift-c = 'reload-config'
 cmd-shift-r = 'reload-config'
 
 # Resize mode trigger (cmd+r like i3 mod+r)
