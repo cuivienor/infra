@@ -207,6 +207,18 @@ return { -- LSP Configuration & Plugins
 					settings = {},
 				},
 			},
+			-- Ruby LSP - installed via gem, not Mason (see: https://shopify.github.io/ruby-lsp/editors.html#nvim-lspconfig)
+			-- Add to Gemfile: gem "ruby-lsp", require: false
+			ruby_lsp = {
+				init_options = {
+					formatter = 'syntax_tree',
+					linters = { 'ruby_lsp' },
+				},
+			},
+			-- Sorbet - installed via gem, not Mason (should be in project Gemfile)
+			-- Add to Gemfile: gem "sorbet", group: :development
+			-- Add to Gemfile: gem "sorbet-runtime"
+			sorbet = {},
 		}
 
 		-- Ensure the servers and tools above are installed
