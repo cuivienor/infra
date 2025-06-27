@@ -30,6 +30,7 @@
         "nvim",
         "ghostty",
         "aerospace",
+        "launchagents",
         "npm",
         "config",
         "cspell"
@@ -118,6 +119,10 @@
     },
     "aerospace": {
       "description": "AeroSpace tiling window manager for macOS",
+      "platforms": ["macos"]
+    },
+    "launchagents": {
+      "description": "macOS LaunchAgent services",
       "platforms": ["macos"]
     }
   }
