@@ -5,22 +5,22 @@
 after-login-command = []
 after-startup-command = [
     # Start apps on specific workspaces like i3 - using AppleScript for new windows
-    '''exec-and-forget osascript -e '
-    tell application "Ghostty"
-        activate
-        tell application "System Events"
-            tell process "Ghostty"
-                keystroke "n" using {command down}
-            end tell
-        end tell
-    end tell'
-    ''',
-    '''exec-and-forget osascript -e '
-    tell application "Google Chrome"
-        make new window
-        activate
-    end tell'
-    ''',
+    # '''exec-and-forget osascript -e '
+    # tell application "Ghostty"
+    #     activate
+    #     tell application "System Events"
+    #         tell process "Ghostty"
+    #             keystroke "n" using {command down}
+    #         end tell
+    #     end tell
+    # end tell'
+    # ''',
+    # '''exec-and-forget osascript -e '
+    # tell application "Google Chrome"
+    #     make new window
+    #     activate
+    # end tell'
+    # ''',
 ]
 
 # Enable mouse follows focus (like i3 behavior)
@@ -60,6 +60,7 @@ start-at-login = true
 9 = 'secondary'
 10 = 'secondary'
 
+
 # Default layout (optimized for main monitor - horizontal screen)
 default-root-container-layout = 'tiles'
 default-root-container-orientation = 'vertical'
@@ -71,19 +72,20 @@ preset = 'qwerty'
 # Main mode bindings (required)
 [mode.main.binding]
 # Terminal (cmd+return like i3 mod+return) - opens new window
-cmd-enter = '''exec-and-forget osascript -e '
-tell application "Ghostty"
-    activate
-    tell application "System Events"
-        tell process "Ghostty"
-            keystroke "n" using {command down}
-        end tell
-    end tell
-end tell'
-'''
+# cmd-enter = '''exec-and-forget osascript -e '
+# tell application "Ghostty"
+#     activate
+#     tell application "System Events"
+#         tell process "Ghostty"
+#             keystroke "n" using {command down}
+#         end tell
+#     end tell
+# end tell'
+# '''
 
 # Kill focused window (cmd+shift+q like i3 mod+shift+q)
 cmd-shift-q = 'close'
+
 
 # App launcher (cmd+d like i3 mod+d with rofi)
 # Use Spotlight or Raycast as replacement for rofi
