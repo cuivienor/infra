@@ -208,23 +208,18 @@ run = 'layout floating'
 if.app-id = 'com.google.Chrome'
 run = 'move-node-to-workspace 3'
 
-# [[on-window-detected]]
-# if.app-id = 'com.mitchellh.ghostty'
-# if.window-title-regex-substring = '^(?!.*Chat_Window).*$'
-# run = 'move-node-to-workspace 1'
+[[on-window-detected]]
+if.app-id = 'com.google.Chrome.app.Default'
+run = 'move-node-to-workspace 3'
 
 [[on-window-detected]]
 if.app-id = 'com.todesktop.230313mzl4w4u92'  # Cursor
 run = 'move-node-to-workspace 2'
 
-[[on-window-detected]]
-if.app-id = 'com.google.Chrome.app.Default'
-run = 'move-node-to-workspace 3'
-
 # Window assignment rules for common apps
 [[on-window-detected]]
 if.app-id = 'com.spotify.client'
-run = 'move-node-to-workspace 8'
+run = 'move-node-to-workspace 10'
 
 # Chat window should always be floating and behave like a dialog
 [[on-window-detected]]
@@ -235,11 +230,7 @@ run = ['layout floating']
 # Communication apps on secondary monitor workspace
 [[on-window-detected]]
 if.app-id = 'com.tinyspeck.slackmacgap'
-run = 'move-node-to-workspace 6'
-
-[[on-window-detected]]
-if.app-id = 'com.microsoft.teams2'
-run = 'move-node-to-workspace 6'
+run = 'move-node-to-workspace 9'
 
 [[on-window-detected]]
 if.app-id = 'com.discord.Discord'
@@ -248,22 +239,6 @@ run = 'move-node-to-workspace 6'
 # Development tools on workspace 4
 [[on-window-detected]]
 if.app-id = 'com.microsoft.VSCode'
-run = 'move-node-to-workspace 4'
-
-[[on-window-detected]]
-if.app-id = 'com.jetbrains.intellij'
-run = 'move-node-to-workspace 4'
-
-[[on-window-detected]]
-if.app-id = 'com.jetbrains.intellij.ce'
-run = 'move-node-to-workspace 4'
-
-[[on-window-detected]]
-if.app-id = 'com.jetbrains.pycharm'
-run = 'move-node-to-workspace 4'
-
-[[on-window-detected]]
-if.app-id = 'com.docker.docker'
 run = 'move-node-to-workspace 4'
 
 # System monitoring on secondary monitor
