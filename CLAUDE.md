@@ -6,6 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a personal dotfiles repository managed using GNU Stow. It contains configuration files for various tools and applications organized in a modular architecture that supports different platforms (Linux, macOS) and environments (corporate, minimal).
 
+### Theme
+The repository uses Catppuccin (Mocha variant) consistently across tmux, starship, zsh, i3, and rofi for visual consistency.
+
 ## Architecture
 
 The repository uses a JSON-based configuration system (`dotfiles-config.json`) that defines:
@@ -40,10 +43,11 @@ The repository uses a JSON-based configuration system (`dotfiles-config.json`) t
 
 ### Key Utilities
 - `t` - Tmux sessionizer script (located in `stow/scripts/.local/scripts/t`)
-  - Finds and switches to project directories
+  - Finds and switches to project directories in `~/dev`, `~/src`, and other common locations
   - Integrates with zoxide for fuzzy directory finding
-  - Supports `.t` project initialization files
-- `batl` - Pipe last command output to bat pager
+  - Supports `.t` project initialization files for custom tmux layouts
+  - Inspired by ThePrimeagen's workflow
+- `batl` - Pipe last command output to bat pager (WARNING: re-executes the last command)
 
 ## Key Configuration Files
 
@@ -54,8 +58,10 @@ The repository uses a JSON-based configuration system (`dotfiles-config.json`) t
 - **starship**: Cross-shell prompt with Catppuccin theme
 
 ### Platform-Specific
-- **i3/picom/rofi/X11**: Linux desktop environment components
-- **aerospace**: macOS tiling window manager
+- **i3/picom/rofi/X11**: Linux desktop environment components (full desktop stack)
+- **aerospace**: macOS tiling window manager (i3 replacement for macOS)
+- **karabiner**: macOS keyboard customization
+- **launchagents**: macOS service management
 - **systemd**: Linux user services
 
 ## Development Workflow
@@ -77,6 +83,7 @@ The installation script automatically detects platform and environment:
 - Falls back to minimal architecture for unknown platforms
 
 ## Special Files
-- `.t` files: Project-specific tmux initialization scripts
+- `.t` files: Project-specific tmux initialization scripts (auto-sourced by `t` command)
 - `$HOME/.env`: Source file for environment secrets (optional)
 - `$XDG_CONFIG_HOME/path.bash`: PATH modifications
+- `dotfiles-config.json`: Defines package compatibility and architecture combinations
