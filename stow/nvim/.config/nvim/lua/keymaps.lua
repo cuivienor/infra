@@ -29,6 +29,24 @@ vim.keymap.set("n", "<space><space>x", "<cmd>source %<CR>")
 vim.keymap.set("n", "<space>x", ":.lua<CR>")
 vim.keymap.set("v", "<space>x", ":lua<CR>")
 
+-- Swap file management
+vim.keymap.set("n", "<leader>wsd", function()
+	local swap_dir = vim.fn.expand("~/.local/state/nvim/swap/")
+	vim.cmd("!rm -f " .. swap_dir .. "*")
+	print("Cleared all swap files")
+end, { desc = "[W]orkspace [S]wap [D]elete all" })
+
+vim.keymap.set("n", "<leader>wsr", "<cmd>recover<CR>", { desc = "[W]orkspace [S]wap [R]ecover" })
+vim.keymap.set("n", "<leader>wsc", function()
+	local current_swap = vim.fn.swapname(vim.fn.expand("%"))
+	if current_swap ~= "" then
+		vim.fn.delete(current_swap)
+		print("Deleted swap file: " .. current_swap)
+	else
+		print("No swap file for current buffer")
+	end
+end, { desc = "[W]orkspace [S]wap [C]lear current" })
+
 -- Custom keymaps
 -- Move file keybinding and logic
 -- TODO: Move this function in a separate appropriate place

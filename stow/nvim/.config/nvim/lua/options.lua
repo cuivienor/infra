@@ -65,3 +65,9 @@ vim.opt.softtabstop = 4
 
 -- Conceal level for obsidian.nvim
 vim.opt.conceallevel = 2
+
+-- Swap file configuration
+vim.opt.swapfile = true
+vim.opt.directory = vim.fn.expand("~/.local/state/nvim/swap//")
+vim.opt.updatecount = 100
+vim.opt.updatetime = 250
