@@ -10,3 +10,7 @@ font-feature = +liga
 adjust-cell-width = -1
 font-thicken = false
 
+# Enable URL detection and make them clickable
+# URLs will be clickable when holding Cmd (on macOS) or Ctrl (on Linux)
+link-url = true
+
