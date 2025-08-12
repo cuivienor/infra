@@ -381,12 +381,17 @@ return {
 
 		-- Build LSP configuration for a Ruby project
 		ruby_project.build_lsp_config = function(project_root, bufnr)
+			local capabilities = lsp.make_capabilities()
+			-- Ensure ruby-lsp uses UTF-16 encoding to match other LSPs
+			capabilities.general = capabilities.general or {}
+			capabilities.general.positionEncodings = { "utf-16" }
+			
 			local config = {
 				name = "ruby_lsp_" .. project_root:gsub("[/\\]", "_"),
 				cmd = { "ruby-lsp" },
 				root_dir = project_root,
 				bufnr = bufnr,
-				capabilities = lsp.make_capabilities(),
+				capabilities = capabilities,
 				init_options = {
 					formatter = "auto",
 					experimentalFeaturesEnabled = true,
