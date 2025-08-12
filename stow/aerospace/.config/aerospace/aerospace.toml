@@ -199,27 +199,10 @@ right = 'resize width +50'
 enter = 'mode main'
 esc = 'mode main'
 
-# Window rules (replicating i3 for_window rules)
+# Window rules
 [[on-window-detected]]
 if.app-id = 'us.zoom.xos'
 run = 'layout floating'
-
-[[on-window-detected]]
-if.app-id = 'com.google.Chrome'
-run = 'move-node-to-workspace 3'
-
-[[on-window-detected]]
-if.app-id = 'com.google.Chrome.app.Default'
-run = 'move-node-to-workspace 3'
-
-[[on-window-detected]]
-if.app-id = 'com.todesktop.230313mzl4w4u92'  # Cursor
-run = 'move-node-to-workspace 2'
-
-# Window assignment rules for common apps
-[[on-window-detected]]
-if.app-id = 'com.spotify.client'
-run = 'move-node-to-workspace 10'
 
 # Chat window should always be floating and behave like a dialog
 [[on-window-detected]]
@@ -227,24 +210,10 @@ if.app-id = 'com.mitchellh.ghostty'
 if.window-title-regex-substring = 'Chat_Window'
 run = ['layout floating']
 
-# Communication apps on secondary monitor workspace
+# Slack on workspace 9
 [[on-window-detected]]
 if.app-id = 'com.tinyspeck.slackmacgap'
 run = 'move-node-to-workspace 9'
-
-[[on-window-detected]]
-if.app-id = 'com.discord.Discord'
-run = 'move-node-to-workspace 6'
-
-# Development tools on workspace 4
-[[on-window-detected]]
-if.app-id = 'com.microsoft.VSCode'
-run = 'move-node-to-workspace 4'
-
-# System monitoring on secondary monitor
-[[on-window-detected]]
-if.app-id = 'com.apple.ActivityMonitor'
-run = 'move-node-to-workspace 7'
 
 # Gaps configuration (no gaps for seamless tiling)
 [gaps]
