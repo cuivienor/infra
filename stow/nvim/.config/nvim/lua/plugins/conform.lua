@@ -129,8 +129,10 @@ return { -- Autoformat
 			yaml = { "yamlfix" },
 			tf = { "terraform_fmt" },
 			markdown = { "prettierd" },
-			-- Ruby formatting with RuboCop (respects .rubocop.yml in project)
-			ruby = { "rubocop" },
+			-- Ruby formatting: use rubocop command, but prefer LSP if available
+			-- When RuboCop LSP is attached (shadowenv projects), it will be used
+			-- When no LSP, the rubocop formatter will be used (non-shadowenv projects)
+			ruby = { lsp_format = "first", "rubocop" },
 			eruby = { "erb_format" },
 			-- JavaScript/TypeScript formatting
 			javascript = { { "prettierd", "prettier" } },

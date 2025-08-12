@@ -225,10 +225,7 @@ return {
 				},
 				settings = {},
 				on_attach = function(client, attached_bufnr)
-					-- Disable formatting from RuboCop LSP (we use conform.nvim for that)
-					client.server_capabilities.documentFormattingProvider = false
-					client.server_capabilities.documentRangeFormattingProvider = false
-					client.server_capabilities.documentOnTypeFormattingProvider = nil
+					-- Keep RuboCop LSP formatting enabled - conform will use it with lsp_format = "first"
 					
 					-- Update offset encoding if available
 					if client.server_capabilities.positionEncoding then
