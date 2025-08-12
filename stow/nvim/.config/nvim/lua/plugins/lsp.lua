@@ -259,6 +259,9 @@ return { -- LSP Configuration & Plugins
 			"markdownlint",
 			"prettierd",
 			"cspell",
+			-- Don't install rubocop via Mason - use project's version via shadowenv
+			"erb-formatter", -- ERB template formatter
+			"ruff", -- Python formatter/linter
 		})
 		require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
 
