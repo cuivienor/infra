@@ -37,14 +37,32 @@ return { -- LSP Configuration & Plugins
 		--    That is to say, every time a new file is opened that is associated with
 		--    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
 		--    function will be executed to configure the current buffer
+		-- Debug command to check LSP client encodings
+		vim.api.nvim_create_user_command("LspDebugEncodings", function()
+			local clients = vim.lsp.get_active_clients({ bufnr = 0 })
+			local lines = { "LSP Client Encodings for current buffer:", "" }
+			
+			for _, client in ipairs(clients) do
+				table.insert(lines, string.format("Client: %s (ID: %d)", client.name, client.id))
+				table.insert(lines, string.format("  Offset Encoding: %s", client.offset_encoding or "not set"))
+				table.insert(lines, string.format("  Server Capabilities offsetEncoding: %s", 
+					vim.inspect(client.server_capabilities.positionEncoding or "not set")))
+				table.insert(lines, "")
+			end
+			
+			if #clients == 0 then
+				table.insert(lines, "No active LSP clients for this buffer")
+			end
+			
+			-- Check buffer filetype
+			table.insert(lines, string.format("Buffer filetype: %s", vim.bo.filetype))
+			
+			vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
+		end, { desc = "Debug LSP client encodings" })
+
 		vim.api.nvim_create_autocmd("LspAttach", {
 			group = vim.api.nvim_create_augroup("kickstart-lsp-attach", { clear = true }),
 			callback = function(event)
-				-- Ensure the buffer is still valid
-				if not vim.api.nvim_buf_is_valid(event.buf) then
-					return
-				end
-				
 				-- NOTE: Remember that Lua is a real programming language, and as such it is possible
 				-- to define small helper and utility functions so you don't have to repeat yourself.
 				--
@@ -57,19 +75,19 @@ return { -- LSP Configuration & Plugins
 				-- Jump to the definition of the word under your cursor.
 				--  This is where a variable was first declared, or where a function is defined, etc.
 				--  To jump back, press <C-t>.
-				map("gd", function() require("telescope.builtin").lsp_definitions() end, "Goto Definition")
+				map("gd", require("telescope.builtin").lsp_definitions, "Goto Definition")
 
 				-- Find references for the word under your cursor.
-				map("gr", function() require("telescope.builtin").lsp_references() end, "Goto References")
+				map("gr", require("telescope.builtin").lsp_references, "Goto References")
 
 				-- Jump to the implementation of the word under your cursor.
 				--  Useful when your language has ways of declaring types without an actual implementation.
-				map("gI", function() require("telescope.builtin").lsp_implementations() end, "Goto Implementation")
+				map("gI", require("telescope.builtin").lsp_implementations, "Goto Implementation")
 
 				-- Jump to the type of the word under your cursor.
 				--  Useful when you're not sure what type a variable is and you want to see
 				--  the definition of its *type*, not where it was *defined*.
-				map("<leader>D", function() require("telescope.builtin").lsp_type_definitions() end, "Type Definition")
+				map("<leader>D", require("telescope.builtin").lsp_type_definitions, "Type Definition")
 
 				-- Fuzzy find all the symbols in your current document.
 				--  Symbols are things like variables, functions, types, etc.

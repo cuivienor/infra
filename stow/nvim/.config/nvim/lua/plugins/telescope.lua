@@ -1,7 +1,8 @@
 return { -- Fuzzy Finder (files, lsp, etc)
 	"nvim-telescope/telescope.nvim",
 	event = "VimEnter",
-	branch = "0.1.x",
+	-- Use master branch for Neovim 0.11 compatibility (fixes position_encoding warning)
+	branch = "master",
 	dependencies = {
 		"nvim-lua/plenary.nvim",
 		{
