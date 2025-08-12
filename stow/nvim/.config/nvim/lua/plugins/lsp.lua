@@ -8,6 +8,18 @@ return { -- LSP Configuration & Plugins
 		{ "folke/neodev.nvim", opts = {} },
 	},
 	config = function()
+		-- Configure diagnostics display
+		vim.diagnostic.config({
+			virtual_text = true,  -- Show inline virtual text
+			signs = true,         -- Show signs in the sign column
+			underline = true,     -- Underline diagnostics
+			update_in_insert = false,  -- Don't update while in insert mode
+			severity_sort = true,  -- Sort by severity
+			float = {
+				source = "always",  -- Always show source in floating window
+			},
+		})
+		
 		-- Brief aside: **What is LSP?**
 		--
 		-- LSP is an initialism you've probably heard, but might not understand what it is.
