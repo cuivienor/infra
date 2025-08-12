@@ -184,6 +184,106 @@ return {
 			return nil
 		end
 
+		-- Ensure Sorbet LSP for a project
+		ruby_project.ensure_sorbet_lsp = function(project_root, bufnr)
+			-- Check if Sorbet client already exists for this project
+			local existing_clients = vim.lsp.get_clients({ bufnr = bufnr })
+			for _, client in ipairs(existing_clients) do
+				if client.name:match("^sorbet_lsp_") then
+					-- Already attached
+					return
+				end
+			end
+			
+			-- Check if Sorbet client already exists for this project
+			local project = ruby_project.state.projects[project_root]
+			if project and project.sorbet_client_id then
+				-- Try to attach existing client
+				if lsp.attach_client(project.sorbet_client_id, bufnr) then
+					return
+				end
+			end
+			
+			-- Load shadowenv environment for Sorbet
+			local environment = shadowenv.load_environment(project_root)
+			if not environment then
+				return
+			end
+			
+			-- Get the shadowenv srb path
+			local ruby_paths = shadowenv.get_ruby_paths(environment)
+			if not ruby_paths then
+				return
+			end
+			
+			-- Find srb in the same gem directory as ruby-lsp
+			local srb_path = ruby_paths.gem_home .. "/bin/srb"
+			if vim.fn.filereadable(srb_path) ~= 1 then
+				if vim.g.ruby_shadowenv_debug then
+					vim.notify("srb not found in shadowenv: " .. srb_path, vim.log.levels.WARN)
+				end
+				return
+			end
+			
+			-- Configure Sorbet LSP with shadowenv environment
+			local sorbet_config = {
+				name = "sorbet_lsp_" .. project_root:gsub("[/\\]", "_"),
+				cmd = { srb_path, "tc", "--lsp" },
+				cmd_env = environment,  -- Pass the shadowenv environment
+				root_dir = project_root,
+				filetypes = { "ruby", "eruby", "rakefile", "gemfile" },
+				bufnr = bufnr,
+				settings = {},
+				on_attach = function(client, attached_bufnr)
+					-- Update offset encoding if available
+					if client.server_capabilities.positionEncoding then
+						client.offset_encoding = client.server_capabilities.positionEncoding
+					end
+					
+					-- Debug: log capabilities
+					if vim.g.ruby_shadowenv_debug then
+						vim.notify(
+							string.format(
+								"Sorbet LSP attached to buffer %d",
+								attached_bufnr
+							),
+							vim.log.levels.INFO
+						)
+					end
+				end,
+				-- Set the working directory to project root
+				cwd = project_root,
+				capabilities = lsp.make_capabilities(),
+			}
+			
+			-- Remove bufnr from config as vim.lsp.start will handle it
+			sorbet_config.bufnr = nil
+			
+			-- Use vim.lsp.start for better attachment handling
+			local client_id = vim.lsp.start(sorbet_config, {
+				bufnr = bufnr,
+				reuse_client = function(client, config)
+					return client.name == config.name and client.root_dir == config.root_dir
+				end,
+			})
+			
+			if client_id then
+				-- Update project state to include Sorbet client
+				local project = ruby_project.state.projects[project_root]
+				if project then
+					project.sorbet_client_id = client_id
+				end
+				
+				vim.notify(
+					string.format(
+						"Sorbet LSP started for %s",
+						vim.fn.fnamemodify(project_root, ":~")
+					),
+					vim.log.levels.INFO
+				)
+			end
+		end
+
 		-- Ensure RuboCop LSP for a project
 		ruby_project.ensure_rubocop_lsp = function(project_root, bufnr)
 			local bin_rubocop = project_root .. "/bin/rubocop"
@@ -426,6 +526,11 @@ return {
 						if vim.fn.filereadable(bin_rubocop) == 1 then
 							ruby_project.ensure_rubocop_lsp(project_root, bufnr)
 						end
+						
+						-- Also start Sorbet LSP if sorbet/config exists
+						if vim.fn.filereadable(project_root .. "/sorbet/config") == 1 then
+							ruby_project.ensure_sorbet_lsp(project_root, bufnr)
+						end
 					end
 				end
 			end
@@ -443,6 +548,9 @@ return {
 					lsp.stop_client(project.client_id)
 					if project.rubocop_client_id then
 						lsp.stop_client(project.rubocop_client_id)
+					end
+					if project.sorbet_client_id then
+						lsp.stop_client(project.sorbet_client_id)
 					end
 					ruby_project.state.projects[project_root] = nil
 				end

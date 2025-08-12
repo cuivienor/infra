@@ -231,10 +231,7 @@ return { -- LSP Configuration & Plugins
 				},
 			},
 			-- Ruby LSP is handled by shadowenv.lua for Shopify projects
-			-- Sorbet - installed via gem, not Mason (should be in project Gemfile)
-			-- Add to Gemfile: gem "sorbet", group: :development
-			-- Add to Gemfile: gem "sorbet-runtime"
-			sorbet = {},
+			-- Sorbet LSP is handled by shadowenv.lua for Shopify projects (uses shadowenv's srb)
 		}
 
 		-- Ensure the servers and tools above are installed
