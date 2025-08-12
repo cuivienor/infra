@@ -3,6 +3,14 @@ return {
 	cmd = "Copilot",
 	event = { "InsertEnter" },
 	config = function()
-		require("copilot").setup({})
+		require("copilot").setup({
+			server_opts_overrides = {
+				settings = {
+					telemetry = {
+						telemetryLevel = "off",
+					},
+				},
+			},
+		})
 	end,
 }
