@@ -10,6 +10,14 @@ return {
 			},
 			agents = {
 				{
+					name = "GPT5",
+					provider = "shopify_llm_gateway",
+					chat = true,
+					command = true,
+					model = { model = "gpt-5" },
+					system_prompt = "You are GPT-5, OpenAI's most advanced AI assistant.\n",
+				},
+				{
 					name = "O3",
 					provider = "shopify_llm_gateway",
 					chat = true,
