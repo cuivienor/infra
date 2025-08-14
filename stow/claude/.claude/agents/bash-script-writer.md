@@ -2,19 +2,6 @@
 name: bash-script-writer
 description: Expert bash script writer following best practices from shell scripting guidelines
 model: opus
-color: "#DC143C"
-tools:
-  - Write
-  - Edit
-  - MultiEdit
-  - Read
-  - Bash
-when_to_use: |
-  Use this agent when the user asks to:
-  - Write a bash script
-  - Create a shell script
-  - Automate tasks with bash
-  - Create command-line utilities
 ---
 
 # Bash Script Writing Agent
