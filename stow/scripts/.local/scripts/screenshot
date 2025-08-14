@@ -5,6 +5,7 @@ set -euo pipefail
 # Default configuration
 DEFAULT_DIR="$HOME/Pictures/Screenshots"
 DEFAULT_FORMAT="png"
+CAPTURE_MODE="monitor"  # Default to main monitor
 
 # Ensure screenshot directory exists
 SCREENSHOT_DIR="${SCREENSHOT_DIR:-$DEFAULT_DIR}"
@@ -18,11 +19,11 @@ generate_filename() {
     echo "${SCREENSHOT_DIR}/${prefix}_${timestamp}.${format}"
 }
 
-# Simple active monitor capture for now
-capture_active_monitor() {
+# Capture main monitor only
+capture_main_monitor() {
     local output_file="$1"
     
-    echo "Capturing active monitor to: $output_file"
+    echo "Capturing main monitor to: $output_file"
     
     # -m: capture main monitor only
     # -x: no sound
@@ -36,11 +37,126 @@ capture_active_monitor() {
     fi
 }
 
+# Capture all screens (creates separate files for each display)
+capture_all_screens() {
+    local output_file="$1"
+    
+    # Get base filename without extension
+    local base="${output_file%.*}"
+    local ext="${output_file##*.}"
+    
+    echo "Capturing all displays..."
+    
+    # Build file list for up to 5 displays (should cover most setups)
+    local files=()
+    local i
+    for i in {1..5}; do
+        files+=("${base}_display${i}.${ext}")
+    done
+    
+    # screencapture with multiple filenames captures each display to a separate file
+    # It will only create files for displays that actually exist
+    if screencapture -x "${files[@]}" 2>/dev/null; then
+        echo "Screenshots saved successfully!"
+        # Show which files were actually created
+        for file in "${files[@]}"; do
+            [[ -f "$file" ]] && echo "Display: $file"
+        done
+        return 0
+    elif screencapture -x "$output_file"; then
+        # Fallback for single display or if multiple files didn't work
+        echo "Screenshot saved successfully!"
+        echo "Location: $output_file"
+        return 0
+    else
+        echo "Error: Failed to capture screenshot" >&2
+        return 2
+    fi
+}
+
+# Interactive capture (user selects area or window)
+capture_interactive() {
+    local output_file="$1"
+    
+    echo "Starting interactive capture mode..."
+    echo "Tips: Click and drag to select area, Space to toggle window mode, Esc to cancel"
+    
+    # -i: interactive mode
+    # -x: no sound
+    if screencapture -i -x "$output_file"; then
+        # Check if file was created (user might have cancelled)
+        if [[ -f "$output_file" ]]; then
+            echo "Screenshot saved successfully!"
+            echo "Location: $output_file"
+            return 0
+        else
+            echo "Capture cancelled by user"
+            return 1
+        fi
+    else
+        echo "Error: Failed to capture screenshot" >&2
+        return 2
+    fi
+}
+
+# Parse command line arguments
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -m|--monitor)
+                CAPTURE_MODE="monitor"
+                shift
+                ;;
+            -a|--all)
+                CAPTURE_MODE="all"
+                shift
+                ;;
+            -i|--interactive)
+                CAPTURE_MODE="interactive"
+                shift
+                ;;
+            -h|--help)
+                echo "Usage: screenshot [capture_mode] [options]"
+                echo ""
+                echo "Capture modes:"
+                echo "  -m, --monitor      Capture main monitor only (default)"
+                echo "  -a, --all          Capture all screens (separate files for each)"
+                echo "  -i, --interactive  Interactive selection mode"
+                echo ""
+                echo "Options:"
+                echo "  -h, --help         Show this help message"
+                exit 0
+                ;;
+            *)
+                echo "Error: Unknown option: $1" >&2
+                echo "Use -h or --help for usage information" >&2
+                exit 1
+                ;;
+        esac
+    done
+}
+
 # Main execution
 main() {
-    # For now, just do a simple active monitor capture
+    parse_args "$@"
+    
     local output_file=$(generate_filename "screenshot" "$DEFAULT_FORMAT")
-    capture_active_monitor "$output_file"
+    
+    case "$CAPTURE_MODE" in
+        monitor)
+            capture_main_monitor "$output_file"
+            ;;
+        all)
+            capture_all_screens "$output_file"
+            ;;
+        interactive)
+            capture_interactive "$output_file"
+            ;;
+        *)
+            echo "Error: Invalid capture mode: $CAPTURE_MODE" >&2
+            exit 1
+            ;;
+    esac
 }
 
 main "$@"
