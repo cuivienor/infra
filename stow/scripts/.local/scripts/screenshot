@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Default configuration
+DEFAULT_DIR="$HOME/Pictures/Screenshots"
+DEFAULT_FORMAT="png"
+
+# Ensure screenshot directory exists
+SCREENSHOT_DIR="${SCREENSHOT_DIR:-$DEFAULT_DIR}"
+mkdir -p "$SCREENSHOT_DIR"
+
+# Generate timestamp-based filename
+generate_filename() {
+    local prefix="${1:-screenshot}"
+    local format="${2:-$DEFAULT_FORMAT}"
+    local timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+    echo "${SCREENSHOT_DIR}/${prefix}_${timestamp}.${format}"
+}
+
+# Simple active monitor capture for now
+capture_active_monitor() {
+    local output_file="$1"
+    
+    echo "Capturing active monitor to: $output_file"
+    
+    # -m: capture main monitor only
+    # -x: no sound
+    if screencapture -m -x "$output_file"; then
+        echo "Screenshot saved successfully!"
+        echo "Location: $output_file"
+        return 0
+    else
+        echo "Error: Failed to capture screenshot" >&2
+        return 2
+    fi
+}
+
+# Main execution
+main() {
+    # For now, just do a simple active monitor capture
+    local output_file=$(generate_filename "screenshot" "$DEFAULT_FORMAT")
+    capture_active_monitor "$output_file"
+}
+
+main "$@"
