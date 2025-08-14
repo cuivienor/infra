@@ -17,7 +17,8 @@
         "npm",
         "X11",
         "config",
-        "cspell"
+        "cspell",
+        "claude"
       ]
     },
     "macos": {
@@ -34,7 +35,8 @@
         "karabiner",
         "npm",
         "config",
-        "cspell"
+        "cspell",
+        "claude"
       ]
     },
     "corporate": {
@@ -45,7 +47,8 @@
         "tmux",
         "nvim",
         "npm",
-        "config"
+        "config",
+        "claude"
       ]
     },
     "minimal": {
@@ -129,6 +132,10 @@
     "karabiner": {
       "description": "Karabiner-Elements keyboard customization",
       "platforms": ["macos"]
+    },
+    "claude": {
+      "description": "Claude Code configuration and agents",
+      "platforms": ["linux", "macos", "corporate"]
     }
   }
 } 
