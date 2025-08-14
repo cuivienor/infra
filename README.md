@@ -43,3 +43,50 @@ A collection of personal configuration files managed using GNU Stow.
 ## 🎨 Theme
 
 Most modules use the [Catppuccin](https://github.com/catppuccin/catppuccin) color scheme (primarily the Mocha variant).
+
+## 🛍️ Shopify Development
+
+### Neovim LSP Configuration for Shadowenv
+
+The Neovim configuration includes specialized support for Shopify's `shadowenv` (Nix-based environment manager) to ensure proper LSP functionality across multiple Ruby projects with different versions and dependencies.
+
+#### Architecture
+
+**Core Module**: `stow/nvim/.config/nvim/lua/plugins/shadowenv.lua`
+
+This module provides:
+- Automatic detection of shadowenv projects (via `.shadowenv.d` directory)
+- Per-project LSP instances with isolated environments
+- Integration with project-specific Ruby, RuboCop, and Sorbet versions
+
+#### How It Works
+
+1. **Environment Loading**: When opening a Ruby file, the module:
+   - Detects the project root
+   - Loads the shadowenv environment for that project
+   - Extracts Ruby paths from the Nix environment
+
+2. **LSP Management**: Creates project-specific LSP instances:
+   - `ruby_lsp_<project>` - Uses shadowenv's ruby-lsp
+   - `rubocop_lsp_<project>` - Uses project's `bin/rubocop` (includes custom cops)
+   - `sorbet_lsp_<project>` - Uses shadowenv's srb (if `sorbet/config` exists)
+
+3. **Smart Formatting**: 
+   - Diagnostics from LSP servers (real-time)
+   - Formatting via conform.nvim with LSP preference (`lsp_format = "first"`)
+   - Falls back to command-line formatters for non-shadowenv projects
+
+#### Key Features
+
+- **Project Isolation**: Each project uses its own Ruby version and gems
+- **Custom Cops Support**: RuboCop automatically uses project-specific configurations
+- **Zero Configuration**: Works automatically for any shadowenv project
+- **Resource Management**: LSPs start/stop based on active buffers
+
+#### Commands
+
+- `:RubyShadowenvStatus` - Show status of Ruby/RuboCop/Sorbet LSP servers
+- `:RubyShadowenvReload` - Restart LSP servers for current project
+- `:RubyShadowenvDebug` - Debug shadowenv detection and configuration
+
+This setup ensures that Neovim "just works" with Shopify's complex multi-project Ruby environment without manual configuration.
