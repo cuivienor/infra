@@ -17,6 +17,7 @@ if [ -f "$HOME/.env" ]; then
 	source "$HOME/.env"
 fi
 
+export EDITOR="nvim"
 export ZSH="$HOME/.oh-my-zsh"
 
 ZSH_THEME="catppuccin"
@@ -32,7 +33,7 @@ autoload -U compinit && compinit
 setopt SHARE_HISTORY
 HISTFILE=$HOME/.zhistory
 SAVEHIST=1000
-HISTSIZE=999
+HISTSIZE=1000
 setopt HIST_EXPIRE_DUPS_FIRST
 
 # autocompletion using arrow keys (based on history)
