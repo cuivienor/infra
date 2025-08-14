@@ -2,101 +2,301 @@
 
 set -euo pipefail
 
-# Default configuration
-DEFAULT_DIR="$HOME/Pictures/Screenshots"
-DEFAULT_FORMAT="png"
+# Enable debug mode with TRACE=1
+if [[ "${TRACE-0}" == "1" ]]; then
+    set -o xtrace
+fi
+
+# Script version
+readonly VERSION="2.0.0"
+
+# Configuration constants
+readonly DEFAULT_DIR="$HOME/Pictures/Screenshots"
+readonly DEFAULT_FORMAT="png"
+readonly MAX_DISPLAYS=5
+readonly TIMESTAMP_FORMAT="%Y-%m-%d_%H-%M-%S"
+
+# Script variables
 CAPTURE_MODE="monitor"  # Default to main monitor
+OUTPUT_MODE="save"      # Default to save file
+SILENT_MODE="false"     # Default to play sound
+SCREENSHOT_DIR="${SCREENSHOT_DIR:-$DEFAULT_DIR}"
+
+# Color codes for output (if terminal supports it)
+if [[ -t 1 ]]; then
+    readonly RED='\033[0;31m'
+    readonly GREEN='\033[0;32m'
+    readonly YELLOW='\033[1;33m'
+    readonly NC='\033[0m' # No Color
+else
+    readonly RED=''
+    readonly GREEN=''
+    readonly YELLOW=''
+    readonly NC=''
+fi
+
+# Error handling function
+error() {
+    echo -e "${RED}Error: $*${NC}" >&2
+    exit 1
+}
+
+# Warning messages
+warn() {
+    echo -e "${YELLOW}Warning: $*${NC}" >&2
+}
+
+# Success messages
+success() {
+    echo -e "${GREEN}✓ $*${NC}"
+}
+
+# Info messages
+info() {
+    echo "$*"
+}
 
 # Ensure screenshot directory exists
-SCREENSHOT_DIR="${SCREENSHOT_DIR:-$DEFAULT_DIR}"
-mkdir -p "$SCREENSHOT_DIR"
+ensure_screenshot_dir() {
+    if [[ ! -d "$SCREENSHOT_DIR" ]]; then
+        if ! mkdir -p "$SCREENSHOT_DIR"; then
+            error "Failed to create screenshot directory: $SCREENSHOT_DIR"
+        fi
+    fi
+}
+
+ensure_screenshot_dir
+
+# Copy file path to clipboard
+copy_path_to_clipboard() {
+    local file_path="$1"
+    if echo -n "$file_path" | pbcopy; then
+        success "Path copied to clipboard: $file_path"
+        return 0
+    else
+        warn "Failed to copy path to clipboard"
+        return 1
+    fi
+}
+
+# Execute screencapture based on output mode
+execute_capture() {
+    local capture_cmd="$1"
+    local output_file="$2"
+    local output_mode="$3"
+    local silent="$4"
+    
+    local cmd_args=()
+    
+    # Add silent flag if requested
+    if [[ "$silent" == "true" ]]; then
+        cmd_args+=("-x")
+    fi
+    
+    case "$output_mode" in
+        save)
+            # Save to file only
+            if $capture_cmd "${cmd_args[@]}" "$output_file"; then
+                success "Screenshot saved: $output_file"
+                return 0
+            else
+                return 1
+            fi
+            ;;
+        path)
+            # Save to file and copy path to clipboard
+            if $capture_cmd "${cmd_args[@]}" "$output_file"; then
+                success "Screenshot saved: $output_file"
+                copy_path_to_clipboard "$output_file"
+                return 0
+            else
+                return 1
+            fi
+            ;;
+        clipboard)
+            # Copy image directly to clipboard (no file saved)
+            cmd_args+=("-c")
+            if $capture_cmd "${cmd_args[@]}"; then
+                success "Screenshot copied to clipboard"
+                return 0
+            else
+                return 1
+            fi
+            ;;
+        *)
+            error "Invalid output mode: $output_mode"
+            ;;
+    esac
+}
 
 # Generate timestamp-based filename
 generate_filename() {
     local prefix="${1:-screenshot}"
     local format="${2:-$DEFAULT_FORMAT}"
-    local timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+    local timestamp
+    timestamp=$(date +"${TIMESTAMP_FORMAT}")
     echo "${SCREENSHOT_DIR}/${prefix}_${timestamp}.${format}"
 }
 
 # Capture main monitor only
 capture_main_monitor() {
     local output_file="$1"
+    local output_mode="$2"
+    local silent="$3"
     
-    echo "Capturing main monitor to: $output_file"
+    info "Capturing main monitor..."
     
-    # -m: capture main monitor only
-    # -x: no sound
-    if screencapture -m -x "$output_file"; then
-        echo "Screenshot saved successfully!"
-        echo "Location: $output_file"
-        return 0
-    else
-        echo "Error: Failed to capture screenshot" >&2
-        return 2
+    local cmd_args=("-m")
+    
+    # Add silent flag if requested
+    if [[ "$silent" == "true" ]]; then
+        cmd_args+=("-x")
     fi
+    
+    case "$output_mode" in
+        save|path)
+            # Save to file (and optionally copy path)
+            if screencapture "${cmd_args[@]}" "$output_file"; then
+                success "Screenshot saved: $output_file"
+                if [[ "$output_mode" == "path" ]]; then
+                    copy_path_to_clipboard "$output_file"
+                fi
+                return 0
+            else
+                error "Failed to capture screenshot"
+            fi
+            ;;
+        clipboard)
+            # Copy directly to clipboard
+            cmd_args+=("-c")
+            if screencapture "${cmd_args[@]}"; then
+                success "Screenshot copied to clipboard"
+                return 0
+            else
+                error "Failed to capture screenshot"
+            fi
+            ;;
+        *)
+            error "Invalid output mode: $output_mode"
+            ;;
+    esac
 }
 
 # Capture all screens (creates separate files for each display)
 capture_all_screens() {
     local output_file="$1"
+    local output_mode="$2"
+    local silent="$3"
+    
+    # Note: clipboard mode doesn't make sense for multiple displays
+    if [[ "$output_mode" == "clipboard" ]]; then
+        warn "Clipboard mode not supported for all screens capture. Using save mode instead."
+        output_mode="save"
+    fi
     
     # Get base filename without extension
     local base="${output_file%.*}"
     local ext="${output_file##*.}"
     
-    echo "Capturing all displays..."
+    info "Capturing all displays..."
     
-    # Build file list for up to 5 displays (should cover most setups)
+    # Build file list for up to MAX_DISPLAYS
     local files=()
     local i
-    for i in {1..5}; do
+    for ((i=1; i<=MAX_DISPLAYS; i++)); do
         files+=("${base}_display${i}.${ext}")
     done
     
+    local cmd_args=()
+    if [[ "$silent" == "true" ]]; then
+        cmd_args+=("-x")
+    fi
+    
     # screencapture with multiple filenames captures each display to a separate file
     # It will only create files for displays that actually exist
-    if screencapture -x "${files[@]}" 2>/dev/null; then
-        echo "Screenshots saved successfully!"
+    if screencapture "${cmd_args[@]}" "${files[@]}" 2>/dev/null; then
+        local count=0
+        local captured_files=()
         # Show which files were actually created
         for file in "${files[@]}"; do
-            [[ -f "$file" ]] && echo "Display: $file"
+            if [[ -f "$file" ]]; then
+                success "Display captured: $file"
+                captured_files+=("$file")
+                ((count++))
+            fi
         done
-        return 0
-    elif screencapture -x "$output_file"; then
+        
+        if [[ $count -gt 0 ]]; then
+            if [[ "$output_mode" == "path" ]]; then
+                # Copy all file paths to clipboard (newline separated)
+                printf "%s\n" "${captured_files[@]}" | pbcopy
+                success "File paths copied to clipboard"
+            fi
+            return 0
+        else
+            return 1
+        fi
+    elif screencapture "${cmd_args[@]}" "$output_file"; then
         # Fallback for single display or if multiple files didn't work
-        echo "Screenshot saved successfully!"
-        echo "Location: $output_file"
+        success "Screenshot saved: $output_file"
+        if [[ "$output_mode" == "path" ]]; then
+            copy_path_to_clipboard "$output_file"
+        fi
         return 0
     else
-        echo "Error: Failed to capture screenshot" >&2
-        return 2
+        error "Failed to capture screenshot"
     fi
 }
 
 # Interactive capture (user selects area or window)
 capture_interactive() {
     local output_file="$1"
+    local output_mode="$2"
+    local silent="$3"
     
-    echo "Starting interactive capture mode..."
-    echo "Tips: Click and drag to select area, Space to toggle window mode, Esc to cancel"
+    info "Interactive mode: Select area or window"
+    info "Tips: Click and drag to select area, Space to toggle window mode, Esc to cancel"
     
-    # -i: interactive mode
-    # -x: no sound
-    if screencapture -i -x "$output_file"; then
-        # Check if file was created (user might have cancelled)
-        if [[ -f "$output_file" ]]; then
-            echo "Screenshot saved successfully!"
-            echo "Location: $output_file"
-            return 0
-        else
-            echo "Capture cancelled by user"
-            return 1
-        fi
-    else
-        echo "Error: Failed to capture screenshot" >&2
-        return 2
+    local cmd_args=("-i")
+    
+    # Add silent flag if requested
+    if [[ "$silent" == "true" ]]; then
+        cmd_args+=("-x")
     fi
+    
+    case "$output_mode" in
+        save|path)
+            # Save to file (and optionally copy path)
+            if screencapture "${cmd_args[@]}" "$output_file"; then
+                # Check if file was created (user might have cancelled)
+                if [[ -f "$output_file" ]]; then
+                    success "Screenshot saved: $output_file"
+                    if [[ "$output_mode" == "path" ]]; then
+                        copy_path_to_clipboard "$output_file"
+                    fi
+                    return 0
+                else
+                    warn "Capture cancelled by user"
+                    return 1
+                fi
+            else
+                error "Failed to capture screenshot"
+            fi
+            ;;
+        clipboard)
+            # Copy directly to clipboard
+            cmd_args+=("-c")
+            if screencapture "${cmd_args[@]}"; then
+                success "Screenshot copied to clipboard"
+                return 0
+            else
+                error "Failed to capture screenshot"
+            fi
+            ;;
+        *)
+            error "Invalid output mode: $output_mode"
+            ;;
+    esac
 }
 
 # Parse command line arguments
@@ -115,22 +315,66 @@ parse_args() {
                 CAPTURE_MODE="interactive"
                 shift
                 ;;
+            -s|--save)
+                OUTPUT_MODE="save"
+                shift
+                ;;
+            -p|--path)
+                OUTPUT_MODE="path"
+                shift
+                ;;
+            -c|--clipboard)
+                OUTPUT_MODE="clipboard"
+                shift
+                ;;
+            -x|--silent)
+                SILENT_MODE="true"
+                shift
+                ;;
+            -v|--version)
+                echo "Screenshot Tool v${VERSION}"
+                exit 0
+                ;;
             -h|--help)
-                echo "Usage: screenshot [capture_mode] [options]"
-                echo ""
-                echo "Capture modes:"
-                echo "  -m, --monitor      Capture main monitor only (default)"
-                echo "  -a, --all          Capture all screens (separate files for each)"
-                echo "  -i, --interactive  Interactive selection mode"
-                echo ""
-                echo "Options:"
-                echo "  -h, --help         Show this help message"
+                cat <<EOF
+Screenshot Tool v${VERSION}
+
+Usage: $(basename "${BASH_SOURCE[0]}") [OPTIONS]
+
+Capture modes:
+  -m, --monitor      Capture main monitor only (default)
+  -a, --all          Capture all screens (up to ${MAX_DISPLAYS} displays)
+  -i, --interactive  Interactive selection mode
+
+Output modes:
+  -s, --save         Save to file only (default)
+  -p, --path         Save file and copy path to clipboard
+  -c, --clipboard    Copy image directly to clipboard (no file saved)
+
+Options:
+  -h, --help         Show this help message
+  -v, --version      Show version information
+  -x, --silent       No sound when capturing
+
+Environment variables:
+  SCREENSHOT_DIR     Override default save directory
+  TRACE             Set to 1 to enable debug output
+
+Examples:
+  $(basename "${BASH_SOURCE[0]}")              # Capture main monitor, save to file
+  $(basename "${BASH_SOURCE[0]}") -i           # Interactive selection
+  $(basename "${BASH_SOURCE[0]}") -a           # Capture all displays
+  $(basename "${BASH_SOURCE[0]}") -m -x        # Silent main monitor capture
+  $(basename "${BASH_SOURCE[0]}") -i -c        # Interactive capture to clipboard
+  $(basename "${BASH_SOURCE[0]}") -m -p        # Capture monitor, copy path to clipboard
+  $(basename "${BASH_SOURCE[0]}") -a -s -x     # Silent capture all screens to files
+
+Files saved to: ${SCREENSHOT_DIR}
+EOF
                 exit 0
                 ;;
             *)
-                echo "Error: Unknown option: $1" >&2
-                echo "Use -h or --help for usage information" >&2
-                exit 1
+                error "Unknown option: $1\nUse -h or --help for usage information"
                 ;;
         esac
     done
@@ -140,21 +384,26 @@ parse_args() {
 main() {
     parse_args "$@"
     
-    local output_file=$(generate_filename "screenshot" "$DEFAULT_FORMAT")
+    local output_file
+    output_file=$(generate_filename "screenshot" "$DEFAULT_FORMAT")
+    
+    # For clipboard mode with no file needed, pass empty filename
+    if [[ "$OUTPUT_MODE" == "clipboard" ]]; then
+        output_file=""
+    fi
     
     case "$CAPTURE_MODE" in
         monitor)
-            capture_main_monitor "$output_file"
+            capture_main_monitor "$output_file" "$OUTPUT_MODE" "$SILENT_MODE"
             ;;
         all)
-            capture_all_screens "$output_file"
+            capture_all_screens "$output_file" "$OUTPUT_MODE" "$SILENT_MODE"
             ;;
         interactive)
-            capture_interactive "$output_file"
+            capture_interactive "$output_file" "$OUTPUT_MODE" "$SILENT_MODE"
             ;;
         *)
-            echo "Error: Invalid capture mode: $CAPTURE_MODE" >&2
-            exit 1
+            error "Invalid capture mode: $CAPTURE_MODE"
             ;;
     esac
 }
