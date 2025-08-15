@@ -5,14 +5,14 @@ A robust cross-platform screenshot management utility with flexible capture mode
 ## Features
 
 ### Capture Modes
-- **Active Monitor**: Capture only the currently active monitor
-- **All Screens**: Capture all connected displays
-- **Interactive**: User-selectable area or window capture
+- **Interactive** (Default): User-selectable area or window capture - the most flexible option
+- **Main Monitor**: Capture only the main/primary monitor
+- **All Screens**: Capture all connected displays as a single image
 
 ### Output Behaviors
+- **Clipboard** (Default): Copy image directly to clipboard without saving to file
 - **Save to File**: Store screenshot in configured directory with timestamp
 - **Save & Copy Path**: Save file and copy its full path to clipboard
-- **Clipboard Only**: Copy image directly to clipboard without saving
 
 ## Usage
 
@@ -21,14 +21,14 @@ screenshot [capture_mode] [output_behavior] [options]
 ```
 
 ### Capture Mode Flags (mutually exclusive)
-- `-m`, `--monitor` - Capture active monitor only (default)
+- `-i`, `--interactive` - Interactive selection mode (default)
+- `-m`, `--monitor` - Capture main monitor only
 - `-a`, `--all` - Capture all screens
-- `-i`, `--interactive` - Interactive selection mode
 
 ### Output Behavior Flags (mutually exclusive)
-- `-s`, `--save` - Save to file only (default)
+- `-c`, `--clipboard` - Copy image to clipboard only (default, no file saved)
+- `-s`, `--save` - Save to file only
 - `-p`, `--path` - Save file and copy path to clipboard
-- `-c`, `--clipboard` - Copy image to clipboard only (no file saved)
 
 ### Additional Options
 - `-d`, `--dir <path>` - Override default save directory
@@ -40,23 +40,29 @@ screenshot [capture_mode] [output_behavior] [options]
 ## Examples
 
 ```bash
-# Quick fullscreen capture to file
+# Quick interactive capture to clipboard (default behavior)
 screenshot
 
-# Interactive selection to clipboard
-screenshot -i -c
+# Interactive selection saved to file
+screenshot -s
+
+# Capture main monitor to clipboard
+screenshot -m
 
 # Capture all screens, save and copy path
 screenshot -a -p
 
-# Interactive capture with custom name
-screenshot -i -n "bugfix" 
+# Interactive capture with custom name saved to file
+screenshot -s -n "bugfix" 
 
-# Silent capture of active monitor to clipboard
-screenshot -m -c -x
+# Silent capture of main monitor saved to file
+screenshot -m -s -x
 
 # Save to custom directory in PDF format
-screenshot -d ~/Documents/captures -f pdf
+screenshot -s -d ~/Documents/captures -f pdf
+
+# Interactive capture, save file and copy its path
+screenshot -p
 ```
 
 ## Keyboard Binding Recommendations
@@ -65,16 +71,18 @@ Suggested keybindings for common workflows:
 
 | Keybind | Command | Description |
 |---------|---------|-------------|
-| `Cmd+Shift+3` | `screenshot -a -s` | Full desktop capture to file |
-| `Cmd+Shift+4` | `screenshot -i -s` | Interactive capture to file |
-| `Cmd+Shift+5` | `screenshot -i -c` | Interactive capture to clipboard |
-| `Cmd+Ctrl+Shift+3` | `screenshot -m -c` | Active monitor to clipboard |
-| `Cmd+Ctrl+Shift+4` | `screenshot -i -p` | Interactive capture, copy path |
+| `Cmd+Shift+3` | `screenshot -a -s` | All screens capture to file |
+| `Cmd+Shift+4` | `screenshot` | Interactive capture to clipboard (default) |
+| `Cmd+Shift+5` | `screenshot -s` | Interactive capture to file |
+| `Cmd+Ctrl+Shift+3` | `screenshot -m` | Main monitor to clipboard |
+| `Cmd+Ctrl+Shift+4` | `screenshot -p` | Interactive capture, save & copy path |
 
 ## Configuration
 
 ### Default Settings
-- **Save Directory**: `~/Pictures/Screenshots/`
+- **Capture Mode**: Interactive (region/window selection)
+- **Output Mode**: Clipboard (no file saved)
+- **Save Directory**: `~/Pictures/Screenshots/` (when saving files)
 - **File Format**: PNG
 - **Naming Convention**: `screenshot_YYYY-MM-DD_HH-MM-SS.[ext]`
 - **With Prefix**: `[prefix]_YYYY-MM-DD_HH-MM-SS.[ext]`

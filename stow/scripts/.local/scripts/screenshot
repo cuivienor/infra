@@ -17,8 +17,8 @@ readonly MAX_DISPLAYS=5
 readonly TIMESTAMP_FORMAT="%Y-%m-%d_%H-%M-%S"
 
 # Script variables
-CAPTURE_MODE="monitor"  # Default to main monitor
-OUTPUT_MODE="save"      # Default to save file
+CAPTURE_MODE="interactive"  # Default to interactive selection
+OUTPUT_MODE="clipboard"     # Default to clipboard
 SILENT_MODE="false"     # Default to play sound
 SCREENSHOT_DIR="${SCREENSHOT_DIR:-$DEFAULT_DIR}"
 
@@ -342,14 +342,14 @@ Screenshot Tool v${VERSION}
 Usage: $(basename "${BASH_SOURCE[0]}") [OPTIONS]
 
 Capture modes:
-  -m, --monitor      Capture main monitor only (default)
+  -i, --interactive  Interactive selection mode (default)
+  -m, --monitor      Capture main monitor only
   -a, --all          Capture all screens (up to ${MAX_DISPLAYS} displays)
-  -i, --interactive  Interactive selection mode
 
 Output modes:
-  -s, --save         Save to file only (default)
+  -c, --clipboard    Copy image directly to clipboard (default, no file saved)
+  -s, --save         Save to file only
   -p, --path         Save file and copy path to clipboard
-  -c, --clipboard    Copy image directly to clipboard (no file saved)
 
 Options:
   -h, --help         Show this help message
@@ -361,11 +361,11 @@ Environment variables:
   TRACE             Set to 1 to enable debug output
 
 Examples:
-  $(basename "${BASH_SOURCE[0]}")              # Capture main monitor, save to file
-  $(basename "${BASH_SOURCE[0]}") -i           # Interactive selection
+  $(basename "${BASH_SOURCE[0]}")              # Interactive selection to clipboard (default)
+  $(basename "${BASH_SOURCE[0]}") -m -s        # Capture main monitor, save to file
   $(basename "${BASH_SOURCE[0]}") -a           # Capture all displays
-  $(basename "${BASH_SOURCE[0]}") -m -x        # Silent main monitor capture
-  $(basename "${BASH_SOURCE[0]}") -i -c        # Interactive capture to clipboard
+  $(basename "${BASH_SOURCE[0]}") -m -x        # Silent main monitor capture to clipboard
+  $(basename "${BASH_SOURCE[0]}") -i -s        # Interactive selection, save to file
   $(basename "${BASH_SOURCE[0]}") -m -p        # Capture monitor, copy path to clipboard
   $(basename "${BASH_SOURCE[0]}") -a -s -x     # Silent capture all screens to files
 
