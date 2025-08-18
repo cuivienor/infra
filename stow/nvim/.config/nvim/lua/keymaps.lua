@@ -29,6 +29,20 @@ vim.keymap.set("n", "<space><space>x", "<cmd>source %<CR>")
 vim.keymap.set("n", "<space>x", ":.lua<CR>")
 vim.keymap.set("v", "<space>x", ":lua<CR>")
 
+-- Diagnostics
+vim.keymap.set("n", "<leader>dq", function()
+	vim.diagnostic.setqflist()
+	vim.cmd("copen")
+end, { desc = "[D]iagnostics to [Q]uickfix list" })
+
+vim.keymap.set("n", "<leader>dl", function()
+	vim.diagnostic.setloclist()
+	vim.cmd("lopen")
+end, { desc = "[D]iagnostics to [L]ocation list" })
+
+vim.keymap.set("n", "<leader>dd", "<cmd>Telescope diagnostics<cr>", { desc = "[D]iagnostics in Telescope" })
+vim.keymap.set("n", "<leader>db", "<cmd>Telescope diagnostics bufnr=0<cr>", { desc = "[D]iagnostics for current [B]uffer" })
+
 -- Swap file management
 vim.keymap.set("n", "<leader>wsd", function()
 	local swap_dir = vim.fn.expand("~/.local/state/nvim/swap/")

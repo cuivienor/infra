@@ -111,6 +111,23 @@ return { -- Autoformat
 				args = { "format", "--stdin-filename", "$FILENAME", "-" },
 				stdin = true,
 			},
+			swiftformat = {
+				-- Use system SwiftFormat installed via Homebrew
+				command = "swiftformat",
+				args = { 
+					"--quiet",
+					"stdin",
+					"--stdinpath", "$FILENAME",
+					-- Match SwiftLint rules
+					"--maxwidth", "120",  -- Line length limit
+					"--swift-version", "5.9",  -- Swift version
+					-- Note: trailing commas are allowed (personal preference)
+				},
+				stdin = true,
+				condition = function()
+					return vim.fn.executable("swiftformat") == 1
+				end,
+			},
 		},
 		-- format_on_save = function(bufnr)
 		-- 	-- Disable "format_on_save lsp_fallback" for languages that don't
@@ -142,6 +159,8 @@ return { -- Autoformat
 			json = { { "prettierd", "prettier" } },
 			-- Python formatting
 			python = { "ruff_format" },
+			-- Swift formatting
+			swift = { "swiftformat" },
 			-- Conform can also run multiple formatters sequentially
 			-- python = { "isort", "black" },
 			--
@@ -158,36 +177,19 @@ return { -- Autoformat
 			local info = conform.list_formatters_for_buffer(0)
 			if #info > 0 then
 				local lines = { "Active formatters for this buffer:" }
-				for _, formatter in ipairs(info) do
-					table.insert(lines, "  - " .. formatter)
-					-- Show the actual command that will be run
-					local formatter_config = conform.get_formatter_config(formatter, vim.api.nvim_get_current_buf())
-					if formatter_config then
-						-- Handle command being a function or string
-						local cmd = formatter_config.command
-						if type(cmd) == "function" then
-							-- Create a context object similar to what conform uses
-							local ctx = {
-								dirname = vim.fn.expand("%:p:h"),
-								filename = vim.fn.expand("%:p"),
-								buf = vim.api.nvim_get_current_buf(),
-							}
-							cmd = cmd(ctx)
+				for _, formatter_name in ipairs(info) do
+					table.insert(lines, "  - " .. formatter_name)
+					-- Get the formatter info
+					local formatter_info = conform.get_formatter_info(formatter_name, vim.api.nvim_get_current_buf())
+					if formatter_info and formatter_info.available then
+						table.insert(lines, "    Command: " .. formatter_info.command)
+						if formatter_info.cwd then
+							table.insert(lines, "    Working dir: " .. formatter_info.cwd)
 						end
-						table.insert(lines, "    Command: " .. tostring(cmd))
-						
-						-- Handle cwd being a function or string
-						if formatter_config.cwd then
-							local cwd = formatter_config.cwd
-							if type(cwd) == "function" then
-								local ctx = {
-									dirname = vim.fn.expand("%:p:h"),
-									filename = vim.fn.expand("%:p"),
-									buf = vim.api.nvim_get_current_buf(),
-								}
-								cwd = cwd(ctx)
-							end
-							table.insert(lines, "    Working dir: " .. tostring(cwd))
+					elseif formatter_info then
+						table.insert(lines, "    Status: Not available")
+						if formatter_info.available_msg then
+							table.insert(lines, "    Reason: " .. formatter_info.available_msg)
 						end
 					end
 				end

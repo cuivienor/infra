@@ -20,6 +20,7 @@ return {
 			-- Ruby diagnostics handled by RuboCop LSP in shadowenv.lua
 			-- ruby = { "rubocop" },
 			eruby = { "erb_lint" },
+			swift = { "swiftlint" },
 		}
 
 		local markdownlint = require("lint").linters.markdownlint

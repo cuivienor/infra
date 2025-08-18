@@ -244,6 +244,20 @@ return { -- LSP Configuration & Plugins
 			},
 			-- Ruby LSP is handled by shadowenv.lua for Shopify projects
 			-- Sorbet LSP is handled by shadowenv.lua for Shopify projects (uses shadowenv's srb)
+			sourcekit = {
+				filetypes = { "swift", "objective-c", "objective-cpp" },
+				cmd = {
+					vim.fn.trim(vim.fn.system("xcrun -f sourcekit-lsp")),
+				},
+				root_dir = function(filename, _)
+					local util = require("lspconfig.util")
+					-- Look for buildServer.json first (created by xcode-build-server)
+					-- Then look for Xcode projects, Package.swift, or git root
+					return util.root_pattern("buildServer.json", "*.xcodeproj", "*.xcworkspace", "Package.swift", ".git")(filename)
+						or util.find_git_ancestor(filename)
+						or vim.fn.getcwd()
+				end,
+			},
 		}
 
 		-- Ensure the servers and tools above are installed
@@ -257,6 +271,10 @@ return { -- LSP Configuration & Plugins
 		-- You can add other tools here that you want Mason to install
 		-- for you, so that they are available from within Neovim.
 		local ensure_installed = vim.tbl_keys(servers or {})
+		-- Remove sourcekit since it's not available via Mason (uses system installation)
+		ensure_installed = vim.tbl_filter(function(name)
+			return name ~= "sourcekit"
+		end, ensure_installed)
 		vim.list_extend(ensure_installed, {
 			"stylua", -- Used to format Lua code
 			"shellcheck",
@@ -271,6 +289,8 @@ return { -- LSP Configuration & Plugins
 			-- Don't install rubocop via Mason - use project's version via shadowenv
 			"erb-formatter", -- ERB template formatter
 			"ruff", -- Python formatter/linter
+			-- SwiftFormat not available in Mason - use Homebrew version
+			"swiftlint", -- Swift linter
 		})
 		require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
 
@@ -286,5 +306,11 @@ return { -- LSP Configuration & Plugins
 				end,
 			},
 		})
+
+		-- Setup sourcekit-lsp manually (not available via Mason)
+		local sourcekit_config = servers.sourcekit or {}
+		sourcekit_config.capabilities = vim.tbl_deep_extend("force", {}, capabilities, sourcekit_config.capabilities or {})
+		sourcekit_config.cmd = sourcekit_config.cmd or { "sourcekit-lsp" }
+		require("lspconfig").sourcekit.setup(sourcekit_config)
 	end,
 }

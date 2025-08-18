@@ -18,6 +18,7 @@ return { -- Highlight, edit, and navigate code
 			"vimdoc",
 			"ruby",
 			"embedded_template", -- For ERB files
+			"swift",
 		},
 		-- Auto install languages that are not installed
 		auto_install = true,
