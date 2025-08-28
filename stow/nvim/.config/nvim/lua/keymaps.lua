@@ -94,3 +94,24 @@ vim.keymap.set("n", "<leader>mv", function()
 		end,
 	})
 end, { desc = "Move file to a new directory" })
+
+-- Copy relative path to clipboard
+vim.keymap.set("n", "<leader>cp", function()
+	local path = vim.fn.fnamemodify(vim.fn.expand("%"), ":~:.")
+	vim.fn.setreg("+", path)
+	print("Copied to clipboard: " .. path)
+end, { desc = "[C]opy relative [P]ath to clipboard" })
+
+-- Copy absolute path to clipboard
+vim.keymap.set("n", "<leader>cP", function()
+	local path = vim.fn.expand("%:p")
+	vim.fn.setreg("+", path)
+	print("Copied to clipboard: " .. path)
+end, { desc = "[C]opy absolute [P]ath to clipboard" })
+
+-- Copy filename only to clipboard
+vim.keymap.set("n", "<leader>cf", function()
+	local filename = vim.fn.expand("%:t")
+	vim.fn.setreg("+", filename)
+	print("Copied to clipboard: " .. filename)
+end, { desc = "[C]opy [F]ilename to clipboard" })
