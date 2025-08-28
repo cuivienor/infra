@@ -1,5 +1,6 @@
 return {
 	"olimorris/codecompanion.nvim",
+	enabled = false, -- Disabled due to keymap conflict with <leader>cp
 	dependencies = {
 		"nvim-lua/plenary.nvim",
 		"nvim-treesitter/nvim-treesitter",
