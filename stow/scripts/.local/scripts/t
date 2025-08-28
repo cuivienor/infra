@@ -25,6 +25,9 @@ tmux_init() {
 # Function to find project directories
 find_projects() {
 	{
+		# Hardcoded sparse checkout directory
+		[[ -d "/Users/cuiv/world/trees/root/src/areas/core/shopify" ]] && echo "/Users/cuiv/world/trees/root/src/areas/core/shopify"
+		
 		# Shallow search in ~ and ~/dev (1 level deep, exclude hidden dirs)
 		# Look for git repos at this level
 		[[ -d "$HOME/dev" ]] && fd -t d -d 2 -H '^\.git$' . "$HOME/dev" 2>/dev/null | while read -r git_dir; do
