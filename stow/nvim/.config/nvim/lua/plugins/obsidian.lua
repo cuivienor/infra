@@ -60,6 +60,12 @@ return {
 		notes_subdir = "0.Inbox",
 		new_notes_location = "notes_subdir",
 
+		daily_notes = {
+			folder = "Journal",
+			date_format = "%Y-%m-%d",
+			template = "Daily Note.md",
+		},
+
 		templates = {
 			folder = "Templates",
 			date_format = "%Y-%m-%d",
