@@ -19,6 +19,12 @@ return { -- Highlight, edit, and navigate code
 			"ruby",
 			"embedded_template", -- For ERB files
 			"swift",
+			-- Zine languages
+			"ziggy",
+			"ziggy_schema",
+			"supermd",
+			"supermd_inline",
+			"superhtml",
 		},
 		-- Auto install languages that are not installed
 		auto_install = true,
@@ -42,6 +48,59 @@ return { -- Highlight, edit, and navigate code
 
 		-- There is no treesitter zsh support so use bash instead
 		vim.treesitter.language.register("bash", "zsh")
+
+		-- Register Zine language parsers
+		local parser_config = require("nvim-treesitter.parsers").get_parser_configs()
+		
+		parser_config.ziggy = {
+			install_info = {
+				url = "~/dev/ziggy/tree-sitter-ziggy",
+				files = { "src/parser.c" },
+				branch = "main",
+			},
+		}
+		
+		parser_config.ziggy_schema = {
+			install_info = {
+				url = "~/dev/ziggy/tree-sitter-ziggy-schema",
+				files = { "src/parser.c" },
+				branch = "main",
+			},
+		}
+		
+		parser_config.supermd = {
+			install_info = {
+				url = "~/dev/supermd/tree-sitter/supermd",
+				files = { "src/parser.c", "src/scanner.c" },
+				branch = "main",
+			},
+		}
+		
+		parser_config.supermd_inline = {
+			install_info = {
+				url = "~/dev/supermd/tree-sitter/supermd-inline",
+				files = { "src/parser.c", "src/scanner.c" },
+				branch = "main",
+			},
+		}
+		
+		parser_config.superhtml = {
+			install_info = {
+				url = "~/dev/superhtml/tree-sitter-superhtml",
+				files = { "src/parser.c", "src/scanner.c" },
+				branch = "main",
+			},
+		}
+
+		-- Set up Zine file type mappings
+		vim.filetype.add({
+			extension = {
+				smd = "supermd",
+				shtml = "superhtml",
+				ziggy = "ziggy",
+				["ziggy-schema"] = "ziggy_schema",
+			},
+		})
 
 		---@diagnostic disable-next-line: missing-fields
 		require("nvim-treesitter.configs").setup(opts)

@@ -90,3 +90,82 @@ This module provides:
 - `:RubyShadowenvDebug` - Debug shadowenv detection and configuration
 
 This setup ensures that Neovim "just works" with Shopify's complex multi-project Ruby environment without manual configuration.
+
+## 🌐 Zine Development Setup
+
+### Overview
+
+The Neovim configuration includes full support for [Zine](https://zine-ssg.io/), a static site generator. This includes syntax highlighting, LSP support, and formatting for Ziggy, SuperMD, and SuperHTML.
+
+### Initial Setup (One-time)
+
+The following setup is required to enable Zine development support:
+
+#### 1. Clone and Build Tools
+
+```bash
+# Clone repositories
+cd ~/dev
+git clone https://github.com/kristoff-it/ziggy.git
+git clone https://github.com/kristoff-it/supermd.git
+git clone https://github.com/kristoff-it/superhtml.git
+
+# Build tools (requires Zig 0.15+)
+cd ~/dev/ziggy && zig build --release=fast
+cd ~/dev/supermd && zig build --release=fast
+cd ~/dev/superhtml && zig build --release=fast
+
+# Symlink binaries to PATH
+ln -sf ~/dev/ziggy/zig-out/bin/ziggy ~/.local/bin/ziggy
+ln -sf ~/dev/supermd/zig-out/bin/docgen ~/.local/bin/supermd
+ln -sf ~/dev/superhtml/zig-out/bin/superhtml ~/.local/bin/superhtml
+```
+
+#### 2. Set up Treesitter Queries
+
+```bash
+# Create query directories
+mkdir -p ~/.config/nvim/queries/{ziggy,ziggy_schema,supermd,supermd_inline,superhtml}
+
+# Symlink query files
+ln -sf ~/dev/ziggy/tree-sitter-ziggy/queries/* ~/.config/nvim/queries/ziggy/
+ln -sf ~/dev/ziggy/tree-sitter-ziggy-schema/queries/* ~/.config/nvim/queries/ziggy_schema/
+ln -sf ~/dev/supermd/editors/neovim/queries/supermd/* ~/.config/nvim/queries/supermd/
+ln -sf ~/dev/supermd/editors/neovim/queries/supermd_inline/* ~/.config/nvim/queries/supermd_inline/
+ln -sf ~/dev/superhtml/tree-sitter-superhtml/queries/* ~/.config/nvim/queries/superhtml/
+```
+
+#### 3. Install Treesitter Parsers
+
+After the above setup, open Neovim and run:
+```vim
+:TSInstall ziggy ziggy_schema supermd supermd_inline superhtml
+```
+
+### Features
+
+Once configured, you'll have:
+
+- **File Type Detection**: Automatic detection for `.smd`, `.shtml`, `.ziggy`, and `.ziggy-schema` files
+- **Syntax Highlighting**: Full Treesitter-based highlighting for all Zine languages
+- **LSP Support**: 
+  - Ziggy LSP for `.ziggy` files
+  - Ziggy Schema LSP for `.ziggy-schema` files
+  - SuperHTML LSP for `.shtml` and `.html` files
+- **Formatting**: Format on save or with `<leader>f` for all Zine file types
+- **Diagnostics**: Real-time error checking and validation
+
+### Updating
+
+To update the tools and parsers:
+```bash
+# Pull latest changes
+cd ~/dev/ziggy && git pull && zig build --release=fast
+cd ~/dev/supermd && git pull && zig build --release=fast
+cd ~/dev/superhtml && git pull && zig build --release=fast
+
+# Update parsers in Neovim
+:TSUpdate ziggy ziggy_schema supermd supermd_inline superhtml
+```
+
+The configuration is managed in `stow/nvim/.config/nvim/lua/plugins/zine.lua`.

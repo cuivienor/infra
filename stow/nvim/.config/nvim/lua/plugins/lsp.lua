@@ -258,6 +258,40 @@ return { -- LSP Configuration & Plugins
 						or vim.fn.getcwd()
 				end,
 			},
+			-- Zine Development LSP Servers
+			ziggy_lsp = {
+				cmd = { "ziggy", "lsp" },
+				filetypes = { "ziggy" },
+				root_dir = function(filename, _)
+					local util = require("lspconfig.util")
+					return util.root_pattern("build.ziggy", ".git")(filename)
+						or util.find_git_ancestor(filename)
+						or vim.fn.getcwd()
+				end,
+				single_file_support = true,
+			},
+			ziggy_schema_lsp = {
+				cmd = { "ziggy", "lsp-schema" },
+				filetypes = { "ziggy_schema" },
+				root_dir = function(filename, _)
+					local util = require("lspconfig.util")
+					return util.root_pattern("build.ziggy", ".git")(filename)
+						or util.find_git_ancestor(filename)
+						or vim.fn.getcwd()
+				end,
+				single_file_support = true,
+			},
+			superhtml_lsp = {
+				cmd = { "superhtml", "lsp" },
+				filetypes = { "superhtml", "html" },
+				root_dir = function(filename, _)
+					local util = require("lspconfig.util")
+					return util.root_pattern("build.ziggy", ".git")(filename)
+						or util.find_git_ancestor(filename)
+						or vim.fn.getcwd()
+				end,
+				single_file_support = true,
+			},
 		}
 
 		-- Ensure the servers and tools above are installed
@@ -271,9 +305,12 @@ return { -- LSP Configuration & Plugins
 		-- You can add other tools here that you want Mason to install
 		-- for you, so that they are available from within Neovim.
 		local ensure_installed = vim.tbl_keys(servers or {})
-		-- Remove sourcekit since it's not available via Mason (uses system installation)
+		-- Remove servers that aren't available via Mason
 		ensure_installed = vim.tbl_filter(function(name)
-			return name ~= "sourcekit"
+			return name ~= "sourcekit" 
+				and name ~= "ziggy_lsp" 
+				and name ~= "ziggy_schema_lsp" 
+				and name ~= "superhtml_lsp"
 		end, ensure_installed)
 		vim.list_extend(ensure_installed, {
 			"stylua", -- Used to format Lua code
@@ -312,5 +349,27 @@ return { -- LSP Configuration & Plugins
 		sourcekit_config.capabilities = vim.tbl_deep_extend("force", {}, capabilities, sourcekit_config.capabilities or {})
 		sourcekit_config.cmd = sourcekit_config.cmd or { "sourcekit-lsp" }
 		require("lspconfig").sourcekit.setup(sourcekit_config)
+
+		-- Setup Zine LSP servers manually (not available via Mason)
+		local zine_servers = { "ziggy_lsp", "ziggy_schema_lsp", "superhtml_lsp" }
+		for _, server_name in ipairs(zine_servers) do
+			local server_config = servers[server_name] or {}
+			server_config.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server_config.capabilities or {})
+			
+			-- Register custom configs if needed
+			local configs = require("lspconfig.configs")
+			if not configs[server_name] then
+				configs[server_name] = {
+					default_config = vim.tbl_deep_extend("force", {
+						cmd = server_config.cmd,
+						filetypes = server_config.filetypes,
+						root_dir = server_config.root_dir,
+						single_file_support = server_config.single_file_support,
+					}, server_config),
+				}
+			end
+			
+			require("lspconfig")[server_name].setup(server_config)
+		end
 	end,
 }

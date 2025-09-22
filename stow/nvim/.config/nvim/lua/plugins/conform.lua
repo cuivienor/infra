@@ -128,6 +128,17 @@ return { -- Autoformat
 					return vim.fn.executable("swiftformat") == 1
 				end,
 			},
+			-- Zine formatters
+			ziggy_fmt = {
+				command = "ziggy",
+				args = { "fmt", "--stdin" },
+				stdin = true,
+			},
+			superhtml_fmt = {
+				command = "superhtml",
+				args = { "fmt", "--stdin" },
+				stdin = true,
+			},
 		},
 		-- format_on_save = function(bufnr)
 		-- 	-- Disable "format_on_save lsp_fallback" for languages that don't
@@ -161,6 +172,11 @@ return { -- Autoformat
 			python = { "ruff_format" },
 			-- Swift formatting
 			swift = { "swiftformat" },
+			-- Zine formats
+			ziggy = { "ziggy_fmt" },
+			ziggy_schema = { "ziggy_fmt" },
+			superhtml = { "superhtml_fmt" },
+			shtml = { "superhtml_fmt" },
 			-- Conform can also run multiple formatters sequentially
 			-- python = { "isort", "black" },
 			--
