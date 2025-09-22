@@ -163,11 +163,11 @@ return { -- Autoformat
 			ruby = { lsp_format = "first", "rubocop" },
 			eruby = { "erb_format" },
 			-- JavaScript/TypeScript formatting
-			javascript = { { "prettierd", "prettier" } },
-			typescript = { { "prettierd", "prettier" } },
-			javascriptreact = { { "prettierd", "prettier" } },
-			typescriptreact = { { "prettierd", "prettier" } },
-			json = { { "prettierd", "prettier" } },
+			javascript = { "prettierd", "prettier", stop_after_first = true },
+			typescript = { "prettierd", "prettier", stop_after_first = true },
+			javascriptreact = { "prettierd", "prettier", stop_after_first = true },
+			typescriptreact = { "prettierd", "prettier", stop_after_first = true },
+			json = { "prettierd", "prettier", stop_after_first = true },
 			-- Python formatting
 			python = { "ruff_format" },
 			-- Swift formatting
