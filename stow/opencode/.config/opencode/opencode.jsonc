@@ -1,0 +1,63 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "theme": "catppuccin",
+  "autoshare": false,
+  "autoupdate": false,
+  "disabled_providers": ["openai","gemini"],
+  
+  // MCP server for Opencode source code access
+  "mcp": {
+    "opencode-source": {
+      "type": "local",
+      "command": ["npx", "@modelcontextprotocol/server-filesystem", "/Users/cuiv/src/github.com/sst/opencode"],
+      "enabled": true
+    },
+    "vault-mcp": {
+      "type": "local",
+      "command": ["/opt/homebrew/bin/uvx", "shopify-mcp-bridge"],
+      "environment": {
+        "MCP_API_TOKEN": "{env:VAULT_API_TOKEN}",
+        "MCP_TARGET_URL": "https://vault.shopify.io/mcp"
+      },
+      "enabled": true
+    }
+  },
+  
+  // Globally disable MCP tools for all agents by default
+  "tools": {
+    "opencode-source_*": false,
+    "vault-mcp_*": true  // Enable vault-mcp tools globally
+  },
+  
+  // Agent-specific configurations
+  "agent": {
+    "opencode-config-expert": {
+      // Enable opencode-source MCP tools only for this agent
+      "tools": {
+        "opencode-source_*": true
+      }
+    }
+  },
+  
+  "provider": {
+    "shopify": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Shopify",
+      "options": {
+        "baseURL": "https://proxy-shopify-ai.local.shop.dev/v1"
+      },
+      "models": {
+        "gpt-5": {
+          "name": "GPT-5",
+          "reasoning": false // not sure if this is required anymore
+        },
+        "claude-opus-4-1": {
+          "name": "Claude Opus 4.1"
+        },
+        "claude-sonnet-4": {
+          "name": "Claude Sonnet 4"
+        }
+      }
+    }
+  }
+}
