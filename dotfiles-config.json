@@ -18,7 +18,8 @@
         "X11",
         "config",
         "cspell",
-        "claude"
+        "claude",
+        "opencode"
       ]
     },
     "macos": {
@@ -36,7 +37,8 @@
         "npm",
         "config",
         "cspell",
-        "claude"
+        "claude",
+        "opencode"
       ]
     },
     "corporate": {
@@ -48,7 +50,8 @@
         "nvim",
         "npm",
         "config",
-        "claude"
+        "claude",
+        "opencode"
       ]
     },
     "minimal": {
@@ -135,6 +138,10 @@
     },
     "claude": {
       "description": "Claude Code configuration and agents",
+      "platforms": ["linux", "macos", "corporate"]
+    },
+    "opencode": {
+      "description": "OpenCode AI assistant configuration",
       "platforms": ["linux", "macos", "corporate"]
     }
   }

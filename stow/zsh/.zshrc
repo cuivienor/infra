@@ -85,9 +85,7 @@ export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
 # fi
 
 # Source local environment if it exists
-if [ -f "$HOME/.local/bin/env" ]; then
-	. "$HOME/.local/bin/env"
-fi
+# Moved to after homebrew and chruby initialization
 
 # Initialize tools that depend on PATH being fully set up
 # zoxide - smart cd replacement
@@ -113,33 +111,69 @@ export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
 # Got from (https://www.reddit.com/r/zsh/comments/ass2tc/gitadd_completion_with_full_paths_listed_at_once/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
 # TODO: Move to a better location
 __git_status_files () {
-  local -a status_files=( ${"${(0)"$(git status -z)"}"} )
-  local -a unstaged_files
-  local -a staged_files
-  for entry in ${status_files}; do
-    local stts=$entry[1,3]
-    local file=$entry[4,-1]
+  # Check if we're in a git repository
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    return 1
+  fi
 
-    if [[ $stts[2] != ' ' ]]
-    then
-      unstaged_files+=$file
+  local ret=1
+  local -a status_files unstaged_files staged_files
+  
+  # Get git status with null-terminated output
+  status_files=("${(@0)$(git status --porcelain=v1 -z 2>/dev/null)}")
+  
+  # Parse each status entry
+  for entry in "${status_files[@]}"; do
+    if [[ -z "$entry" ]]; then continue; fi
+    
+    local status_code="${entry[1,2]}"
+    local file_path="${entry[4,-1]}"
+    
+    # Skip if no file path
+    [[ -z "$file_path" ]] && continue
+    
+    # Check for unstaged changes (second character not space)
+    if [[ "${status_code[2]}" != " " ]]; then
+      unstaged_files+=("$file_path")
     fi
-
-    if [[ $stts[1] != ' ' ]] && [[ $stts[1] != '?' ]]
-    then
-      staged_files+=$file
+    
+    # Check for staged changes (first character not space and not untracked)
+    if [[ "${status_code[1]}" != " " && "${status_code[1]}" != "?" ]]; then
+      staged_files+=("$file_path")
     fi
   done
 
-  _describe -t unstaged 'Unstaged' unstaged_files && ret=0
-  _describe -t staged 'Staged' staged_files && ret=0
+  # Provide completions
+  if (( ${#unstaged_files[@]} > 0 )); then
+    _describe -t unstaged 'Unstaged files' unstaged_files && ret=0
+  fi
+  
+  if (( ${#staged_files[@]} > 0 )); then
+    _describe -t staged 'Staged files' staged_files && ret=0
+  fi
 
   return $ret
 }
 
 __git_staged_files () {
-  local -a staged_files=( ${"${(0)"$(git diff-index -z --name-only --no-color --cached HEAD)"}"} )
-  _describe -t staged 'Staged files' staged_files && ret=0
+  # Check if we're in a git repository
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local ret=1
+  local -a staged_files
+  
+  # Get staged files with null-terminated output
+  staged_files=("${(@0)$(git diff --name-only --cached -z 2>/dev/null)}")
+  
+  # Filter out empty entries
+  staged_files=("${staged_files[@]:#}")
+  
+  if (( ${#staged_files[@]} > 0 )); then
+    _describe -t staged 'Staged files' staged_files && ret=0
+  fi
+  
   return $ret
 }
 
@@ -151,7 +185,45 @@ __git_treeish-to-index_files () {
   __git_staged_files
 }
 
-__git_other_files () { 
+__git_other_files () {
+  # Check if we're in a git repository
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local ret=1
+  local -a other_files
+  
+  # Get untracked files
+  other_files=("${(@0)$(git ls-files --others --exclude-standard -z 2>/dev/null)}")
+  
+  # Filter out empty entries
+  other_files=("${other_files[@]:#}")
+  
+  if (( ${#other_files[@]} > 0 )); then
+    _describe -t other 'Untracked files' other_files && ret=0
+  fi
+  
+  return $ret
 }
 
 
+
+[[ -x /opt/homebrew/bin/brew ]] && eval $(/opt/homebrew/bin/brew shellenv)
+
+[[ -f /opt/dev/sh/chruby/chruby.sh ]] && { type chruby >/dev/null 2>&1 || chruby () { source /opt/dev/sh/chruby/chruby.sh; chruby "$@"; } }
+
+# Source local environment to add ~/.local/bin to PATH
+if [ -f "$HOME/.local/bin/env" ]; then
+	. "$HOME/.local/bin/env"
+fi
+
+# Initialize shadowenv for directory-based environment management
+# This must come after all PATH modifications
+if command -v shadowenv &> /dev/null; then
+	eval "$(shadowenv init zsh)"
+fi
+
+
+# opencode
+export PATH=/Users/cuiv/.opencode/bin:$PATH

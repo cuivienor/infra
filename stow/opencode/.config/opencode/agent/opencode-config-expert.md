@@ -234,6 +234,85 @@ The source repository at `/Users/cuiv/src/github.com/sst/opencode` contains:
 - SDK implementations for various platforms
 - Built-in agent and command definitions
 
+## Opencode Plugin Development
+
+When implementing Opencode plugins, follow these critical guidelines based on the actual plugin architecture:
+
+### Plugin Structure and Best Practices
+
+1. **Basic Plugin Template**:
+```typescript
+import type { Plugin } from "@opencode-ai/plugin"
+
+export const PluginName: Plugin = async () => {
+  return {
+    async "hook.name"(input, output) {
+      // Your plugin logic here
+    }
+  }
+}
+```
+
+2. **Key Implementation Rules**:
+- **No context parameters**: The main plugin function takes NO parameters - use `async () => {}` not `async ({ project, client, $, directory, worktree }) => {}`
+- **Direct property access**: Access properties directly without optional chaining - assume they exist
+- **Use `undefined` to remove**: Set properties to `undefined` to remove them, don't use `delete`
+- **Keep it simple**: Avoid unnecessary logging, complex logic, or defensive programming
+- **Trust the types**: The TypeScript types from `@opencode-ai/plugin` are accurate - follow them exactly
+
+3. **Common Hooks**:
+- `chat.params`: Modify chat parameters before sending to provider
+  - Input: `{ provider, model, message }`
+  - Output: Contains `options` object with provider parameters
+  - Example: `output.options["paramName"] = undefined` to remove a parameter
+
+4. **Working Example - Removing Unsupported Parameters**:
+```typescript
+import type { Plugin } from "@opencode-ai/plugin"
+
+export const RemoveUnsupportedParams: Plugin = async () => {
+  return {
+    async "chat.params"({ provider, model }, output) {
+      if (provider.info.id.includes("shopify") && model.id.includes("gpt-5")) {
+        // Remove unsupported parameters
+        output.options["textVerbosity"] = undefined
+        // Remap parameters if needed
+        output.options["max_completion_tokens"] = output.options["max_tokens"]
+        output.options["max_tokens"] = undefined
+      }
+    }
+  }
+}
+```
+
+5. **Common Mistakes to Avoid**:
+- ❌ Don't add context parameters to the main plugin function
+- ❌ Don't use optional chaining (`?.`) everywhere
+- ❌ Don't use `delete` to remove properties
+- ❌ Don't nest options incorrectly (they're directly in `output.options`)
+- ❌ Don't add excessive logging or debugging code
+- ❌ Don't wrap everything in try-catch blocks
+
+6. **Plugin Location and Loading**:
+- Place plugins in `.config/opencode/plugin/` directory (singular "plugin", not "plugins")
+- Use `.ts` or `.js` extensions
+- Plugins are automatically loaded from this directory
+- No configuration needed - just place the file there
+
+7. **Testing Plugins**:
+- Check logs at `~/.local/share/opencode/log/` for errors
+- Look for "loading plugin" messages to confirm plugin is found
+- Use `grep -i "error" <logfile>` to find issues
+- Keep initial implementations simple, then add complexity
+
+### Provider-Specific Considerations
+
+When working with custom providers (like Shopify's internal proxy):
+- Parameters may need to be removed or remapped
+- Check `ProviderTransform` in source code for default transformations
+- Common issues: `textVerbosity`, `reasoningEffort`, `max_completion_tokens` compatibility
+- Always test with actual API calls to verify parameters are correct
+
 ## Debugging Current Issues
 
 When a user reports they are experiencing a current issue with Opencode, follow these steps immediately:
