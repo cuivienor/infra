@@ -1,2 +1,5 @@
-prefix=~/.local/npm-global
-
+@shopify:registry=https://npm.shopify.io/node/
+@shopify-internal:registry=https://npm.shopify.io/node/
+@evinced:registry=https://npm.shopify.io/evinced/
+//npm.shopify.io/evinced/:_authToken=REDACTED
+//npm.shopify.io/node/:_authToken=REDACTED

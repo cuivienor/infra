@@ -105,10 +105,6 @@ fi
 
 # NPM configuration
 
-# export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
-
-# NPM configuration
-
 export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
 
 # Gives shell completion for relevant git files
@@ -231,6 +227,3 @@ fi
 
 # opencode
 export PATH=/Users/cuiv/.opencode/bin:$PATH
-
-# Added by tec agent
-[[ -x /Users/cuiv/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/cuiv/.local/state/tec/profiles/base/current/global/init zsh)"
