@@ -84,7 +84,8 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "Shopify",
       "options": {
-        "baseURL": "https://proxy-shopify-ai.local.shop.dev/v1"
+        "baseURL": "https://proxy-shopify-ai.local.shop.dev/v1",
+        "timeout": 1800000  // 30 minutes timeout for long-running tasks
       },
       "models": {
         "gpt-5": {

@@ -105,7 +105,7 @@ fi
 
 # NPM configuration
 
-export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+# export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
 
 # Gives shell completion for relevant git files
 # Got from (https://www.reddit.com/r/zsh/comments/ass2tc/gitadd_completion_with_full_paths_listed_at_once/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
@@ -227,3 +227,6 @@ fi
 
 # opencode
 export PATH=/Users/cuiv/.opencode/bin:$PATH
+
+# Added by tec agent
+[[ -x /Users/cuiv/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/cuiv/.local/state/tec/profiles/base/current/global/init zsh)"
