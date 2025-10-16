@@ -331,45 +331,41 @@ return { -- LSP Configuration & Plugins
 		})
 		require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
 
+		-- Configure servers using the new vim.lsp.config API (Nvim 0.11+)
+		-- This replaces the deprecated require('lspconfig') pattern
+		for server_name, server_config in pairs(servers) do
+			local config = vim.tbl_deep_extend("force", {}, server_config, {
+				capabilities = vim.tbl_deep_extend("force", {}, capabilities, server_config.capabilities or {})
+			})
+
+			-- Special handling for custom servers not in lspconfig
+			if server_name == "ziggy_lsp" or server_name == "ziggy_schema_lsp" or server_name == "superhtml_lsp" then
+				-- Define custom configs for Zine LSP servers
+				vim.lsp.config(server_name, {
+					cmd = config.cmd,
+					filetypes = config.filetypes,
+					root_markers = config.root_dir and { "build.ziggy", ".git" } or nil,
+					capabilities = config.capabilities,
+				})
+			else
+				-- For standard servers, just override if needed
+				if next(config) ~= nil then
+					vim.lsp.config(server_name, config)
+				end
+			end
+		end
+
+		-- Setup mason-lspconfig to automatically enable installed servers
 		require("mason-lspconfig").setup({
 			handlers = {
 				function(server_name)
-					local server = servers[server_name] or {}
-					-- This handles overriding only values explicitly passed
-					-- by the server configuration above. Useful when disabling
-					-- certain features of an LSP (for example, turning off formatting for tsserver)
-					server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
-					require("lspconfig")[server_name].setup(server)
+					-- Automatically enable each server installed by Mason
+					vim.lsp.enable(server_name)
 				end,
 			},
 		})
 
-		-- Setup sourcekit-lsp manually (not available via Mason)
-		local sourcekit_config = servers.sourcekit or {}
-		sourcekit_config.capabilities = vim.tbl_deep_extend("force", {}, capabilities, sourcekit_config.capabilities or {})
-		sourcekit_config.cmd = sourcekit_config.cmd or { "sourcekit-lsp" }
-		require("lspconfig").sourcekit.setup(sourcekit_config)
-
-		-- Setup Zine LSP servers manually (not available via Mason)
-		local zine_servers = { "ziggy_lsp", "ziggy_schema_lsp", "superhtml_lsp" }
-		for _, server_name in ipairs(zine_servers) do
-			local server_config = servers[server_name] or {}
-			server_config.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server_config.capabilities or {})
-			
-			-- Register custom configs if needed
-			local configs = require("lspconfig.configs")
-			if not configs[server_name] then
-				configs[server_name] = {
-					default_config = vim.tbl_deep_extend("force", {
-						cmd = server_config.cmd,
-						filetypes = server_config.filetypes,
-						root_dir = server_config.root_dir,
-						single_file_support = server_config.single_file_support,
-					}, server_config),
-				}
-			end
-			
-			require("lspconfig")[server_name].setup(server_config)
-		end
+		-- Enable manually configured servers (not available via Mason)
+		vim.lsp.enable({ "sourcekit", "ziggy_lsp", "ziggy_schema_lsp", "superhtml_lsp" })
 	end,
 }
