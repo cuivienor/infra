@@ -24,6 +24,7 @@
       "Bash(git commit:*)",
       "Bash(git rev-parse:*)",
       "Bash(cd:*)",
+      "Bash(chmod:*)",
       "Bash(ls:*)",
       "Bash(cat:*)",
       "Bash(pwd:*)",
