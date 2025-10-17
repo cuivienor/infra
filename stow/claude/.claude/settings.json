@@ -22,6 +22,7 @@
       "Bash(git worktree:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
+      "Bash(git rev-parse:*)",
       "Bash(ls:*)",
       "Bash(cat:*)",
       "Bash(pwd:*)",
