@@ -1,0 +1,35 @@
+{
+  "enabledPlugins": {
+    "superpowers@cuivienor-marketplace": true
+  },
+  "alwaysThinkingEnabled": false,
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Skill(superpowers:*)",
+      "Task",
+      "mcp__dev-mcp-from-shop-world__grokt_search",
+      "Bash(bundle exec:*)",
+      "Bash(bundle check:*)",
+      "Bash(bundle install:*)",
+      "Bash(/opt/dev/bin/dev:*)",
+      "Bash(bin/rails:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git worktree:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(pwd:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm:*)",
+      "Bash(yarn:*)",
+      "Bash(jq:*)",
+      "WebFetch(domain:docs.anthropic.com)"
+    ]
+  }
+}
