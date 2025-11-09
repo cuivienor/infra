@@ -225,5 +225,9 @@ if command -v shadowenv &> /dev/null; then
 fi
 
 
-# opencode
-export PATH=/Users/cuiv/.opencode/bin:$PATH
+# opencode - Platform-aware path configuration
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	export PATH=/Users/cuiv/.opencode/bin:$PATH
+else
+	export PATH=/home/cuiv/.opencode/bin:$PATH
+fi

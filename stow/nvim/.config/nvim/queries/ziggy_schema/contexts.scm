@@ -1,0 +1,1 @@
+/home/cuiv/dev/ziggy/tree-sitter-ziggy-schema/queries/contexts.scm

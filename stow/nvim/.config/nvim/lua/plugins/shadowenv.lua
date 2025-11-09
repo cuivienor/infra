@@ -11,20 +11,36 @@
 
 return {
 	"Shopify/shadowenv.vim", -- Shopify shadowenv integration
+	cond = function()
+		-- Only load shadowenv.vim plugin if shadowenv is available
+		return vim.fn.executable("shadowenv") == 1
+	end,
 	config = function()
+		-- Early exit if shadowenv is not available
+		if vim.fn.executable("shadowenv") ~= 1 then
+			vim.notify("Shadowenv not found, skipping shadowenv integration", vim.log.levels.INFO)
+			return
+		end
+
 		-- ============================================================================
 		-- Shadowenv Module - Handles all shadowenv operations
 		-- ============================================================================
 		local shadowenv = {}
 
+		-- Check if shadowenv is available on the system
+		shadowenv.is_available = function()
+			-- Check if shadowenv executable exists and ShadowenvHook command is available
+			return vim.fn.executable("shadowenv") == 1 and vim.fn.exists(":ShadowenvHook") == 2
+		end
+
 		-- Check if a directory has shadowenv configuration
 		shadowenv.has_shadowenv = function(dir)
-			return vim.fn.isdirectory(dir .. "/.shadowenv.d") == 1
+			return shadowenv.is_available() and vim.fn.isdirectory(dir .. "/.shadowenv.d") == 1
 		end
 
 		-- Load shadowenv environment for a directory
 		shadowenv.load_environment = function(directory)
-			if not shadowenv.has_shadowenv(directory) then
+			if not shadowenv.is_available() or not shadowenv.has_shadowenv(directory) then
 				return nil
 			end
 
@@ -204,7 +220,11 @@ return {
 				end
 			end
 			
-			-- Load shadowenv environment for Sorbet
+			-- Load shadowenv environment for Sorbet (only if available)
+			if not shadowenv.is_available() then
+				return
+			end
+			
 			local environment = shadowenv.load_environment(project_root)
 			if not environment then
 				return
@@ -306,7 +326,11 @@ return {
 				end
 			end
 			
-			-- Load shadowenv environment for RuboCop
+			-- Load shadowenv environment for RuboCop (only if available)
+			if not shadowenv.is_available() then
+				return
+			end
+			
 			local environment = shadowenv.load_environment(project_root)
 			if not environment then
 				return
@@ -407,9 +431,13 @@ return {
 				end,
 			}
 
-			-- Try to load shadowenv
+			-- Try to load shadowenv (only if available)
 			local env_type = "system"
-			local environment = shadowenv.load_environment(project_root)
+			local environment = nil
+			
+			if shadowenv.is_available() then
+				environment = shadowenv.load_environment(project_root)
+			end
 
 			if environment then
 				local ruby_paths = shadowenv.get_ruby_paths(environment)
