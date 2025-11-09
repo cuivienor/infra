@@ -1,0 +1,1 @@
+/home/cuiv/dev/ziggy/tree-sitter-ziggy/queries/highlights.scm
