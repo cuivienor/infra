@@ -11,6 +11,11 @@
     media_user_enabled: true
     media_user_groups: ['cdrom']  # Add to cdrom group for optical drive access
     
+    # SSH key deployment
+    ssh_authorized_keys_users:
+      - root
+      - media  # Allow direct SSH as media user
+    
     # Container ID for device passthrough
     container_id: 302
 
@@ -34,6 +39,7 @@
         mode: '0755'
       loop:
         - { src: "../../scripts/media/production/rip-disc.sh", dest: "rip-disc.sh" }
+        - { src: "../../scripts/media/utilities/run-bg.sh", dest: "run-bg.sh" }
       tags: ['scripts']
 
     - name: Configure staging path environment variable

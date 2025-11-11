@@ -71,18 +71,31 @@ These scripts are actively used in the media pipeline workflow.
 
 **`production/organize-and-remux-tv.sh`**
 - **Purpose**: Process TV shows from 1-ripped to 2-remuxed
-- **Container**: CT201 (transcoder-new) @ 192.168.1.77
-- **Input**: `/mnt/storage/media/staging/1-ripped/tv/Show_Name/`
-- **Output**: `/mnt/storage/media/staging/2-remuxed/tv/Show_Name/Season_##/`
+- **Container**: CT303 (analyzer) @ 192.168.1.73
+- **Input**: `/mnt/staging/1-ripped/tv/Show_Name/`
+- **Output**: `/mnt/staging/2-remuxed/tv/Show_Name/Season_##/`
 - **Usage**:
   ```bash
+  # Basic usage
   ./organize-and-remux-tv.sh "Show Name" 01
+  
+  # Start at specific episode (e.g., E05)
+  ./organize-and-remux-tv.sh "Show Name" 01 5
+  
+  # Run in background with logging
+  ~/scripts/run-bg.sh ~/scripts/organize-and-remux-tv.sh "Show Name" 01
   ```
+- **Prerequisites**: Manually organize files in each disc directory before running:
+  - Main episodes → keep in disc root
+  - Bonus content → move to `extras/` subdirectory
+  - Junk files → move to `discarded/` subdirectory
 - **Features**:
   - Finds all discs for specified season
-  - Interactive extra identification
-  - Auto-numbers episodes
+  - Auto-detects manual organization (episodes/extras/discarded)
+  - Sequential episode numbering across all discs
+  - Preserves original filenames for extras
   - Remuxes with track filtering (eng/bul only)
+  - Single confirmation prompt (auto-handled by run-bg.sh)
 
 ### Transcoding (CT201 - Transcoder)
 
@@ -144,6 +157,25 @@ These scripts are actively used in the media pipeline workflow.
 ## Utilities
 
 Helper and configuration scripts for one-time or occasional use.
+
+**`utilities/run-bg.sh`**
+- **Purpose**: Run any script in background with automatic logging
+- **Container**: CT302 (ripper), CT303 (analyzer)
+- **Usage**:
+  ```bash
+  # Run any script in background
+  ~/scripts/run-bg.sh ~/scripts/rip-disc.sh show "Show Name" "S01 Disc1"
+  ~/scripts/run-bg.sh ~/scripts/organize-and-remux-tv.sh "Show Name" 01
+  
+  # Monitor progress
+  tail -f ~/logs/<script-name>_<timestamp>.log
+  ```
+- **Features**:
+  - Auto-sets STAGING_BASE environment variable
+  - Handles interactive prompts (auto-confirms with yes)
+  - Timestamped log files in ~/logs/
+  - Survives SSH disconnection
+  - Shows PID for process management
 
 **`utilities/configure-makemkv.sh`**
 - **Purpose**: Configure MakeMKV settings for media user
@@ -223,10 +255,11 @@ Old prototypes and superseded scripts kept for reference.
 
 | Container | IP | Purpose | Scripts |
 |-----------|-------|---------|---------|
-| **CT302** | 192.168.1.70 | Ripper (IaC) | rip-disc.sh |
-| **CT200** | 192.168.1.75 | Ripper (backup) | rip-disc.sh |
-| **CT201** | 192.168.1.77 | Transcoder | organize-and-remux-*, transcode-queue, promote-to-ready, filebot-process |
-| **CT202** | 192.168.1.72 | Analyzer | analyze-media.sh |
+| **CT302** | 192.168.1.70 | Ripper (IaC) | rip-disc.sh, run-bg.sh |
+| **CT303** | 192.168.1.73 | Analyzer (IaC) | organize-and-remux-*, analyze-media.sh, run-bg.sh |
+| **CT200** | 192.168.1.75 | Ripper (legacy) | rip-disc.sh |
+| **CT201** | 192.168.1.77 | Transcoder (legacy) | transcode-queue, promote-to-ready, filebot-process |
+| **CT202** | 192.168.1.72 | Analyzer (legacy) | analyze-media.sh |
 | **CT101** | 192.168.1.128 | Media Server | (Jellyfin - no scripts) |
 
 ---
@@ -259,19 +292,28 @@ nohup ./production/transcode-queue.sh "/mnt/storage/media/staging/2-remuxed/movi
 
 ```bash
 # 1. Rip all discs (CT302)
-./production/rip-disc.sh show "Show Name" "S01 Disc1"
-./production/rip-disc.sh show "Show Name" "S01 Disc2"
+ssh ct302
+~/scripts/run-bg.sh ~/scripts/rip-disc.sh show "Show Name" "S01 Disc1"
+# Wait for completion, then rip next disc
+~/scripts/run-bg.sh ~/scripts/rip-disc.sh show "Show Name" "S01 Disc2"
 
-# 2. Organize & Remux (CT201)
-./production/organize-and-remux-tv.sh "Show Name" 01
+# 2. Manually organize each disc directory
+# - Main episodes → keep in root
+# - Extras → move to extras/
+# - Junk → move to discarded/
 
-# 3. Transcode (CT201)
+# 3. Organize & Remux (CT303)
+ssh ct303
+~/scripts/run-bg.sh ~/scripts/organize-and-remux-tv.sh "Show Name" 01
+tail -f ~/logs/organize-and-remux-tv_*.log
+
+# 4. Transcode (CT201)
 nohup ./production/transcode-queue.sh "/mnt/storage/media/staging/2-remuxed/tv/Show_Name/Season_01/" 20 hardware --auto &
 
-# 4. Promote (CT201)
+# 5. Promote (CT201)
 ./production/promote-to-ready.sh "/mnt/storage/media/staging/3-transcoded/tv/Show_Name/Season_01_2025-11-11/"
 
-# 5. Finalize (CT201)
+# 6. Finalize (CT201)
 ./production/filebot-process.sh "/mnt/storage/media/staging/4-ready/tv/Show_Name/"
 ```
 
