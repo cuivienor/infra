@@ -1,0 +1,36 @@
+---
+# Initialize restic repositories
+
+- name: Check if repositories are initialized
+  ansible.builtin.shell: |
+    source {{ restic_config_dir }}/{{ item.name }}.env
+    {{ restic_bin_path }} snapshots --json 2>/dev/null || echo "NOT_INITIALIZED"
+  args:
+    executable: /bin/bash
+  register: repo_status
+  loop: "{{ backup_policies }}"
+  when: item.enabled | default(false)
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: Initialize restic repositories
+  ansible.builtin.shell: |
+    source {{ restic_config_dir }}/{{ item.item.name }}.env
+    {{ restic_bin_path }} init
+  args:
+    executable: /bin/bash
+  loop: "{{ repo_status.results }}"
+  when: 
+    - item.item is defined
+    - item.item.enabled | default(false)
+    - "'NOT_INITIALIZED' in item.stdout"
+  no_log: true
+
+- name: Display repository initialization status
+  ansible.builtin.debug:
+    msg: "Repository '{{ item.item.name }}' is {{ 'already initialized' if 'NOT_INITIALIZED' not in item.stdout else 'newly initialized' }}"
+  loop: "{{ repo_status.results }}"
+  when:
+    - item.item is defined
+    - item.item.enabled | default(false)

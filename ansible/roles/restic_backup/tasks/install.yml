@@ -1,0 +1,45 @@
+---
+# Install restic binary
+
+- name: Check if restic is already installed
+  ansible.builtin.stat:
+    path: "{{ restic_bin_path }}"
+  register: restic_binary
+
+- name: Get installed restic version
+  ansible.builtin.command: "{{ restic_bin_path }} version"
+  register: restic_version_output
+  changed_when: false
+  failed_when: false
+  when: restic_binary.stat.exists
+
+- name: Download restic binary
+  ansible.builtin.get_url:
+    url: "{{ restic_download_url }}"
+    dest: "/tmp/restic_{{ restic_version }}_linux_amd64.bz2"
+    mode: '0644'
+  when: not restic_binary.stat.exists or restic_version not in restic_version_output.stdout
+  register: restic_download
+
+- name: Extract restic binary
+  ansible.builtin.shell: |
+    bunzip2 -c /tmp/restic_{{ restic_version }}_linux_amd64.bz2 > {{ restic_bin_path }}
+    chmod 755 {{ restic_bin_path }}
+  when: restic_download.changed
+  args:
+    creates: "{{ restic_bin_path }}"
+
+- name: Remove temporary download file
+  ansible.builtin.file:
+    path: "/tmp/restic_{{ restic_version }}_linux_amd64.bz2"
+    state: absent
+  when: restic_download.changed
+
+- name: Verify restic installation
+  ansible.builtin.command: "{{ restic_bin_path }} version"
+  register: restic_verify
+  changed_when: false
+
+- name: Display restic version
+  ansible.builtin.debug:
+    msg: "Restic version: {{ restic_verify.stdout }}"

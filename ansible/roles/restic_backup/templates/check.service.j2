@@ -1,0 +1,27 @@
+[Unit]
+Description=Restic repository integrity check
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart={{ restic_config_dir }}/scripts/maintenance.sh check
+User=root
+Group=root
+
+# Security hardening
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths={{ restic_cache_dir }} {{ restic_log_dir }}
+
+# Timeout
+TimeoutStartSec=0
+
+# Resource limits
+Nice={{ restic_nice_level }}
+IOSchedulingClass={{ restic_ionice_class }}
+
+[Install]
+WantedBy=multi-user.target

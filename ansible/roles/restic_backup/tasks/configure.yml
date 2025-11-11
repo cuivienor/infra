@@ -1,0 +1,81 @@
+---
+# Configure restic backup environment
+
+- name: Create restic configuration directory
+  ansible.builtin.file:
+    path: "{{ restic_config_dir }}"
+    state: directory
+    mode: '0750'
+    owner: root
+    group: root
+
+- name: Create restic cache directory
+  ansible.builtin.file:
+    path: "{{ restic_cache_dir }}"
+    state: directory
+    mode: '0750'
+    owner: "{{ backup_user }}"
+    group: "{{ backup_group }}"
+
+- name: Create restic log directory
+  ansible.builtin.file:
+    path: "{{ restic_log_dir }}"
+    state: directory
+    mode: '0750'
+    owner: "{{ backup_user }}"
+    group: "{{ backup_group }}"
+
+- name: Create backup scripts directory
+  ansible.builtin.file:
+    path: "{{ restic_config_dir }}/scripts"
+    state: directory
+    mode: '0750'
+    owner: root
+    group: root
+
+- name: Generate backup environment files for each policy
+  ansible.builtin.template:
+    src: backup-env.j2
+    dest: "{{ restic_config_dir }}/{{ item.name }}.env"
+    mode: '0600'
+    owner: root
+    group: root
+  loop: "{{ backup_policies }}"
+  when: item.enabled | default(false)
+  no_log: true  # Don't log sensitive credentials
+
+- name: Generate backup script for each policy
+  ansible.builtin.template:
+    src: backup-script.sh.j2
+    dest: "{{ restic_config_dir }}/scripts/backup-{{ item.name }}.sh"
+    mode: '0750'
+    owner: root
+    group: root
+  loop: "{{ backup_policies }}"
+  when: item.enabled | default(false)
+
+- name: Generate exclude files for each policy
+  ansible.builtin.template:
+    src: excludes.txt.j2
+    dest: "{{ restic_config_dir }}/{{ item.name }}-excludes.txt"
+    mode: '0644'
+    owner: root
+    group: root
+  loop: "{{ backup_policies }}"
+  when: item.enabled | default(false) and item.excludes | default([]) | length > 0
+
+- name: Generate maintenance script
+  ansible.builtin.template:
+    src: maintenance.sh.j2
+    dest: "{{ restic_config_dir }}/scripts/maintenance.sh"
+    mode: '0750'
+    owner: root
+    group: root
+
+- name: Generate restore script
+  ansible.builtin.template:
+    src: restore.sh.j2
+    dest: "{{ restic_config_dir }}/scripts/restore.sh"
+    mode: '0750'
+    owner: root
+    group: root

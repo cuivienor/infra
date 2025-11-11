@@ -1,0 +1,21 @@
+[Unit]
+Description=Timer for restic repository checks
+Requires=restic-check.service
+
+[Timer]
+{% if backup_check_schedule == 'weekly' %}
+OnCalendar=weekly
+{% elif backup_check_schedule == 'monthly' %}
+OnCalendar=monthly
+{% else %}
+OnCalendar={{ backup_check_schedule }}
+{% endif %}
+
+# Run checks at off-peak hours
+RandomizedDelaySec=2h
+
+# Run immediately if missed
+Persistent=true
+
+[Install]
+WantedBy=timers.target

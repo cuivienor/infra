@@ -1,0 +1,40 @@
+---
+# Playbook to configure restic backups
+# Usage: ansible-playbook playbooks/backup.yml
+
+- name: Configure restic backups on Proxmox host
+  hosts: proxmox_host
+  become: true
+  
+  vars_files:
+    - ../vars/backup_secrets.yml
+  
+  roles:
+    - role: restic_backup
+      tags: ['backup', 'restic']
+
+  post_tasks:
+    - name: Display backup configuration summary
+      ansible.builtin.debug:
+        msg:
+          - "========================================="
+          - "Restic Backup Configuration Complete"
+          - "========================================="
+          - ""
+          - "Enabled backup policies:"
+          {% for policy in backup_policies %}
+          {% if policy.enabled | default(false) %}
+          - "  - {{ policy.name }}: {{ policy.schedule }} backups to {{ policy.b2_bucket }}"
+          {% endif %}
+          {% endfor %}
+          - ""
+          - "Manual commands:"
+          - "  Run backup now:    systemctl start restic-backup-<policy>.service"
+          - "  Check status:      systemctl status restic-backup-<policy>.timer"
+          - "  View logs:         journalctl -u restic-backup-<policy>.service"
+          - "  List snapshots:    /etc/restic/scripts/maintenance.sh snapshots <policy>"
+          - "  Restore files:     /etc/restic/scripts/restore.sh -h"
+          - ""
+          - "Log directory:    {{ restic_log_dir }}"
+          - "Config directory: {{ restic_config_dir }}"
+          - "========================================="

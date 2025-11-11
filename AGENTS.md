@@ -358,6 +358,14 @@ su - media
 - **IaC helpers**: `scripts/iac/`
 - **Utilities**: `scripts/utils/`
 
+### Backups
+
+- **Configuration**: `/etc/restic/` (on host)
+- **Backup logs**: `/var/log/restic/` (on host)
+- **Ansible role**: `ansible/roles/restic_backup/`
+- **Documentation**: `docs/guides/backup-setup.md`
+- **Quick reference**: `docs/reference/backup-quick-reference.md`
+
 ---
 
 ## Project Goals
@@ -376,7 +384,7 @@ su - media
 ### Medium Term
 
 - [ ] Automate host configuration with Ansible
-- [ ] Create backup/restore procedures
+- [x] Create backup/restore procedures (restic + Backblaze B2)
 - [ ] Test disaster recovery workflow
 - [ ] Add monitoring container
 - [ ] Migrate Jellyfin to container

@@ -10,6 +10,7 @@ terraform/.terraform.tfstate.lock.info
 *.retry
 ansible/.vault_pass
 ansible/vars/secrets.yml
+ansible/vars/backup_secrets.yml
 
 # Environment
 .envrc

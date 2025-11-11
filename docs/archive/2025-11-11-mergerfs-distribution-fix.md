@@ -110,7 +110,6 @@ ssh homelab "cd /mnt/disk1 && find . -type d -not -path '*/lost+found*' -not -pa
 /audiobooks
 /e-books  
 /Photos
-/Porn
 /downloads
 /random
 /tv
