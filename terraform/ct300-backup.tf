@@ -15,7 +15,8 @@ resource "proxmox_virtual_environment_container" "backup" {
     
     ip_config {
       ipv4 {
-        address = "dhcp"
+        address = "192.168.1.58/24"
+        gateway = "192.168.1.1"
       }
     }
 
@@ -79,7 +80,7 @@ resource "proxmox_virtual_environment_container" "backup" {
 # Output the container's IP for Ansible
 output "backup_container_ip" {
   value       = proxmox_virtual_environment_container.backup.initialization[0].ip_config[0].ipv4[0].address
-  description = "IP address of the backup container (DHCP assigned)"
+  description = "IP address of the backup container (static)"
 }
 
 output "backup_container_id" {
