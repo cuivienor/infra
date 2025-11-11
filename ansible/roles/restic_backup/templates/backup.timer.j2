@@ -1,0 +1,23 @@
+[Unit]
+Description=Timer for restic backup - {{ item.name }} policy
+Requires=restic-backup-{{ item.name }}.service
+
+[Timer]
+{% if item.schedule == 'daily' %}
+OnCalendar=daily
+{% elif item.schedule == 'weekly' %}
+OnCalendar=weekly
+{% elif item.schedule == 'monthly' %}
+OnCalendar=monthly
+{% else %}
+OnCalendar={{ item.schedule }}
+{% endif %}
+
+# Add randomized delay to prevent all backups running simultaneously
+RandomizedDelaySec=30m
+
+# Run immediately if missed (e.g., system was off)
+Persistent=true
+
+[Install]
+WantedBy=timers.target

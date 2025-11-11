@@ -1,0 +1,82 @@
+---
+# Default variables for restic_backup role
+
+# Restic version to install
+restic_version: "0.16.4"
+restic_download_url: "https://github.com/restic/restic/releases/download/v{{ restic_version }}/restic_{{ restic_version }}_linux_amd64.bz2"
+
+# Installation paths
+restic_bin_path: "/usr/local/bin/restic"
+restic_config_dir: "/etc/restic"
+restic_cache_dir: "/var/cache/restic"
+restic_log_dir: "/var/log/restic"
+
+# Backup user (typically media or root)
+backup_user: "media"
+backup_group: "media"
+
+# Backup policies configuration
+backup_policies:
+  # Policy for /mnt/storage data (excludes large media files)
+  # Backs up: photos, documents, backups, e-books, audiobooks, etc.
+  # Excludes: Movies, TV, and media pipeline directories
+  - name: "data"
+    enabled: true
+    paths:
+      - "/mnt/storage"
+    excludes:
+      # Large media directories (expensive to backup, can be re-ripped/re-downloaded)
+      # Note: media/ now includes movies, tv, audiobooks, e-books, staging
+      - "/mnt/storage/media/**"
+      
+      # Private content (adult content, not backed up)
+      - "/mnt/storage/private/**"
+      
+      # Legacy media in archives (already have old backups)
+      - "/mnt/storage/archives/legacy-media/**"
+      
+      # Temporary/cache directories
+      - "/mnt/storage/temp/**"
+      - "/mnt/storage/lost+found/**"
+      - "/mnt/storage/.snapraid.*"
+      
+      # Common patterns to skip
+      - "**/.Trash-*/**"
+      - "**/Thumbs.db"
+      - "**/.DS_Store"
+      - "**/*.tmp"
+      - "**/*.partial"
+      - "**/node_modules/**"
+      - "**/__pycache__/**"
+    schedule: "daily"
+    retention:
+      keep_daily: 7
+      keep_weekly: 4
+      keep_monthly: 6
+      keep_yearly: 2
+    b2_bucket: "{{ b2_bucket_data }}"
+
+# Backblaze B2 configuration (sensitive values in vault)
+b2_account_id: "{{ vault_b2_account_id }}"
+b2_account_key: "{{ vault_b2_account_key }}"
+b2_bucket_data: "{{ vault_b2_bucket_data | default('homelab-data') }}"
+
+# Restic repository passwords (sensitive values in vault)
+restic_password_data: "{{ vault_restic_password_data }}"
+
+# Performance settings
+restic_nice_level: 19  # Run backups with low priority
+restic_ionice_class: "idle"  # Use idle I/O priority
+
+# Notification settings (optional)
+backup_notify_email: ""
+backup_notify_on_success: false
+backup_notify_on_failure: true
+
+# Backup check settings
+backup_check_enabled: true
+backup_check_schedule: "weekly"  # Run 'restic check' weekly
+
+# Pre/post backup hooks
+backup_pre_hook: ""
+backup_post_hook: ""

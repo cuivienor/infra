@@ -1,132 +1,276 @@
-# Media Pipeline v2 - Current Status
+# Homelab Current Status
 
-**Date**: 2025-11-10
-**Status**: Ready for Testing
+**Date**: 2025-11-11
+**Focus**: IaC Implementation + Backup System
 
-## ✅ Completed
+---
 
-### Scripts Created/Updated
-- [x] `rip-disc.sh` - Updated with disc identifiers for TV shows
-- [x] `migrate-to-1-ripped.sh` - Migration complete
-- [x] `fix-current-names.sh` - Fix duplicate filenames in 1-ripped
-- [x] `analyze-media.sh` - Save analysis to file
-- [x] `organize-and-remux-movie.sh` - Movie processing
-- [x] `organize-and-remux-tv.sh` - TV show processing with episode mapping
-- [x] `transcode-queue.sh` - New directory structure support
-- [x] `promote-to-ready.sh` - Stage promotion
-- [x] `filebot-process.sh` - FileBot automation
+## 🎯 Current Work: Backup System with IaC
 
-### Files Migrated
-- [x] Dragon - SKIPPED (active transcode)
-- [x] Dragon2 → 1-ripped/movies/How_To_Train_Your_Dragon_2_2024-11-10/
-- [x] LionKing → 1-ripped/movies/The_Lion_King_2024-11-10/
-- [x] Matrix → 1-ripped/movies/The_Matrix_Disc1_2024-11-10/
-- [x] Matrix-UHD → 1-ripped/movies/The_Matrix_Disc2_2024-11-10/
-- [x] Cosmos → 1-ripped/tv/Cosmos_A_Spacetime_Odyssey/S01_Disc[1-4]_2024-11-10/
-- [x] Avatar → 1-ripped/tv/Avatar_The_Last_Airbender/S01_Disc[1-2]_2024-11-10/
+### ✅ Completed (2025-11-11)
 
-## 🎯 Next Steps
+**Infrastructure as Code Setup:**
+- [x] Created Terraform configuration for CT300 (backup container)
+- [x] Created Ansible role `restic_backup` for automated backups
+- [x] Designed hybrid approach: custom scripts + Backrest UI
+- [x] Simplified backup policy to "data" (all /mnt/storage except media)
+- [x] Complete documentation for deployment
 
-### 1. Fix Duplicate Filenames (IMMEDIATE)
-```bash
-# On CT 201
-~/scripts/fix-current-names.sh
-```
-This adds disc identifiers to Cosmos and Avatar files so Jellyfin doesn't see duplicates.
+**Files Created:**
+- `terraform/main.tf` - Terraform provider config
+- `terraform/variables.tf` - Variable definitions
+- `terraform/containers/ct300-backup.tf` - Backup container definition
+- `terraform/terraform.tfvars.example` - Example secrets
+- `terraform/README.md` - Terraform usage guide
+- `ansible/roles/restic_backup/` - Complete backup role
+- `ansible/playbooks/ct300-backup.yml` - Container playbook
+- `ansible/vars/backup_secrets.yml.example` - B2/restic secrets template
+- `docs/guides/ct300-backup-deployment.md` - Deployment walkthrough
+- `docs/guides/backup-setup.md` - Detailed backup guide
+- `docs/reference/backup-quick-reference.md` - Command reference
+- `docs/plans/backup-implementation-summary.md` - Complete overview
 
-### 2. Configure Jellyfin Libraries
-See: `jellyfin-setup-guide.md`
-- Add "Staging - Ripped" library → `/mnt/storage/media/staging/1-ripped`
-- Set to "Folders" type, disable all metadata
+### 🎯 Next Steps
 
-### 3. Test Movie Workflow (Recommend: Lion King)
-```bash
-# Analyze
-./analyze-media.sh /mnt/storage/media/staging/1-ripped/movies/The_Lion_King_2024-11-10/
+**Deploy CT300 Backup Container:**
 
-# Review in Jellyfin, delete unwanted files
+1. **Get Backblaze B2 credentials**
+   - Sign up at backblaze.com
+   - Create app key
+   - Create bucket: `homelab-data`
+   - Generate restic password
 
-# Organize & Remux
-./organize-and-remux-movie.sh /mnt/storage/media/staging/1-ripped/movies/The_Lion_King_2024-11-10/
+2. **Configure secrets**
+   ```bash
+   cd ~/dev/homelab-notes
+   
+   # Terraform secrets
+   cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+   nano terraform/terraform.tfvars  # Add Proxmox password
+   
+   # Ansible secrets
+   cp ansible/vars/backup_secrets.yml.example ansible/vars/backup_secrets.yml
+   nano ansible/vars/backup_secrets.yml  # Add B2 credentials
+   ansible-vault encrypt ansible/vars/backup_secrets.yml
+   ```
 
-# Review in Jellyfin "Staging - Remuxed"
+3. **Deploy with Terraform**
+   ```bash
+   cd terraform
+   terraform init
+   terraform plan
+   terraform apply
+   ```
 
-# Transcode
-./transcode-queue.sh /mnt/storage/media/staging/2-remuxed/movies/The_Lion_King_2024-11-10/ 20 software
+4. **Configure with Ansible**
+   ```bash
+   export CT300_IP="<ip-from-terraform>"
+   ansible-playbook ansible/playbooks/ct300-backup.yml --vault-password-file ~/.vault_pass
+   ```
 
-# Review in Jellyfin "Staging - Transcoded"
+5. **Test backup**
+   ```bash
+   ssh homelab "pct exec 300 -- systemctl start restic-backup-data.service"
+   ssh homelab "pct exec 300 -- /etc/restic/scripts/maintenance.sh snapshots data"
+   ```
 
-# Promote
-./promote-to-ready.sh /mnt/storage/media/staging/3-transcoded/movies/The_Lion_King_2024-11-10/
+**See**: `docs/guides/ct300-backup-deployment.md` for complete walkthrough
 
-# FileBot
-./filebot-process.sh /mnt/storage/media/staging/4-ready/movies/The_Lion_King/
-```
+---
 
-### 4. Test TV Show Workflow (Recommend: Avatar)
-```bash
-# Analyze each disc
-./analyze-media.sh /mnt/storage/media/staging/1-ripped/tv/Avatar_The_Last_Airbender/S01_Disc1_2024-11-10/
-./analyze-media.sh /mnt/storage/media/staging/1-ripped/tv/Avatar_The_Last_Airbender/S01_Disc2_2024-11-10/
+## 📁 Current Infrastructure
 
-# Review in Jellyfin, delete unwanted files
+### Proxmox Host (homelab - 192.168.1.56)
+- **Hardware**: i5-9600K, 32GB RAM, 35TB MergerFS pool
+- **Storage**: `/mnt/storage` (4.1TB used, 29TB free)
+- **GPU**: Intel Arc A380 (transcoding), NVIDIA GTX 1080
+- **Optical**: /dev/sr0 (Blu-ray)
 
-# Organize & Remux entire season
-./organize-and-remux-tv.sh "Avatar The Last Airbender" 01
-# Interactive: mark extras, confirm episode numbering
+### Active Containers (Manual)
+- **CT101** jellyfin (192.168.1.128) - Media server
+- **CT200** ripper-new (192.168.1.75) - MakeMKV, optical drive
+- **CT201** transcoder-new (192.168.1.77) - FFmpeg, Intel Arc GPU
+- **CT202** analyzer (192.168.1.72) - Media analysis
 
-# Continue with transcode → promote → filebot
-```
+### IaC Containers (300 Range)
+- **CT300** backup (TBD) - Restic + Backrest UI ⏳ **READY TO DEPLOY**
 
-### 5. Test New Rip (CT 200)
-When you rip a new disc:
-```bash
-./rip-disc.sh show "New Show" "S01 Disc1"
-```
-Verify disc identifier is automatically added to filenames.
+### Legacy Containers (Stopped)
+- **CT100** ripper (old) - Being replaced by CT200
+- **CT102** transcoder (old) - Being replaced by CT201
 
-## 📁 Current Structure
+---
 
+## 💾 Backup Strategy
+
+### Current State: Ready for Deployment
+
+**Backup Policy: `data`**
+- **What**: Everything in `/mnt/storage` except large media
+- **Included**: photos, documents, backups, e-books, audiobooks
+- **Excluded**: Movies, TV, media pipeline directories
+- **Target**: Backblaze B2 (`homelab-data` bucket)
+- **Schedule**: Daily at 2 AM
+- **Retention**: 7 daily, 4 weekly, 6 monthly, 2 yearly
+- **Encryption**: Restic (client-side)
+
+**3-2-1 Backup Strategy:**
+1. ✅ Live data on MergerFS (35TB with SnapRAID parity)
+2. ⏳ Restic → Backblaze B2 (encrypted cloud) **← Deploying now**
+3. ⏳ Future: Local/family member backup
+
+**Estimated Cost**: $0.50-$2.50/month depending on data size
+
+---
+
+## 🎬 Media Pipeline Status
+
+### Current: v2 Implementation Complete
+
+**Directory Structure:**
 ```
 /mnt/storage/media/staging/
-├── 1-ripped/          ← Files here (needs filename fix)
+├── 1-ripped/          ← Migrated files here
 │   ├── movies/
-│   │   ├── How_To_Train_Your_Dragon_2_2024-11-10/
-│   │   ├── The_Lion_King_2024-11-10/
-│   │   ├── The_Matrix_Disc1_2024-11-10/
-│   │   └── The_Matrix_Disc2_2024-11-10/
 │   └── tv/
-│       ├── Cosmos_A_Spacetime_Odyssey/
-│       │   ├── S01_Disc1_2024-11-10/
-│       │   ├── S01_Disc2_2024-11-10/
-│       │   ├── S01_Disc3_2024-11-10/
-│       │   └── S01_Disc4_2024-11-10/
-│       └── Avatar_The_Last_Airbender/
-│           ├── S01_Disc1_2024-11-10/
-│           └── S01_Disc2_2024-11-10/
-├── 2-remuxed/         ← Empty (ready for processing)
-├── 3-transcoded/      ← Empty (ready for processing)
-├── 4-ready/           ← Empty (ready for processing)
-└── Dragon/            ← Untouched (active transcode)
+├── 2-remuxed/         ← Ready for use
+├── 3-transcoded/      ← Ready for use
+└── 4-ready/           ← Ready for use
 ```
+
+**Scripts Ready:**
+- `rip-disc.sh` - MakeMKV automation
+- `analyze-media.sh` - Media analysis
+- `organize-and-remux-movie.sh` - Movie processing
+- `organize-and-remux-tv.sh` - TV processing
+- `transcode-queue.sh` - Transcoding
+- `promote-to-ready.sh` - Stage promotion
+- `filebot-process.sh` - FileBot automation
+
+**Status**: Ready for testing (pending backup deployment)
+
+---
+
+## 📊 IaC Progress
+
+### Phase 1: Foundation (In Progress)
+- [x] Repository organized for IaC
+- [x] Comprehensive documentation (current-state.md)
+- [x] Terraform setup (main.tf, variables.tf)
+- [x] First container definition (CT300)
+- [x] Ansible role created (restic_backup)
+- [ ] Deploy first IaC container ⏳ **NEXT**
+- [ ] Test Terraform + Ansible workflow
+- [ ] Document lessons learned
+
+### Phase 2: Container Migration (Planned)
+- [ ] Import CT200 (ripper) to Terraform
+- [ ] Import CT201 (transcoder) to Terraform
+- [ ] Import CT202 (analyzer) to Terraform
+- [ ] Create device passthrough Ansible role
+- [ ] Decommission legacy containers (CT100, CT102)
+
+### Phase 3: Host Configuration (Planned)
+- [ ] Ansible role for MergerFS configuration
+- [ ] Ansible role for SnapRAID configuration
+- [ ] Host backup (Proxmox configs, LXC configs)
+- [ ] Disaster recovery testing
+
+---
+
+## 🔑 Secrets Management
+
+**Terraform Secrets** (git-ignored):
+- `terraform/terraform.tfvars` - Proxmox credentials
+
+**Ansible Secrets** (vault-encrypted):
+- `ansible/vars/backup_secrets.yml` - B2 + restic passwords
+
+**Vault Password**:
+- Stored in `~/.vault_pass` (chmod 600)
+- Used with `--vault-password-file ~/.vault_pass`
+
+---
+
+## 📚 Documentation Structure
+
+```
+docs/
+├── guides/               # Step-by-step how-to
+│   ├── backup-setup.md
+│   ├── ct300-backup-deployment.md
+│   ├── jellyfin-setup.md
+│   └── media-pipeline-v2.md
+├── reference/            # Quick reference
+│   ├── backup-quick-reference.md
+│   ├── current-state.md
+│   └── media-pipeline-quick-reference.md
+├── plans/                # Planning docs
+│   ├── backup-implementation-summary.md
+│   └── storage-iac-plan.md
+└── archive/              # Completed work
+```
+
+---
+
+## 🎯 Immediate Action Items
+
+1. **Get B2 credentials** (backblaze.com)
+2. **Configure secrets** (terraform.tfvars, backup_secrets.yml)
+3. **Deploy CT300** (terraform apply)
+4. **Run Ansible** (configure backups)
+5. **Test backup** (first manual run)
+6. **Monitor** (verify daily automation)
+
+**Time estimate**: 1-2 hours for complete setup
+
+---
 
 ## 🐛 Known Issues
 
-- [ ] **Duplicate filenames in TV shows** - Run fix-current-names.sh to resolve
-- [ ] **Dragon folder** - Still in old structure, will move after transcode completes
+**Backup System:**
+- None - ready for deployment
 
-## 📚 Documentation
+**Media Pipeline:**
+- [ ] Duplicate filenames in TV shows (fix-current-names.sh)
+- [ ] Dragon folder still in old structure
 
-- `media-pipeline-v2-implementation.md` - Complete implementation guide
-- `media-pipeline-quick-reference.md` - Command cheat sheet
-- `jellyfin-setup-guide.md` - Jellyfin configuration
-- `directory-migration-plan.md` - Migration details
+**Infrastructure:**
+- [ ] CT300-302 range not yet defined in AGENTS.md
+- [ ] Backup role not yet listed in AGENTS.md
 
-## 🚀 Ready to Go!
+---
 
-Your pipeline is set up and ready for testing. Start with:
-1. `fix-current-names.sh` (fixes Jellyfin duplicate issue)
-2. Configure Jellyfin library
-3. Test with Lion King (smallest movie)
+## 📖 Key Reference Files
 
-Good luck! 🎬
+**For Deployment:**
+- `docs/guides/ct300-backup-deployment.md` - Start here
+- `terraform/README.md` - Terraform usage
+- `ansible/roles/restic_backup/README.md` - Role documentation
+
+**For Reference:**
+- `docs/reference/backup-quick-reference.md` - Daily commands
+- `docs/reference/current-state.md` - Full system inventory
+- `AGENTS.md` - AI context and conventions
+
+---
+
+## 🚀 Success Criteria
+
+CT300 deployment is successful when:
+- [x] Terraform creates container
+- [ ] Container gets DHCP IP
+- [ ] Storage mounted at /mnt/storage
+- [ ] Ansible completes without errors
+- [ ] First backup finishes
+- [ ] Snapshot visible in B2
+- [ ] Test restore succeeds
+- [ ] Daily timer is active
+
+---
+
+**Current Priority**: Deploy CT300 backup container (first IaC container!)
+
+**Next After That**: Test media pipeline with backup in place
+
+**Last Updated**: 2025-11-11

@@ -1,0 +1,18 @@
+---
+# Main tasks for restic_backup role
+
+- name: Include installation tasks
+  ansible.builtin.import_tasks: install.yml
+  tags: ['restic', 'install']
+
+- name: Include configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+  tags: ['restic', 'config']
+
+- name: Include repository initialization tasks
+  ansible.builtin.import_tasks: init_repos.yml
+  tags: ['restic', 'init']
+
+- name: Include systemd timer tasks
+  ansible.builtin.import_tasks: systemd.yml
+  tags: ['restic', 'systemd']

@@ -1,0 +1,68 @@
+---
+# Playbook to configure CT300 backup container
+# Usage: ansible-playbook playbooks/ct300-backup.yml --vault-password-file ~/.vault_pass
+
+- name: Configure CT300 backup container
+  hosts: ct300-backup
+  become: true
+  
+  vars_files:
+    - ../vars/backup_secrets.yml
+  
+  vars:
+    # Override backup user to root (simpler for container)
+    backup_user: "root"
+    backup_group: "root"
+  
+  pre_tasks:
+    - name: Wait for container to be ready
+      ansible.builtin.wait_for_connection:
+        timeout: 60
+    
+    - name: Gather facts
+      ansible.builtin.setup:
+    
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+    
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - curl
+          - wget
+          - ca-certificates
+          - bzip2
+          - jq
+        state: present
+  
+  roles:
+    - role: restic_backup
+      tags: ['backup', 'restic']
+  
+  post_tasks:
+    - name: Display backup container summary
+      ansible.builtin.debug:
+        msg:
+          - "========================================="
+          - "CT300 Backup Container Configuration Complete"
+          - "========================================="
+          - ""
+          - "Container: ct300-backup ({{ ansible_host }})"
+          - "Storage mount: /mnt/storage (from host)"
+          - ""
+          - "Backup policy:"
+          - "  - Name: data"
+          - "  - Schedule: daily"
+          - "  - Target: Backblaze B2 ({{ b2_bucket_data }})"
+          - "  - Excludes: Movies, TV, media pipeline"
+          - ""
+          - "Next steps:"
+          - "  1. Verify /mnt/storage is mounted: pct exec 300 -- ls -l /mnt/storage"
+          - "  2. Test backup: pct exec 300 -- systemctl start restic-backup-data.service"
+          - "  3. Check logs: pct exec 300 -- journalctl -u restic-backup-data.service -f"
+          - "  4. View snapshots: pct exec 300 -- /etc/restic/scripts/maintenance.sh snapshots data"
+          - ""
+          - "Backrest UI (to be installed): http://{{ ansible_host }}:9898"
+          - "========================================="
