@@ -1,0 +1,53 @@
+---
+# SSH key distribution tasks
+
+- name: Check if SSH keys directory exists
+  ansible.builtin.stat:
+    path: "{{ ssh_keys_directory }}"
+  delegate_to: localhost
+  become: false
+  register: ssh_keys_dir
+
+- name: Fail if SSH keys directory not found
+  ansible.builtin.fail:
+    msg: "SSH keys directory not found: {{ ssh_keys_directory }}"
+  when: not ssh_keys_dir.stat.exists
+
+- name: Find all SSH public keys
+  ansible.builtin.find:
+    paths: "{{ ssh_keys_directory }}"
+    patterns: "*.pub"
+  delegate_to: localhost
+  become: false
+  register: ssh_public_keys
+
+- name: Display found SSH keys
+  ansible.builtin.debug:
+    msg: "Found {{ ssh_public_keys.files | length }} SSH public key(s) to deploy"
+
+- name: Ensure .ssh directory exists for each user
+  ansible.builtin.file:
+    path: "/{{ item }}/.ssh"
+    state: directory
+    mode: '0700'
+    owner: "{{ item }}"
+    group: "{{ item }}"
+  loop: "{{ ssh_authorized_keys_users }}"
+
+- name: Deploy SSH authorized keys for each user
+  ansible.builtin.authorized_key:
+    user: "{{ item.0 }}"
+    key: "{{ lookup('file', item.1.path) }}"
+    state: present
+    comment: "{{ item.1.path | basename | regex_replace('\\.pub$', '') }}"
+  loop: "{{ ssh_authorized_keys_users | product(ssh_public_keys.files) | list }}"
+  loop_control:
+    label: "{{ item.0 }} <- {{ item.1.path | basename }}"
+
+- name: Set proper permissions on authorized_keys
+  ansible.builtin.file:
+    path: "/{{ item }}/.ssh/authorized_keys"
+    mode: '0600'
+    owner: "{{ item }}"
+    group: "{{ item }}"
+  loop: "{{ ssh_authorized_keys_users }}"

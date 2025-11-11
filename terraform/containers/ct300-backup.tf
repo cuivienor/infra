@@ -20,10 +20,8 @@ resource "proxmox_virtual_environment_container" "backup" {
     }
 
     user_account {
-      keys = [
-        # Add your SSH public key here for root access
-        # Example: "ssh-rsa AAAAB3... user@host"
-      ]
+      # SSH keys automatically loaded from ansible/files/ssh-keys/
+      keys = local.ssh_public_keys
     }
   }
 

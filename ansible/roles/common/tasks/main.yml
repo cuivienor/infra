@@ -1,0 +1,14 @@
+---
+# Main tasks for common role
+
+- name: Import SSH keys tasks
+  ansible.builtin.import_tasks: ssh-keys.yml
+  tags: ['ssh-keys', 'ssh']
+
+- name: Import system configuration tasks
+  ansible.builtin.import_tasks: system.yml
+  tags: ['system']
+
+- name: Import package management tasks
+  ansible.builtin.import_tasks: packages.yml
+  tags: ['packages']

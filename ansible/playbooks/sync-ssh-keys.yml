@@ -1,0 +1,26 @@
+---
+# Playbook to sync SSH keys to all homelab infrastructure
+# Usage: ansible-playbook playbooks/sync-ssh-keys.yml
+
+- name: Sync SSH keys to all hosts
+  hosts: all
+  become: true
+  gather_facts: false
+  
+  tasks:
+    - name: Wait for connection
+      ansible.builtin.wait_for_connection:
+        timeout: 30
+      
+    - name: Gather facts
+      ansible.builtin.setup:
+    
+    - name: Apply common role (SSH keys only)
+      ansible.builtin.include_role:
+        name: common
+        tasks_from: ssh-keys
+      tags: ['ssh-keys']
+    
+    - name: Display success message
+      ansible.builtin.debug:
+        msg: "✅ SSH keys synced successfully to {{ inventory_hostname }}"
