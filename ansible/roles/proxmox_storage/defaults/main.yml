@@ -44,9 +44,9 @@ snapraid_autosave: 500
 
 # SnapRAID scheduling
 snapraid_sync_enabled: true
-snapraid_sync_schedule: "0 3 * * *"  # 3 AM daily
+snapraid_sync_schedule: "*-*-* 03:00:00"  # 3 AM daily (systemd format)
 snapraid_scrub_enabled: true
-snapraid_scrub_schedule: "0 4 * * 1"  # 4 AM Monday weekly
+snapraid_scrub_schedule: "Mon *-*-* 04:00:00"  # 4 AM Monday weekly (systemd format)
 snapraid_scrub_percent: 8
 
 # Media user
