@@ -21,3 +21,12 @@ common_packages:
   - git
   - ca-certificates
   - gnupg
+
+# Media user configuration (for media pipeline containers)
+media_user_enabled: false
+media_user_name: "media"
+media_user_uid: 1000
+media_user_gid: 1000
+media_user_groups: []  # Additional groups (e.g., ['cdrom'] for optical drive access)
+media_user_home: "/home/{{ media_user_name }}"
+media_user_shell: "/bin/bash"

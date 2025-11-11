@@ -12,3 +12,8 @@
 - name: Import package management tasks
   ansible.builtin.import_tasks: packages.yml
   tags: ['packages']
+
+- name: Import media user tasks
+  ansible.builtin.import_tasks: media-user.yml
+  tags: ['media-user']
+  when: media_user_enabled | bool

@@ -93,11 +93,12 @@
 - **CT202** analyzer (192.168.1.72) - Media analysis
 
 ### IaC Containers (300 Range)
-- **CT300** backup (TBD) - Restic + Backrest UI ⏳ **READY TO DEPLOY**
-
-### Legacy Containers (Stopped)
-- **CT100** ripper (old) - Being replaced by CT200
-- **CT102** transcoder (old) - Being replaced by CT201
+- **CT300** backup (deployed) - Restic + Backrest UI ✅
+- **CT301** samba (deployed) - Samba file server ✅
+- **CT302** ripper (deployed 2025-11-11) - MakeMKV with optical drive ✅
+  - IP: 192.168.1.70
+  - Security: Restricted storage access (staging only)
+  - Status: Production ready, CT200 remains as backup
 
 ---
 
@@ -163,12 +164,19 @@
 - [ ] Test Terraform + Ansible workflow
 - [ ] Document lessons learned
 
-### Phase 2: Container Migration (Planned)
-- [ ] Import CT200 (ripper) to Terraform
+### Phase 2: Container Migration (In Progress)
+- [x] Create CT302 (ripper IaC version) ✅
+- [x] Create device passthrough Ansible role ✅
+- [x] Create MakeMKV Ansible role ✅
+- [x] Decommission legacy containers (CT100, CT102) ✅
+- [x] Deploy and test CT302 ✅ **DEPLOYED 2025-11-11**
+  - Security enhancement: Restricted storage mount (staging only)
+  - All verification tests passed
+  - MakeMKV v1.18.2 compiled and configured
+- [ ] Test CT302 with actual disc ripping ⏳ **NEXT**
+- [ ] Plan cutover from CT200 to CT302
 - [ ] Import CT201 (transcoder) to Terraform
 - [ ] Import CT202 (analyzer) to Terraform
-- [ ] Create device passthrough Ansible role
-- [ ] Decommission legacy containers (CT100, CT102)
 
 ### Phase 3: Host Configuration (Planned)
 - [ ] Ansible role for MergerFS configuration

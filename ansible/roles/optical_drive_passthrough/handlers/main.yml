@@ -1,0 +1,7 @@
+---
+# Optical drive passthrough handlers
+
+- name: restart container
+  shell: "pct stop {{ container_id }} && sleep 2 && pct start {{ container_id }}"
+  delegate_to: homelab
+  when: container_id is defined

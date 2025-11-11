@@ -1,0 +1,15 @@
+---
+# Optical drive passthrough role defaults
+
+# Container ID (must be set in playbook or inventory)
+# container_id: 302
+
+# Optical drive device paths on host
+optical_drive_block_device: "/dev/sr0"
+optical_drive_scsi_device: "/dev/sg4"
+
+# Device major:minor numbers (standard for optical drives)
+optical_drive_block_major: 11
+optical_drive_block_minor: 0
+optical_drive_scsi_major: 21
+optical_drive_scsi_minor: 4

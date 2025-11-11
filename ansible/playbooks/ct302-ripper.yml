@@ -1,0 +1,120 @@
+---
+# CT302 Ripper Container Configuration
+# MakeMKV Blu-ray/DVD ripper with optical drive passthrough
+
+- name: Configure ripper container
+  hosts: ct302
+  become: yes
+  
+  vars:
+    # Enable media user creation
+    media_user_enabled: true
+    media_user_groups: ['cdrom']  # Add to cdrom group for optical drive access
+    
+    # Container ID for device passthrough
+    container_id: 302
+
+  vars_files:
+    - ../vars/makemkv_secrets.yml  # Encrypted file with makemkv_beta_key
+
+  roles:
+    - role: common
+      tags: ['common']
+    
+    - role: makemkv
+      tags: ['makemkv']
+
+  tasks:
+    - name: Deploy media scripts
+      copy:
+        src: "{{ item.src }}"
+        dest: "/home/media/scripts/{{ item.dest }}"
+        owner: media
+        group: media
+        mode: '0755'
+      loop:
+        - { src: "../../scripts/media/production/rip-disc.sh", dest: "rip-disc.sh" }
+      tags: ['scripts']
+
+    - name: Configure staging path environment variable
+      lineinfile:
+        path: /home/media/.bashrc
+        line: 'export STAGING_BASE="/mnt/staging"'
+        state: present
+        owner: media
+        group: media
+      tags: ['scripts']
+
+# Optical drive passthrough must run on the Proxmox host
+- name: Configure optical drive passthrough
+  hosts: homelab
+  become: yes
+  
+  vars:
+    container_id: 302
+  
+  roles:
+    - role: optical_drive_passthrough
+      tags: ['optical', 'passthrough']
+
+# Verification tasks (run after container restart)
+- name: Verify ripper container configuration
+  hosts: ct302
+  become: yes
+  
+  tasks:
+    - name: Wait for container to be ready after restart
+      wait_for_connection:
+        timeout: 60
+      tags: ['verify']
+
+    - name: Verify optical drive devices exist
+      stat:
+        path: "{{ item }}"
+      loop:
+        - /dev/sr0
+        - /dev/sg4
+      register: optical_devices
+      tags: ['verify']
+
+    - name: Display optical drive status
+      debug:
+        msg: "{{ item.item }} {{ 'exists' if item.stat.exists else 'MISSING' }}"
+      loop: "{{ optical_devices.results }}"
+      tags: ['verify']
+
+    - name: Verify MakeMKV can access optical drive
+      command: makemkvcon info disc:0
+      register: makemkv_test
+      failed_when: false
+      changed_when: false
+      become_user: media
+      tags: ['verify']
+
+    - name: Display MakeMKV test result
+      debug:
+        msg: "{{ makemkv_test.stdout_lines[0:3] }}"
+      when: makemkv_test.stdout_lines is defined and makemkv_test.stdout_lines | length > 0
+      tags: ['verify']
+
+    - name: Verify scripts deployed
+      stat:
+        path: /home/media/scripts/rip-disc.sh
+      register: script_check
+      tags: ['verify']
+
+    - name: Display script deployment status
+      debug:
+        msg: "rip-disc.sh {{ 'deployed successfully' if script_check.stat.exists else 'MISSING' }}"
+      tags: ['verify']
+
+    - name: Verify staging mount exists
+      stat:
+        path: /mnt/staging/1-ripped
+      register: staging_mount
+      tags: ['verify']
+
+    - name: Display staging mount status
+      debug:
+        msg: "Staging directory {{ 'mounted correctly' if staging_mount.stat.exists else 'MISSING - check mount configuration' }}"
+      tags: ['verify']

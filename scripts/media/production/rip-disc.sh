@@ -48,14 +48,22 @@ SAFE_NAME=$(echo "$NAME" | tr ' ' '_' | tr -cd '[:alnum:]_-')
 DATE_STAMP=$(date +%Y-%m-%d)
 
 # Determine output path based on type
+# Base path can be overridden with STAGING_BASE env var
+# Auto-detect if running in container with /mnt/staging mount
+if [ -d "/mnt/staging/1-ripped" ]; then
+    STAGING_BASE="${STAGING_BASE:-/mnt/staging}"
+else
+    STAGING_BASE="${STAGING_BASE:-/mnt/storage/media/staging}"
+fi
+
 case "$TYPE" in
     movie)
-        OUTPUT_DIR="/mnt/storage/media/staging/1-ripped/movies/${SAFE_NAME}_${DATE_STAMP}"
+        OUTPUT_DIR="${STAGING_BASE}/1-ripped/movies/${SAFE_NAME}_${DATE_STAMP}"
         DISPLAY_INFO="Movie: $NAME"
         ;;
     show)
         SAFE_DISC=$(echo "$DISC_INFO" | tr ' ' '_' | tr -cd '[:alnum:]_-')
-        OUTPUT_DIR="/mnt/storage/media/staging/1-ripped/tv/${SAFE_NAME}/${SAFE_DISC}_${DATE_STAMP}"
+        OUTPUT_DIR="${STAGING_BASE}/1-ripped/tv/${SAFE_NAME}/${SAFE_DISC}_${DATE_STAMP}"
         DISPLAY_INFO="Show: $NAME | Disc: $DISC_INFO"
         ;;
 esac

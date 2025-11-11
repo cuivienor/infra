@@ -34,15 +34,16 @@ This file contains important context for AI assistants working on this repositor
 - Storage mount: `/mnt/storage` bind-mounted from host
 - Base template: Debian 12
 
-**Active Containers**:
+**Active Containers** (Manual):
+- **CT101 jellyfin** (192.168.1.128): Media server (unprivileged)
 - **CT200 ripper-new** (192.168.1.75): MakeMKV with optical drive passthrough
 - **CT201 transcoder-new** (192.168.1.77): FFmpeg with Intel Arc GPU passthrough
 - **CT202 analyzer** (192.168.1.72): Media analysis tools
-- **CT101 jellyfin** (192.168.1.128): Media server (unprivileged)
 
-**Legacy Containers** (stopped, to be decommissioned):
-- **CT100 ripper** (old): Being replaced by CT200
-- **CT102 transcoder** (old): Being replaced by CT201
+**IaC Containers** (300 Range):
+- **CT300 backup** (192.168.1.58): Restic + Backrest UI for automated backups to Backblaze B2
+- **CT301 samba** (192.168.1.82): Samba file server for network shares
+- **CT302 ripper** (192.168.1.70): MakeMKV with optical drive (IaC version of CT200, production ready)
 
 ### Media Pipeline
 
@@ -58,8 +59,10 @@ This file contains important context for AI assistants working on this repositor
 - Purpose: Consistent ownership for media files across containers
 
 **Scripts Location**: `scripts/media/`
+- **Organized structure**: `production/`, `utilities/`, `migration/`, `archive/`
 - All scripts expect to run as `media` user
 - Scripts handle ripping, transcoding, organizing, and migration
+- See `scripts/media/README.md` for complete documentation
 
 ### IaC Strategy
 
@@ -148,6 +151,12 @@ homelab-notes/
 
 ### Security
 
+**Ansible Vault Password**:
+- **Location**: `.vault_pass` in repository root (`/home/cuiv/dev/homelab-notes/.vault_pass`)
+- **NOT** in `~/.vault_pass` (repo-specific, not global)
+- **Usage**: `--vault-password-file .vault_pass` (from repo root) or `--vault-password-file ../.vault_pass` (from ansible/)
+- **Permissions**: `chmod 600 .vault_pass`
+
 **Never Commit**:
 - Terraform state files (`*.tfstate`)
 - Terraform variables with secrets (`terraform.tfvars`)
@@ -161,6 +170,7 @@ homelab-notes/
 - Ansible inventory structure (IPs can be parameterized)
 - Scripts (ensure no hardcoded credentials)
 - Documentation
+- Encrypted vault files (e.g., `*_secrets.yml` after encryption)
 
 ### Git Workflow
 
@@ -318,8 +328,8 @@ ansible-playbook playbooks/site.yml --tags ripper
 # Check mode (dry run)
 ansible-playbook playbooks/<name>.yml --check
 
-# Edit vault
-ansible-vault edit vars/secrets.yml
+# Edit vault (vault password is in repo root: .vault_pass)
+ansible-vault edit vars/secrets.yml --vault-password-file ../.vault_pass
 ```
 
 ### Media Scripts
