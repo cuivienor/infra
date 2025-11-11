@@ -80,7 +80,8 @@ Resources:
 
 Network:
   Bridge: vmbr0
-  IP: DHCP assigned
+  IP: 192.168.1.82/24 (static)
+  Gateway: 192.168.1.1
 
 Storage:
   Mount: /mnt/storage → /mnt/storage
