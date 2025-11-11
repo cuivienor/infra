@@ -195,9 +195,9 @@ while IFS='|' read -r input_file output_file; do
     
     # Build ffmpeg command based on mode
     if [ "$MODE" = "hardware" ]; then
-        ffmpeg_cmd="ffmpeg -hwaccel qsv -hwaccel_output_format qsv -i \"$input_file\" -c:v hevc_qsv -preset medium -global_quality $CRF -c:a copy -c:s copy -y \"$output_file\""
+        ffmpeg_cmd="ffmpeg -nostdin -hwaccel qsv -hwaccel_output_format qsv -i \"$input_file\" -c:v hevc_qsv -preset medium -global_quality $CRF -c:a copy -c:s copy -y \"$output_file\""
     else
-        ffmpeg_cmd="ffmpeg -i \"$input_file\" -map 0:v:0 -map 0:a -map 0:s? -c:v libx265 -preset slow -crf $CRF -c:a copy -c:s copy -y \"$output_file\""
+        ffmpeg_cmd="ffmpeg -nostdin -i \"$input_file\" -map 0:v:0 -map 0:a -map 0:s? -c:v libx265 -preset slow -crf $CRF -c:a copy -c:s copy -y \"$output_file\""
     fi
     
     # Execute
