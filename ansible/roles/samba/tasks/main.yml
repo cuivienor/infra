@@ -1,0 +1,94 @@
+---
+# Samba installation and configuration tasks
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  tags: [samba, install]
+
+- name: Install Samba packages
+  apt:
+    name:
+      - samba
+      - samba-common-bin
+      - cifs-utils  # Useful for testing
+    state: present
+  tags: [samba, install]
+
+- name: Ensure media group exists
+  group:
+    name: media
+    gid: 1000
+    state: present
+  tags: [samba, users]
+
+- name: Ensure media user exists
+  user:
+    name: media
+    uid: 1000
+    group: media
+    groups: []
+    shell: /bin/bash
+    create_home: yes
+    home: /home/media
+    state: present
+  tags: [samba, users]
+
+- name: Ensure /mnt/storage exists and has correct permissions
+  file:
+    path: /mnt/storage
+    state: directory
+    owner: media
+    group: media
+    mode: '0775'
+  tags: [samba, permissions]
+
+- name: Deploy Samba configuration
+  template:
+    src: smb.conf.j2
+    dest: /etc/samba/smb.conf
+    owner: root
+    group: root
+    mode: '0644'
+    validate: 'testparm -s %s'
+  notify: restart samba
+  tags: [samba, config]
+
+- name: Check if media user exists in Samba
+  shell: pdbedit -L | grep -q '^media:'
+  register: samba_user_exists
+  changed_when: false
+  failed_when: false
+  tags: [samba, users]
+
+- name: Set Samba password for media user
+  shell: |
+    (echo "{{ samba_media_password }}"; echo "{{ samba_media_password }}") | smbpasswd -a -s media
+  when: samba_user_exists.rc != 0
+  no_log: true  # Don't log password
+  tags: [samba, users]
+
+- name: Enable media user in Samba
+  shell: smbpasswd -e media
+  changed_when: false
+  tags: [samba, users]
+
+- name: Ensure Samba services are enabled and started
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  loop:
+    - smbd
+    - nmbd
+  tags: [samba, service]
+
+- name: Create Samba log directory
+  file:
+    path: /var/log/samba
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [samba, logging]

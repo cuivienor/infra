@@ -1,0 +1,5 @@
+---
+# Default variables for samba role
+
+# Samba media user password (override in vars/secrets.yml)
+samba_media_password: "changeme"

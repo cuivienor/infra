@@ -1,0 +1,35 @@
+---
+# Playbook for configuring CT301 (Samba file server)
+
+- name: Configure Samba container (CT301)
+  hosts: ct301_samba
+  become: yes
+  gather_facts: yes
+
+  vars_files:
+    - ../vars/secrets.yml
+
+  pre_tasks:
+    - name: Wait for container to be reachable
+      wait_for_connection:
+        timeout: 300
+        delay: 10
+      tags: always
+
+    - name: Gather facts after connection
+      setup:
+      tags: always
+
+  roles:
+    - role: samba
+      tags: [samba]
+
+  post_tasks:
+    - name: Display Samba server information
+      debug:
+        msg:
+          - "Samba server configured successfully!"
+          - "Access via: \\\\{{ ansible_default_ipv4.address }}\\storage"
+          - "Username: media"
+          - "Password: (stored in Ansible Vault)"
+      tags: always
