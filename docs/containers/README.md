@@ -15,6 +15,24 @@ Operational documentation for all homelab LXC containers.
 
 ---
 
+### CT301: Samba File Server
+**Status**: ✅ Production  
+**Purpose**: SMB file sharing for `/mnt/storage` access  
+**Quick Access**: `ssh root@192.168.1.82` | `\\192.168.1.82\storage`
+
+[📖 Full Documentation](./ct301-samba.md) | [Terraform](../../terraform/ct301-samba.tf) | [Ansible](../../ansible/playbooks/ct301-samba.yml)
+
+---
+
+### CT302: Ripper Container (IaC)
+**Status**: ✅ Production  
+**Purpose**: Blu-ray/DVD ripping with MakeMKV (IaC version)  
+**Quick Access**: `ssh root@192.168.1.70`
+
+[📖 Full Documentation](./ct302-ripper.md) | [Terraform](../../terraform/ct302-ripper.tf) | [Ansible](../../ansible/playbooks/ct302-ripper.yml)
+
+---
+
 ### CT101: Jellyfin Media Server  
 **Status**: ✅ Production  
 **Purpose**: Media streaming (movies, TV, music)  
@@ -24,12 +42,12 @@ Operational documentation for all homelab LXC containers.
 
 ---
 
-### CT200: Ripper (MakeMKV)
-**Status**: ✅ Production  
+### CT200: Ripper (MakeMKV) - Legacy
+**Status**: ✅ Production (Manual)  
 **Purpose**: Blu-ray/DVD ripping with optical drive passthrough  
 **Quick Access**: `ssh root@192.168.1.75`
 
-📝 *Documentation pending*
+📝 *Documentation pending* | **Note**: Being replaced by CT302 (IaC version)
 
 ---
 
@@ -70,10 +88,12 @@ Operational documentation for all homelab LXC containers.
 ### By Purpose
 
 **Media Pipeline:**
-- CT200 (Ripper) → CT201 (Transcoder) → CT202 (Analyzer) → CT101 (Jellyfin)
+- CT302 (Ripper) → CT201 (Transcoder) → CT202 (Analyzer) → CT101 (Jellyfin)
+- Legacy: CT200 (Ripper - Manual)
 
 **Infrastructure:**
 - CT300 (Backup)
+- CT301 (Samba File Server)
 
 **Planned:**
 - Monitoring/Alerting container
@@ -83,10 +103,12 @@ Operational documentation for all homelab LXC containers.
 
 **Terraform + Ansible (IaC):**
 - CT300 (Backup)
+- CT301 (Samba)
+- CT302 (Ripper)
 
 **Manual (To be migrated):**
 - CT101 (Jellyfin)
-- CT200 (Ripper)
+- CT200 (Ripper - Legacy, will be replaced by CT302)
 - CT201 (Transcoder)
 - CT202 (Analyzer)
 
@@ -98,15 +120,19 @@ Operational documentation for all homelab LXC containers.
 ```bash
 # From jump box/local machine
 ssh root@192.168.1.58   # CT300 - Backup
+ssh root@192.168.1.82   # CT301 - Samba
+ssh root@192.168.1.70   # CT302 - Ripper (IaC)
 ssh root@192.168.1.128  # CT101 - Jellyfin
-ssh root@192.168.1.75   # CT200 - Ripper
+ssh root@192.168.1.75   # CT200 - Ripper (Legacy)
 ssh root@192.168.1.77   # CT201 - Transcoder
 ssh root@192.168.1.72   # CT202 - Analyzer
 
 # From Proxmox host
 pct enter 300   # Backup
+pct enter 301   # Samba
+pct enter 302   # Ripper (IaC)
 pct enter 101   # Jellyfin
-pct enter 200   # Ripper
+pct enter 200   # Ripper (Legacy)
 pct enter 201   # Transcoder
 pct enter 202   # Analyzer
 ```
@@ -196,5 +222,5 @@ When creating documentation for a new container:
 ---
 
 **Last updated**: 2025-11-11  
-**Containers documented**: 1/5 active  
-**Next to document**: CT101 (Jellyfin), CT200 (Ripper), CT201 (Transcoder), CT202 (Analyzer)
+**Containers documented**: 3/7 active (CT300, CT301, CT302)  
+**Next to document**: CT101 (Jellyfin), CT201 (Transcoder), CT202 (Analyzer), CT200 (Legacy Ripper)
