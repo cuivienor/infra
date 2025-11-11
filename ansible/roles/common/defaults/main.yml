@@ -1,0 +1,23 @@
+---
+# Default variables for common role
+
+# SSH key management
+ssh_keys_directory: "{{ playbook_dir }}/../files/ssh-keys"
+ssh_authorized_keys_users:
+  - root  # Default: deploy keys to root user
+
+# Timezone configuration
+timezone: "America/New_York"
+
+# Locale configuration
+locale: "en_US.UTF-8"
+
+# Basic packages to install on all systems
+common_packages:
+  - vim
+  - htop
+  - curl
+  - wget
+  - git
+  - ca-certificates
+  - gnupg
