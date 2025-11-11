@@ -18,22 +18,25 @@ backup_group: "media"
 # Backup policies configuration
 backup_policies:
   # Policy for /mnt/storage data (excludes large media files)
-  # Backs up: photos, documents, backups, e-books, audiobooks, etc.
-  # Excludes: Movies, TV, and media pipeline directories
+  # Backs up: photos, documents, backups from archives/
+  # Excludes: All media/, private/, google-takeout/
   - name: "data"
     enabled: true
     paths:
       - "/mnt/storage"
     excludes:
       # Large media directories (expensive to backup, can be re-ripped/re-downloaded)
-      # Note: media/ now includes movies, tv, audiobooks, e-books, staging
+      # Note: media/ includes movies, tv, audiobooks, e-books, staging, legacy-media
       - "/mnt/storage/media/**"
       
       # Private content (adult content, not backed up)
       - "/mnt/storage/private/**"
       
-      # Legacy media in archives (already have old backups)
-      - "/mnt/storage/archives/legacy-media/**"
+      # Google Takeout (Google Photos archive - 598GB, not backing up)
+      - "/mnt/storage/google-takeout/**"
+      
+      # Old Photos directory (pending deletion after consolidation verified)
+      - "/mnt/storage/Photos-OLD-DELETE-AFTER-REVIEW/**"
       
       # Temporary/cache directories
       - "/mnt/storage/temp/**"
