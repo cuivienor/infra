@@ -86,8 +86,13 @@
 **MergerFS Options**:
 ```
 defaults,nonempty,allow_other,use_ino,cache.files=off,
-moveonenospc=true,dropcacheonclose=true,minfreespace=200G
+moveonenospc=true,dropcacheonclose=true,category.create=eppfrd,minfreespace=200G
 ```
+
+**Distribution Policy**: `eppfrd` (Existing Path, Percentage Free space, Round-robin Distribution)
+- Automatically distributes new files across disks with most free space
+- Requires directory structure to exist on all disks
+- Updated 2025-11-11 from `mfs` to `eppfrd` for balanced usage
 
 **Disk Identification**: All disks mounted by `/dev/disk/by-id/` for stability
 
@@ -109,10 +114,13 @@ moveonenospc=true,dropcacheonclose=true,minfreespace=200G
 ├── movies/           # Movie library (managed by FileBot)
 ├── tv/               # TV show library (managed by FileBot)
 └── staging/          # Media pipeline staging area
-    ├── 0-raw/        # Raw MakeMKV rips
-    ├── 1-ripped/     # Transcoded files
-    └── 2-ready/      # Organized and ready to move to library
+    ├── 1-ripped/     # Raw MakeMKV output
+    ├── 2-remuxed/    # Remuxed files
+    ├── 3-transcoded/ # Transcoded files
+    └── 4-ready/      # Organized and ready to move to library
 ```
+
+**Note**: Directory structure replicated across all three data disks (disk1, disk2, disk3) as of 2025-11-11 to enable MergerFS `eppfrd` distribution policy.
 
 **Ownership**: `media:media` (UID/GID 1000:1000)  
 **Permissions**: Directories `0775`, Files managed by scripts

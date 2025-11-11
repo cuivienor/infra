@@ -30,7 +30,7 @@ storage_parity_disk:
 mergerfs_version: "2.40.2"
 mergerfs_pool_path: /mnt/storage
 mergerfs_source_dirs: /mnt/disk*
-mergerfs_opts: "defaults,nonempty,allow_other,use_ino,cache.files=off,moveonenospc=true,dropcacheonclose=true,category.create=mfs,minfreespace=200G,fsname=mergerfs"
+mergerfs_opts: "defaults,nonempty,allow_other,use_ino,cache.files=off,moveonenospc=true,dropcacheonclose=true,category.create=eppfrd,minfreespace=200G,fsname=mergerfs"
 
 # SnapRAID configuration
 snapraid_version: "12.3"
