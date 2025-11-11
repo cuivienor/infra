@@ -35,7 +35,7 @@
 
   post_tasks:
     - name: Verify mounts
-      command: mount | grep -E 'mergerfs|/mnt/disk|/mnt/parity'
+      shell: mount | grep -E 'mergerfs|/mnt/disk|/mnt/parity'
       register: mounts
       changed_when: false
 
