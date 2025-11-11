@@ -1,0 +1,55 @@
+---
+# Default variables for proxmox_storage role
+
+# Storage disks configuration
+storage_disks:
+  - name: disk1
+    device: /dev/disk/by-id/ata-WDC_WD101EDBZ-11B1DA0_VCHLGZTP-part1
+    mount: /mnt/disk1
+    fstype: ext4
+    opts: defaults
+  - name: disk2
+    device: /dev/disk/by-id/ata-ST10000DM0004-1ZC101_ZA2DWAHC-part1
+    mount: /mnt/disk2
+    fstype: ext4
+    opts: defaults
+  - name: disk3
+    device: /dev/disk/by-id/ata-WDC_WD180EDGZ-11B2DA0_3FKXJ3UV-part1
+    mount: /mnt/disk3
+    fstype: ext4
+    opts: defaults
+
+storage_parity_disk:
+  device: /dev/disk/by-id/ata-WDC_WD180EDGZ-11B2DA0_3FKJMTSV-part1
+  mount: /mnt/parity
+  fstype: ext4
+  opts: defaults
+
+# MergerFS configuration
+mergerfs_version: "2.40.2"
+mergerfs_pool_path: /mnt/storage
+mergerfs_source_dirs: /mnt/disk*
+mergerfs_opts: "defaults,nonempty,allow_other,use_ino,cache.files=off,moveonenospc=true,dropcacheonclose=true,category.create=mfs,minfreespace=200G,fsname=mergerfs"
+
+# SnapRAID configuration
+snapraid_version: "12.3"
+snapraid_parity_file: /mnt/parity/snapraid.parity
+snapraid_content_files:
+  - /mnt/disk1/.snapraid.content
+  - /mnt/disk2/.snapraid.content
+  - /mnt/disk3/.snapraid.content
+snapraid_block_size: 256
+snapraid_hash: blake2
+snapraid_autosave: 500
+
+# SnapRAID scheduling
+snapraid_sync_enabled: true
+snapraid_sync_schedule: "0 3 * * *"  # 3 AM daily
+snapraid_scrub_enabled: true
+snapraid_scrub_schedule: "0 4 * * 1"  # 4 AM Monday weekly
+snapraid_scrub_percent: 8
+
+# Media user
+media_user: media
+media_uid: 1000
+media_gid: 1000

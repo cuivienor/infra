@@ -1,0 +1,19 @@
+---
+# Set proper permissions on storage
+
+- name: Set ownership on data disks
+  file:
+    path: "{{ item.mount }}"
+    owner: "{{ media_user }}"
+    group: "{{ media_user }}"
+    mode: '0775'
+    state: directory
+  loop: "{{ storage_disks }}"
+
+- name: Set ownership on mergerfs pool
+  file:
+    path: "{{ mergerfs_pool_path }}"
+    owner: "{{ media_user }}"
+    group: "{{ media_user }}"
+    mode: '0775'
+    state: directory

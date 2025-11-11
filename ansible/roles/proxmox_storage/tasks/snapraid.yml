@@ -1,0 +1,117 @@
+---
+# Configure SnapRAID
+
+- name: Create SnapRAID configuration
+  template:
+    src: snapraid.conf.j2
+    dest: /etc/snapraid.conf
+    mode: '0644'
+    owner: root
+    group: root
+  notify: snapraid config changed
+
+- name: Create log directory for SnapRAID
+  file:
+    path: /var/log/snapraid
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Create SnapRAID runner script
+  copy:
+    src: snapraid-runner.sh
+    dest: /usr/local/bin/snapraid-runner.sh
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Create SnapRAID sync systemd service
+  copy:
+    dest: /etc/systemd/system/snapraid-sync.service
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      [Unit]
+      Description=SnapRAID sync
+      After=local-fs.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/snapraid-runner.sh sync
+      StandardOutput=journal
+      StandardError=journal
+  notify: reload systemd
+
+- name: Create SnapRAID sync systemd timer
+  copy:
+    dest: /etc/systemd/system/snapraid-sync.timer
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      [Unit]
+      Description=Run SnapRAID sync daily
+
+      [Timer]
+      OnCalendar={{ snapraid_sync_schedule }}
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+  when: snapraid_sync_enabled
+  notify: reload systemd
+
+- name: Create SnapRAID scrub systemd service
+  copy:
+    dest: /etc/systemd/system/snapraid-scrub.service
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      [Unit]
+      Description=SnapRAID scrub
+      After=local-fs.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/snapraid-runner.sh scrub
+      StandardOutput=journal
+      StandardError=journal
+  notify: reload systemd
+
+- name: Create SnapRAID scrub systemd timer
+  copy:
+    dest: /etc/systemd/system/snapraid-scrub.timer
+    mode: '0644'
+    owner: root
+    group: root
+    content: |
+      [Unit]
+      Description=Run SnapRAID scrub weekly
+
+      [Timer]
+      OnCalendar={{ snapraid_scrub_schedule }}
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+  when: snapraid_scrub_enabled
+  notify: reload systemd
+
+- name: Enable and start SnapRAID sync timer
+  systemd:
+    name: snapraid-sync.timer
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  when: snapraid_sync_enabled
+
+- name: Enable and start SnapRAID scrub timer
+  systemd:
+    name: snapraid-scrub.timer
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  when: snapraid_scrub_enabled

@@ -1,0 +1,43 @@
+---
+# Configure MergerFS pool
+
+- name: Verify mergerfs is installed
+  command: which mergerfs
+  register: mergerfs_bin
+  failed_when: mergerfs_bin.rc != 0
+  changed_when: false
+
+- name: Create mergerfs mount point
+  file:
+    path: "{{ mergerfs_pool_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Check if mergerfs is in fstab
+  command: grep -F "{{ mergerfs_pool_path }}" /etc/fstab
+  register: mergerfs_fstab_check
+  failed_when: false
+  changed_when: false
+
+- name: Add mergerfs entry to fstab
+  mount:
+    path: "{{ mergerfs_pool_path }}"
+    src: "{{ mergerfs_source_dirs }}"
+    fstype: fuse.mergerfs
+    opts: "{{ mergerfs_opts }}"
+    state: present
+  when: mergerfs_fstab_check.rc != 0
+
+- name: Ensure mergerfs is mounted
+  mount:
+    path: "{{ mergerfs_pool_path }}"
+    src: "{{ mergerfs_source_dirs }}"
+    fstype: fuse.mergerfs
+    opts: "{{ mergerfs_opts }}"
+    state: mounted
+
+- name: Verify mergerfs is mounted
+  command: mountpoint -q {{ mergerfs_pool_path }}
+  register: mergerfs_mounted
+  failed_when: mergerfs_mounted.rc != 0
+  changed_when: false

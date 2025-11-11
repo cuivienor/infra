@@ -1,0 +1,36 @@
+---
+# Configure data disk mounts
+
+- name: Create mount point directories
+  file:
+    path: "{{ item.mount }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ storage_disks + [storage_parity_disk] }}"
+
+- name: Check if disks are in fstab
+  command: grep -F "{{ item.device }}" /etc/fstab
+  register: fstab_check
+  loop: "{{ storage_disks + [storage_parity_disk] }}"
+  failed_when: false
+  changed_when: false
+
+- name: Add disk mounts to fstab
+  mount:
+    path: "{{ item.item.mount }}"
+    src: "{{ item.item.device }}"
+    fstype: "{{ item.item.fstype }}"
+    opts: "{{ item.item.opts }}"
+    state: present
+  loop: "{{ fstab_check.results }}"
+  when: item.rc != 0
+  notify: mount all disks
+
+- name: Ensure all disks are mounted
+  mount:
+    path: "{{ item.mount }}"
+    src: "{{ item.device }}"
+    fstype: "{{ item.fstype }}"
+    opts: "{{ item.opts }}"
+    state: mounted
+  loop: "{{ storage_disks + [storage_parity_disk] }}"
