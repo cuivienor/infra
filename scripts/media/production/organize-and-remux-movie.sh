@@ -18,7 +18,7 @@ if [ -z "$INPUT_DIR" ]; then
     echo "Usage: $0 /path/to/1-ripped/movies/Movie_Name_2024-11-10/"
     echo ""
     echo "Example:"
-    echo "  $0 /mnt/storage/media/staging/1-ripped/movies/How_To_Train_Your_Dragon_2024-11-10/"
+    echo "  $0 \${STAGING_BASE:-/mnt/staging}/1-ripped/movies/How_To_Train_Your_Dragon_2024-11-10/"
     exit 1
 fi
 
@@ -35,6 +35,9 @@ for tool in mkvmerge jq bc; do
     fi
 done
 
+# Use STAGING_BASE environment variable if set, otherwise default to /mnt/storage/media/staging
+STAGING_BASE="${STAGING_BASE:-/mnt/storage/media/staging}"
+
 # Extract movie name and date stamp from folder
 FOLDER_NAME=$(basename "$INPUT_DIR")
 DATE_STAMP=$(echo "$FOLDER_NAME" | grep -oP '[0-9]{4}-[0-9]{2}-[0-9]{2}$' || echo "")
@@ -42,9 +45,9 @@ MOVIE_NAME=$(echo "$FOLDER_NAME" | sed 's/_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}$//')
 
 # Determine output directory
 if [ -n "$DATE_STAMP" ]; then
-    OUTPUT_DIR="/mnt/storage/media/staging/2-remuxed/movies/${MOVIE_NAME}_${DATE_STAMP}"
+    OUTPUT_DIR="${STAGING_BASE}/2-remuxed/movies/${MOVIE_NAME}_${DATE_STAMP}"
 else
-    OUTPUT_DIR="/mnt/storage/media/staging/2-remuxed/movies/${MOVIE_NAME}"
+    OUTPUT_DIR="${STAGING_BASE}/2-remuxed/movies/${MOVIE_NAME}"
 fi
 
 echo "=========================================="
