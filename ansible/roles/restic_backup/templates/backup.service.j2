@@ -9,12 +9,13 @@ ExecStart={{ restic_config_dir }}/scripts/backup-{{ item.name }}.sh
 User=root
 Group=root
 
-# Security hardening
-PrivateTmp=yes
-NoNewPrivileges=yes
-ProtectSystem=strict
-ProtectHome=read-only
-ReadWritePaths={{ restic_cache_dir }} {{ restic_log_dir }}
+# Security hardening (disabled for LXC container compatibility)
+# LXC containers don't support systemd mount namespacing
+# PrivateTmp=yes
+# NoNewPrivileges=yes
+# ProtectSystem=strict
+# ProtectHome=read-only
+# ReadWritePaths={{ restic_cache_dir }} {{ restic_log_dir }}
 
 # Timeout (adjust based on backup size)
 TimeoutStartSec=0
