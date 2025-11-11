@@ -12,6 +12,11 @@
     # No special groups needed for analyzer (no hardware passthrough)
     media_user_groups: []
     
+    # SSH key deployment
+    ssh_authorized_keys_users:
+      - root
+      - media  # Allow direct SSH as media user
+    
     # Optional: Enable FileBot installation
     # Set to true if you want automated FileBot organization
     media_analyzer_install_filebot: false

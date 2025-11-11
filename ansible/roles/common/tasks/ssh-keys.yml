@@ -27,7 +27,7 @@
 
 - name: Ensure .ssh directory exists for each user
   ansible.builtin.file:
-    path: "/{{ item }}/.ssh"
+    path: "{{ '/root' if item == 'root' else '/home/' + item }}/.ssh"
     state: directory
     mode: '0700'
     owner: "{{ item }}"
@@ -46,7 +46,7 @@
 
 - name: Set proper permissions on authorized_keys
   ansible.builtin.file:
-    path: "/{{ item }}/.ssh/authorized_keys"
+    path: "{{ '/root' if item == 'root' else '/home/' + item }}/.ssh/authorized_keys"
     mode: '0600'
     owner: "{{ item }}"
     group: "{{ item }}"
