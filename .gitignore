@@ -8,9 +8,10 @@ terraform/.terraform.tfstate.lock.info
 
 # Ansible
 *.retry
+.vault_pass
 ansible/.vault_pass
-ansible/vars/secrets.yml
-ansible/vars/backup_secrets.yml
+# Note: Encrypted vault files (backup_secrets.yml) are committed
+# Only ignore if unencrypted (shouldn't happen in practice)
 
 # Environment
 .envrc
@@ -26,6 +27,9 @@ ansible/vars/backup_secrets.yml
 
 # Private journal
 .private-journal/
+
+# Temporary files
+tmp/
 
 # Editor
 *.swp
