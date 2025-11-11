@@ -248,16 +248,28 @@ echo ""
 
 # Count episodes (non-extras)
 episode_count=0
+echo "DEBUG: Total files in array: ${#all_files[@]}"
+echo "DEBUG: Extras map size: ${#extras_map[@]}"
+
 for entry in "${all_files[@]}"; do
     IFS='|' read -r idx disc track dur size filepath <<< "$entry"
     if [[ -z "${extras_map[$idx]}" ]]; then
-        ((episode_count++))
+        episode_count=$((episode_count + 1))
     fi
 done
+
+echo "DEBUG: Episode count calculated: $episode_count"
 
 echo "Files to number as episodes: $episode_count"
 echo "Extras: ${#extras_map[@]}"
 echo ""
+
+# Safety check
+if [ $episode_count -eq 0 ]; then
+    echo "ERROR: No episodes found to process!"
+    echo "This shouldn't happen. Please report this issue."
+    exit 1
+fi
 
 read -p "Starting episode number [S${SEASON_NUM}E01]: " start_ep
 start_ep=${start_ep:-"S${SEASON_NUM}E01"}
