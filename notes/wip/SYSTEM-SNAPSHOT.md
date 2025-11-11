@@ -32,7 +32,14 @@
 
 ## Recent Changes
 
-### 2025-11-11
+### 2025-11-11 (Evening)
+- ✅ **MergerFS Distribution Fixed**: Changed policy from `mfs` to `eppfrd`
+- ✅ **Directory Structure Replicated**: All directories from disk1 copied to disk2/disk3
+- ✅ **Tested Distribution**: Verified new files now spread across all disks
+- ✅ **Updated Ansible Config**: Changed `ansible/roles/proxmox_storage/defaults/main.yml`
+- 📊 **Result**: New files now auto-distribute to disk2/disk3 (99% free) instead of disk1 (48% full)
+
+### 2025-11-11 (Morning)
 - ✅ Repository reorganized for IaC work
 - ✅ Created comprehensive documentation structure
 - ✅ Inspected live system and documented current state
@@ -78,10 +85,12 @@
 ### Storage (MergerFS)
 - **Status**: ✅ Healthy
 - **Usage**: 4.1T / 35T (13%)
+- **Distribution**: ✅ Balanced (updated 2025-11-11)
+- **Policy**: `eppfrd` (automatic distribution to emptier disks)
 - **Disks**: 
-  - disk1: 48% (4.1T/9.1T) - Main data disk
-  - disk2: 1% (205M/9.1T) - Nearly empty
-  - disk3: 1% (23G/17T) - Nearly empty
+  - disk1: 48% (4.1T/9.1T) - Legacy data (new files avoid)
+  - disk2: 1% (470M/9.1T) - Active (receiving new files)
+  - disk3: 1% (24G/17T) - Active (receiving new files)
   - parity: 20% (3.1T/17T)
 
 ---
