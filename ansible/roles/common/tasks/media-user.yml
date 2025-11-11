@@ -18,6 +18,14 @@
     create_home: yes
     state: present
 
+- name: Ensure media user home directory ownership
+  file:
+    path: "{{ media_user_home }}"
+    state: directory
+    owner: "{{ media_user_name }}"
+    group: "{{ media_user_name }}"
+    mode: '0755'
+
 - name: Create scripts directory for media user
   file:
     path: "{{ media_user_home }}/scripts"
