@@ -1,0 +1,92 @@
+---
+# Main tasks for media_analyzer role
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install media analyzer packages
+  apt:
+    name: "{{ media_analyzer_packages }}"
+    state: present
+
+- name: Install Java for FileBot (if enabled)
+  apt:
+    name: openjdk-17-jre-headless
+    state: present
+  when: media_analyzer_install_filebot | bool
+
+- name: Check if FileBot is already installed
+  command: filebot --version
+  register: filebot_check
+  changed_when: false
+  failed_when: false
+  when: media_analyzer_install_filebot | bool
+
+- name: Download FileBot package
+  get_url:
+    url: "https://get.filebot.net/filebot/FileBot_{{ filebot_version }}/FileBot_{{ filebot_version }}_amd64.deb"
+    dest: "/tmp/FileBot_{{ filebot_version }}_amd64.deb"
+    mode: '0644'
+  when: 
+    - media_analyzer_install_filebot | bool
+    - filebot_check.rc != 0
+
+- name: Install FileBot
+  apt:
+    deb: "/tmp/FileBot_{{ filebot_version }}_amd64.deb"
+    state: present
+  when: 
+    - media_analyzer_install_filebot | bool
+    - filebot_check.rc != 0
+
+- name: Remove FileBot package file
+  file:
+    path: "/tmp/FileBot_{{ filebot_version }}_amd64.deb"
+    state: absent
+  when: 
+    - media_analyzer_install_filebot | bool
+    - filebot_check.rc != 0
+
+- name: Create scripts directory for media user
+  file:
+    path: /home/media/scripts
+    state: directory
+    owner: media
+    group: media
+    mode: '0755'
+
+- name: Deploy media analyzer scripts
+  copy:
+    src: "{{ playbook_dir }}/../../{{ item.src }}"
+    dest: "/home/media/scripts/{{ item.dest }}"
+    owner: media
+    group: media
+    mode: '0755'
+  loop: "{{ media_analyzer_scripts }}"
+
+- name: Configure staging path environment variable
+  lineinfile:
+    path: /home/media/.bashrc
+    line: 'export STAGING_BASE="{{ staging_base_path }}"'
+    state: present
+    owner: media
+    group: media
+    create: yes
+
+- name: Verify mkvtoolnix installation
+  command: mkvmerge --version
+  register: mkvmerge_version
+  changed_when: false
+
+- name: Verify mediainfo installation
+  command: mediainfo --version
+  register: mediainfo_version
+  changed_when: false
+
+- name: Display installed tool versions
+  debug:
+    msg:
+      - "mkvtoolnix: {{ mkvmerge_version.stdout_lines[0] }}"
+      - "mediainfo: {{ mediainfo_version.stdout_lines[0] }}"

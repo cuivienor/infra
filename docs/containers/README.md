@@ -33,6 +33,15 @@ Operational documentation for all homelab LXC containers.
 
 ---
 
+### CT303: Analyzer Container (IaC)
+**Status**: 🚧 Ready for Deployment  
+**Purpose**: Media analysis, remuxing, and organization  
+**Quick Access**: `ssh root@192.168.1.73`
+
+[📖 Full Documentation](./ct303-analyzer.md) | [Terraform](../../terraform/ct303-analyzer.tf) | [Ansible](../../ansible/playbooks/ct303-analyzer.yml)
+
+---
+
 ### CT101: Jellyfin Media Server  
 **Status**: ✅ Production  
 **Purpose**: Media streaming (movies, TV, music)  
@@ -60,12 +69,12 @@ Operational documentation for all homelab LXC containers.
 
 ---
 
-### CT202: Analyzer
+### CT202: Analyzer (Manual)
 **Status**: ✅ Production  
 **Purpose**: Media analysis and quality checking  
 **Quick Access**: `ssh root@192.168.1.72`
 
-📝 *Documentation pending*
+📝 *Documentation pending* | **Note**: Being replaced by CT303 (IaC version)
 
 ---
 
@@ -88,8 +97,8 @@ Operational documentation for all homelab LXC containers.
 ### By Purpose
 
 **Media Pipeline:**
-- CT302 (Ripper) → CT201 (Transcoder) → CT202 (Analyzer) → CT101 (Jellyfin)
-- Legacy: CT200 (Ripper - Manual)
+- CT302 (Ripper) → CT303 (Analyzer) → CT201 (Transcoder) → CT101 (Jellyfin)
+- Legacy: CT200 (Ripper - Manual), CT202 (Analyzer - Manual)
 
 **Infrastructure:**
 - CT300 (Backup)
@@ -105,12 +114,13 @@ Operational documentation for all homelab LXC containers.
 - CT300 (Backup)
 - CT301 (Samba)
 - CT302 (Ripper)
+- CT303 (Analyzer) 🚧
 
 **Manual (To be migrated):**
 - CT101 (Jellyfin)
 - CT200 (Ripper - Legacy, will be replaced by CT302)
 - CT201 (Transcoder)
-- CT202 (Analyzer)
+- CT202 (Analyzer - Legacy, will be replaced by CT303)
 
 ---
 
@@ -122,19 +132,21 @@ Operational documentation for all homelab LXC containers.
 ssh root@192.168.1.58   # CT300 - Backup
 ssh root@192.168.1.82   # CT301 - Samba
 ssh root@192.168.1.70   # CT302 - Ripper (IaC)
+ssh root@192.168.1.73   # CT303 - Analyzer (IaC)
 ssh root@192.168.1.128  # CT101 - Jellyfin
 ssh root@192.168.1.75   # CT200 - Ripper (Legacy)
 ssh root@192.168.1.77   # CT201 - Transcoder
-ssh root@192.168.1.72   # CT202 - Analyzer
+ssh root@192.168.1.72   # CT202 - Analyzer (Legacy)
 
 # From Proxmox host
 pct enter 300   # Backup
 pct enter 301   # Samba
 pct enter 302   # Ripper (IaC)
+pct enter 303   # Analyzer (IaC)
 pct enter 101   # Jellyfin
 pct enter 200   # Ripper (Legacy)
 pct enter 201   # Transcoder
-pct enter 202   # Analyzer
+pct enter 202   # Analyzer (Legacy)
 ```
 
 ### Container Status from Proxmox
@@ -222,5 +234,5 @@ When creating documentation for a new container:
 ---
 
 **Last updated**: 2025-11-11  
-**Containers documented**: 3/7 active (CT300, CT301, CT302)  
-**Next to document**: CT101 (Jellyfin), CT201 (Transcoder), CT202 (Analyzer), CT200 (Legacy Ripper)
+**Containers documented**: 4/8 active (CT300, CT301, CT302, CT303)  
+**Next to document**: CT101 (Jellyfin), CT201 (Transcoder), CT202 (Legacy Analyzer), CT200 (Legacy Ripper)

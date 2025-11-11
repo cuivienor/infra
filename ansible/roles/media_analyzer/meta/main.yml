@@ -1,0 +1,26 @@
+---
+# Role metadata for media_analyzer
+
+galaxy_info:
+  author: cuiv
+  description: Media analyzer and remuxing tools setup
+  company: Homelab
+  
+  license: MIT
+  
+  min_ansible_version: "2.9"
+  
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - 12
+  
+  galaxy_tags:
+    - media
+    - analyzer
+    - remux
+    - mkvtoolnix
+    - mediainfo
+
+dependencies: []
