@@ -1,0 +1,14 @@
+---
+# Handlers for proxmox_storage role
+
+- name: mount all disks
+  command: mount -a
+  listen: mount all disks
+
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: snapraid config changed
+  debug:
+    msg: "SnapRAID configuration has been updated"
