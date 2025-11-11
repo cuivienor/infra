@@ -17,23 +17,32 @@ This file contains important context for AI assistants working on this repositor
 ### Infrastructure
 
 **Proxmox Host**:
-- Hypervisor: Proxmox VE 8.x
-- Storage: MergerFS pool mounted at `/mnt/storage`
-- Hardware:
-  - Intel Arc GPU (`/dev/dri/card0`, `/dev/dri/renderD128`) - for transcoding
-  - Optical drive (`/dev/sr0`, `/dev/sg0`) - for Blu-ray ripping
-  - Optional: NVIDIA 1080 (if used)
+- **Hostname**: `homelab` (192.168.1.56)
+- **Hypervisor**: Proxmox VE 8.4.14 (kernel 6.8.12-10-pve)
+- **Hardware**: Intel Core i5-9600K (6 cores), 32GB RAM
+- **Storage**: MergerFS pool (35TB total, 4.1TB used) mounted at `/mnt/storage`
+  - 3x data disks (9.1T + 9.1T + 17T)
+  - 1x parity disk (17T)
+- **GPUs**:
+  - **Intel Arc A380** (`/dev/dri/card1`, `/dev/dri/renderD128`) - Primary for transcoding
+  - **NVIDIA GTX 1080** (`/dev/dri/card0`, `/dev/dri/renderD129`) - Secondary/Display
+- **Optical Drive**: `/dev/sr0` (block), `/dev/sg4` (SCSI generic) - for Blu-ray ripping
 
 **Container Architecture**:
 - LXC containers (privileged for hardware passthrough)
-- Network: DHCP on vmbr0 bridge
+- Network: DHCP on vmbr0 bridge (192.168.1.x/24)
 - Storage mount: `/mnt/storage` bind-mounted from host
 - Base template: Debian 12
 
-**Key Containers**:
-- **Ripper**: MakeMKV for Blu-ray ripping (optical drive passthrough)
-- **Transcoder**: FFmpeg/HandBrake with GPU acceleration (Arc GPU passthrough)
-- Future: Jellyfin, monitoring, etc.
+**Active Containers**:
+- **CT200 ripper-new** (192.168.1.75): MakeMKV with optical drive passthrough
+- **CT201 transcoder-new** (192.168.1.77): FFmpeg with Intel Arc GPU passthrough
+- **CT202 analyzer** (192.168.1.72): Media analysis tools
+- **CT101 jellyfin** (192.168.1.128): Media server (unprivileged)
+
+**Legacy Containers** (stopped, to be decommissioned):
+- **CT100 ripper** (old): Being replaced by CT200
+- **CT102 transcoder** (old): Being replaced by CT201
 
 ### Media Pipeline
 
@@ -66,9 +75,13 @@ This file contains important context for AI assistants working on this repositor
 - **Git**: Version control
 - **Ansible Vault**: Secrets management
 
-**Important Files**:
-- IaC Strategy: `docs/reference/homelab-iac-strategy.md`
-- Current Status: `notes/wip/CURRENT-STATUS.md`
+**Important Reference Files**:
+- **IaC Strategy**: `docs/reference/homelab-iac-strategy.md` - Complete IaC implementation plan
+- **Current State** (static): `docs/reference/current-state.md` - Full hardware/software inventory
+- **System Snapshot** (dynamic): `notes/wip/SYSTEM-SNAPSHOT.md` - Running state, recent changes
+- **Current Work**: `notes/wip/CURRENT-STATUS.md` - Active tasks and progress
+
+💡 **Always read** `docs/reference/current-state.md` first for complete system context!
 
 ---
 
@@ -181,11 +194,13 @@ chore: Update .gitignore for new secrets pattern
 ### Adding a New Container
 
 1. Define in `terraform/containers/<name>.tf`
-2. Add to `ansible/inventory/hosts.yml`
+2. Add to `ansible/inventory/hosts.yml` with IP address
 3. Create playbook in `ansible/playbooks/<name>.yml`
 4. Create role(s) if needed in `ansible/roles/<role_name>/`
-5. Test deployment
-6. Document in `docs/guides/`
+5. Device passthrough must be done via Ansible (add to LXC config on host)
+6. Test deployment
+7. Document in `docs/guides/`
+8. Update `docs/reference/current-state.md` and `notes/wip/SYSTEM-SNAPSHOT.md`
 
 ### Working on Media Pipeline
 
@@ -215,17 +230,34 @@ chore: Update .gitignore for new secrets pattern
 
 ### Hardware Passthrough
 
-**GPU (Intel Arc)**:
-- Requires `intel-media-va-driver` on host
-- Devices: `/dev/dri/card0`, `/dev/dri/renderD128`
-- Add `video` and `render` groups in container
-- Verify with: `vainfo --display drm --device /dev/dri/renderD128`
+**GPU (Intel Arc A380)**:
+- **Host Devices**: `/dev/dri/card1`, `/dev/dri/renderD128`
+- **Driver**: i915 kernel module (Intel iHD VA-API driver)
+- **Container Groups**: `video` (226), `render` (104)
+- **Used By**: CT201 (transcoder-new)
+- **LXC Config**:
+  ```
+  lxc.cgroup2.devices.allow: c 226:0 rwm      # card0
+  lxc.cgroup2.devices.allow: c 226:128 rwm    # renderD128
+  lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
+  ```
+- **Verify**: `vainfo --display drm --device /dev/dri/renderD128`
+- **Status**: ✅ Working (VA-API 1.17)
 
-**Optical Drive**:
-- Devices: `/dev/sr0`, `/dev/sg0`, `/dev/sg1`
-- Add `cdrom` group in container
-- LXC config needs cgroup rules and mount entries
-- Must be configured via Ansible (not Terraform)
+**Optical Drive (Blu-ray)**:
+- **Host Devices**: `/dev/sr0` (block, major 11:0), `/dev/sg4` (SCSI generic, major 21:4)
+- **Container Group**: `cdrom` (24)
+- **Used By**: CT200 (ripper-new)
+- **LXC Config**:
+  ```
+  lxc.cgroup2.devices.allow: c 11:0 rwm       # /dev/sr0
+  lxc.cgroup2.devices.allow: c 21:4 rwm       # /dev/sg4
+  lxc.mount.entry: /dev/sr0 dev/sr0 none bind,optional,create=file
+  lxc.mount.entry: /dev/sg4 dev/sg4 none bind,optional,create=file
+  ```
+- **Verify**: `makemkvcon info disc:0`
+- **Status**: ✅ Working
+- **Note**: Must be configured via Ansible (not Terraform)
 
 ### MergerFS
 
@@ -332,10 +364,13 @@ su - media
 
 ### Short Term
 
-- [ ] Complete Phase 1: Test container with Terraform + Ansible
-- [ ] Import existing ripper container to IaC
-- [ ] Import existing transcoder container to IaC
-- [ ] Document device passthrough process
+- [x] Repository reorganization for IaC work
+- [x] Comprehensive system documentation (current-state.md)
+- [ ] Complete Phase 1: Test container (CTID 199) with Terraform + Ansible
+- [ ] Import CT200 (ripper-new) to Terraform
+- [ ] Import CT201 (transcoder-new) to Terraform
+- [ ] Import CT202 (analyzer) to Terraform
+- [ ] Create Ansible roles for device passthrough automation
 - [ ] Create deployment automation script
 
 ### Medium Term
@@ -373,12 +408,17 @@ su - media
 
 ## Changelog
 
-### 2025-01-11
-- Initial AGENTS.md creation
-- Repository reorganized for IaC work
-- Directory structure established
-- Documentation organized by type
-- Scripts categorized by purpose
+### 2025-11-11
+- ✅ Repository reorganized for IaC work
+- ✅ Directory structure established (terraform/, ansible/, organized docs/)
+- ✅ Documentation organized by type (guides, reference, plans, archive)
+- ✅ Scripts categorized by purpose (media, iac, utils)
+- ✅ Comprehensive system inspection completed
+- ✅ Created `docs/reference/current-state.md` with full hardware/software inventory
+- ✅ Created `notes/wip/SYSTEM-SNAPSHOT.md` for tracking dynamic state
+- ✅ Updated AGENTS.md with actual discovered system details
+- 📊 Discovered: Intel Arc A380 + NVIDIA GTX 1080, 35TB MergerFS pool
+- 📊 Containers: 4 active (101, 200, 201, 202), 2 legacy stopped (100, 102)
 
 ---
 
@@ -391,4 +431,4 @@ su - media
 
 ---
 
-*Last updated: 2025-01-11*
+*Last updated: 2025-11-11 - System inspection and comprehensive documentation completed*
