@@ -1,0 +1,13 @@
+---
+# Intel Arc A380 GPU devices
+intel_gpu_card_device: "/dev/dri/card1"
+intel_gpu_render_device: "/dev/dri/renderD128"
+
+# Device major:minor numbers
+intel_gpu_major: 226
+intel_gpu_card_minor: 1      # card1
+intel_gpu_render_minor: 128  # renderD128
+
+# Groups
+video_gid: 226
+render_gid: 104

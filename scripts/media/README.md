@@ -97,30 +97,36 @@ These scripts are actively used in the media pipeline workflow.
   - Remuxes with track filtering (eng/bul only)
   - Single confirmation prompt (auto-handled by run-bg.sh)
 
-### Transcoding (CT201 - Transcoder)
+### Transcoding (CT304 - Transcoder)
 
 **`production/transcode-queue.sh`**
 - **Purpose**: Batch transcode to archival quality x265
-- **Container**: CT201 (transcoder-new) @ 192.168.1.77
-- **Input**: `/mnt/storage/media/staging/2-remuxed/`
-- **Output**: `/mnt/storage/media/staging/3-transcoded/` (mirrors structure)
+- **Container**: CT304 (transcoder) @ TBD
+- **Input**: `/mnt/staging/2-remuxed/`
+- **Output**: `/mnt/staging/3-transcoded/` (mirrors structure)
 - **Usage**:
   ```bash
-  # Software encoding (default)
-  ./transcode-queue.sh "/path/to/2-remuxed/movies/" 20 software
+  # Full path (works anywhere)
+  ./transcode-queue.sh /mnt/staging/2-remuxed/tv/Show/Season_01 20 software
+  
+  # Relative path (requires STAGING_BASE env var)
+  export STAGING_BASE=/mnt/staging
+  ./transcode-queue.sh 2-remuxed/movies/Movie 20 software
   
   # Hardware encoding (Intel Arc GPU)
-  ./transcode-queue.sh "/path/to/2-remuxed/movies/" 20 hardware
+  ./transcode-queue.sh /mnt/staging/2-remuxed/movies/Movie 20 hardware
   
-  # Auto mode (no confirmation, for nohup)
-  nohup ./transcode-queue.sh "/path/to/2-remuxed/movies/" 20 software --auto &
+  # Run in background with auto-confirm
+  ~/scripts/run-bg.sh ~/scripts/transcode-queue.sh \
+    /mnt/staging/2-remuxed/tv/Show/Season_01 20 hardware --auto
   ```
 - **Features**:
-  - Queue-based processing
-  - CRF quality control (18-22)
-  - Hardware acceleration support
-  - Progress tracking
+  - Queue-based processing (resumable)
+  - CRF quality control (18-22, default 20)
+  - Hardware acceleration support (Intel Arc GPU)
+  - Progress tracking with detailed logs
   - Automatic resume on restart
+  - `--auto` flag for background execution
 
 ### Promotion (CT201 - Transcoder)
 
@@ -278,11 +284,14 @@ Old prototypes and superseded scripts kept for reference.
 # 3. Organize & Remux (CT201)
 ./production/organize-and-remux-movie.sh "/mnt/storage/media/staging/1-ripped/movies/Movie_Name_2025-11-11/"
 
-# 4. Transcode (CT201)
-nohup ./production/transcode-queue.sh "/mnt/storage/media/staging/2-remuxed/movies/Movie_Name/" 20 hardware --auto &
+# 4. Transcode (CT304)
+ssh ct304
+~/scripts/run-bg.sh ~/scripts/transcode-queue.sh \
+  /mnt/staging/2-remuxed/movies/Movie_Name 20 hardware --auto
+tail -f ~/logs/transcode-queue_*.log
 
-# 5. Promote (CT201)
-./production/promote-to-ready.sh "/mnt/storage/media/staging/3-transcoded/movies/Movie_Name_2025-11-11/"
+# 5. Promote (CT304 or CT201)
+./production/promote-to-ready.sh "/mnt/staging/3-transcoded/movies/Movie_Name/"
 
 # 6. Finalize (CT201)
 ./production/filebot-process.sh "/mnt/storage/media/staging/4-ready/movies/Movie_Name/"
@@ -307,11 +316,14 @@ ssh ct303
 ~/scripts/run-bg.sh ~/scripts/organize-and-remux-tv.sh "Show Name" 01
 tail -f ~/logs/organize-and-remux-tv_*.log
 
-# 4. Transcode (CT201)
-nohup ./production/transcode-queue.sh "/mnt/storage/media/staging/2-remuxed/tv/Show_Name/Season_01/" 20 hardware --auto &
+# 4. Transcode (CT304)
+ssh ct304
+~/scripts/run-bg.sh ~/scripts/transcode-queue.sh \
+  /mnt/staging/2-remuxed/tv/Show_Name/Season_01 20 hardware --auto
+tail -f ~/logs/transcode-queue_*.log
 
-# 5. Promote (CT201)
-./production/promote-to-ready.sh "/mnt/storage/media/staging/3-transcoded/tv/Show_Name/Season_01_2025-11-11/"
+# 5. Promote (CT304 or CT201)
+./production/promote-to-ready.sh "/mnt/staging/3-transcoded/tv/Show_Name/Season_01/"
 
 # 6. Finalize (CT201)
 ./production/filebot-process.sh "/mnt/storage/media/staging/4-ready/tv/Show_Name/"

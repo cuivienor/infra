@@ -8,9 +8,12 @@
 # --auto: Skip confirmation prompt (for nohup usage)
 #
 # Supports new directory structure:
-#   - Reads from: staging/2-remuxed/...
-#   - Writes to:  staging/3-transcoded/... (mirrors structure)
+#   - Reads from: /mnt/staging/2-remuxed/...
+#   - Writes to:  /mnt/staging/3-transcoded/... (mirrors structure)
 #   - Or legacy: creates *_transcoded.mkv in same folder
+
+# Use STAGING_BASE environment variable if set, otherwise default to /mnt/storage/media/staging
+STAGING_BASE="${STAGING_BASE:-/mnt/storage/media/staging}"
 
 FOLDER="$1"
 CRF="${2:-20}"
@@ -28,14 +31,30 @@ if [ -z "$FOLDER" ]; then
     echo "Usage: $0 <folder> [CRF] [MODE] [--auto]"
     echo ""
     echo "Examples:"
-    echo "  $0 /staging/2-remuxed/movies/Movie_2024-11-10/ 20 software"
-    echo "  $0 /staging/2-remuxed/tv/Show/Season_01/ 20 software"
-    echo "  $0 /staging/2-remuxed/movies/Movie/ 20 software --auto"
+    echo "  $0 /mnt/staging/2-remuxed/movies/Movie_2024-11-10/ 20 software"
+    echo "  $0 /mnt/staging/2-remuxed/tv/Show/Season_01/ 20 software"
+    echo "  $0 /mnt/staging/2-remuxed/movies/Movie/ 20 hardware --auto"
+    echo ""
+    echo "Or use relative paths (requires STAGING_BASE env var):"
+    echo "  $0 2-remuxed/movies/Movie/ 20 software"
+    echo ""
+    echo "Current STAGING_BASE: $STAGING_BASE"
     exit 1
+fi
+
+# Handle relative paths (resolve with STAGING_BASE)
+if [[ ! "$FOLDER" =~ ^/ ]]; then
+    # Relative path - prepend STAGING_BASE
+    FOLDER="$STAGING_BASE/$FOLDER"
+    echo "Resolved relative path to: $FOLDER"
+    echo ""
 fi
 
 if [ ! -d "$FOLDER" ]; then
     echo "Error: Directory not found: $FOLDER"
+    echo ""
+    echo "Hint: Make sure STAGING_BASE is set correctly."
+    echo "Current STAGING_BASE: $STAGING_BASE"
     exit 1
 fi
 
@@ -46,9 +65,9 @@ if [[ ! "$MODE" =~ ^(software|hardware)$ ]]; then
 fi
 
 # Detect if using new structure (2-remuxed -> 3-transcoded)
-if [[ "$FOLDER" =~ staging/2-remuxed ]]; then
+if [[ "$FOLDER" =~ /2-remuxed/ ]]; then
     NEW_STRUCTURE=1
-    OUTPUT_BASE="${FOLDER/2-remuxed/3-transcoded}"
+    OUTPUT_BASE="${FOLDER/\/2-remuxed\//\/3-transcoded\/}"
     echo "Using new directory structure:"
     echo "  Input:  $FOLDER"
     echo "  Output: $OUTPUT_BASE"

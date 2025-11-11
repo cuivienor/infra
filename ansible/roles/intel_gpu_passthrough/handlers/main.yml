@@ -1,0 +1,4 @@
+---
+- name: restart container
+  shell: "pct stop {{ container_id }} && pct start {{ container_id }}"
+  delegate_to: homelab
