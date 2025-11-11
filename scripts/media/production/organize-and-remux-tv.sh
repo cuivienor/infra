@@ -60,6 +60,11 @@ DISC_PATTERN="S${SEASON_NUM}_Disc*"
 
 if [ ! -d "$BASE_DIR" ]; then
     echo "Error: Show directory not found: $BASE_DIR"
+    echo ""
+    echo "Hint: Make sure STAGING_BASE is set correctly."
+    echo "Current STAGING_BASE: $STAGING_BASE"
+    echo ""
+    echo "Try: export STAGING_BASE=/mnt/staging"
     exit 1
 fi
 
@@ -151,13 +156,19 @@ remux_filter_tracks() {
     
     cmd="$cmd \"$input_file\""
     
-    # Execute
-    eval $cmd > /dev/null 2>&1
+    # Execute (capture output for debugging)
+    local mkvmerge_output
+    mkvmerge_output=$(eval $cmd 2>&1)
+    local mkvmerge_exit=$?
     
-    if [ $? -eq 0 ] && [ -f "$temp_file" ]; then
+    if [ $mkvmerge_exit -eq 0 ] && [ -f "$temp_file" ]; then
         mv "$temp_file" "$output_file"
         return 0
     else
+        echo "  ✗ mkvmerge failed (exit code: $mkvmerge_exit)"
+        if [ -n "$mkvmerge_output" ]; then
+            echo "  Error: $(echo "$mkvmerge_output" | head -2)"
+        fi
         rm -f "$temp_file"
         return 1
     fi
@@ -221,7 +232,7 @@ for file in "${episode_files[@]}"; do
     
     printf "S%02dE%02d ← %-40s (%dm, %.2fG) [%s]\n" \
         "$SEASON_NUM" "$ep_num" "$filename" "$duration" "$size" "$disc_name"
-    ((ep_num++))
+    ep_num=$((ep_num + 1))
 done
 
 if [ $total_extras -gt 0 ]; then
@@ -281,12 +292,12 @@ for input_file in "${episode_files[@]}"; do
     echo "[$((processed+failed+1))/$total_files] S${SEASON_NUM}E$(printf '%02d' $ep_num) ← $(basename "$input_file")"
     
     if remux_filter_tracks "$input_file" "$output_file"; then
-        ((processed++))
+        processed=$((processed + 1))
     else
         echo "  ✗ Failed to remux"
-        ((failed++))
+        failed=$((failed + 1))
     fi
-    ((ep_num++))
+    ep_num=$((ep_num + 1))
 done
 
 # Process extras
@@ -300,10 +311,10 @@ if [ $total_extras -gt 0 ]; then
         echo "[$((processed+failed+1))/$total_files] Extra ← $filename"
         
         if remux_filter_tracks "$input_file" "$output_file"; then
-            ((processed++))
+            processed=$((processed + 1))
         else
             echo "  ✗ Failed to remux"
-            ((failed++))
+            failed=$((failed + 1))
         fi
     done
 fi

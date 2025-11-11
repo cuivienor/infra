@@ -27,6 +27,7 @@ media_analyzer_scripts:
   - { src: "scripts/media/production/promote-to-ready.sh", dest: "promote-to-ready.sh" }
   - { src: "scripts/media/production/filebot-process.sh", dest: "filebot-process.sh" }
   - { src: "scripts/media/utilities/fix-current-names.sh", dest: "fix-current-names.sh" }
+  - { src: "scripts/media/utilities/run-bg.sh", dest: "run-bg.sh" }
 
 # Staging base path (where media pipeline directories are mounted)
 staging_base_path: "/mnt/staging"
