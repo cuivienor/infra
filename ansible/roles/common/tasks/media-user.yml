@@ -1,0 +1,27 @@
+---
+# Media user configuration tasks
+
+- name: Create media group
+  group:
+    name: "{{ media_user_name }}"
+    gid: "{{ media_user_gid }}"
+    state: present
+
+- name: Create media user
+  user:
+    name: "{{ media_user_name }}"
+    uid: "{{ media_user_uid }}"
+    group: "{{ media_user_name }}"
+    groups: "{{ media_user_groups }}"
+    home: "{{ media_user_home }}"
+    shell: "{{ media_user_shell }}"
+    create_home: yes
+    state: present
+
+- name: Create scripts directory for media user
+  file:
+    path: "{{ media_user_home }}/scripts"
+    state: directory
+    owner: "{{ media_user_name }}"
+    group: "{{ media_user_name }}"
+    mode: '0755'

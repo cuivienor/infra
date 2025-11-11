@@ -1,0 +1,23 @@
+---
+# MakeMKV role defaults
+
+# MakeMKV version to install (from https://www.makemkv.com/download/)
+# Current version as of CT200: v1.18.2
+# Update this version number when you want to upgrade MakeMKV
+makemkv_version: "1.18.2"
+
+# Download URLs (constructed from version)
+makemkv_oss_url: "https://www.makemkv.com/download/makemkv-oss-{{ makemkv_version }}.tar.gz"
+makemkv_bin_url: "https://www.makemkv.com/download/makemkv-bin-{{ makemkv_version }}.tar.gz"
+
+# Build directory
+makemkv_build_dir: "/tmp/makemkv-build"
+
+# User to configure MakeMKV for (settings will be in ~user/.MakeMKV/)
+makemkv_user: "media"
+
+# MakeMKV settings (managed via template)
+# These match the settings from CT200
+makemkv_settings:
+  default_output_filename: "%t"  # Use title name as filename
+  default_selection_string: "+sel:all"  # Select all tracks by default
