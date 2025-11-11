@@ -468,6 +468,8 @@ ssh root@192.168.1.58 "journalctl -u restic-backup-data.service --since today"
   - Experiment with compression levels
   - Tune upload parallelization
   - Consider B2 bandwidth caps
+  - Optimize cache location (SSD vs HDD for /var/cache/restic)
+  - Evaluate container disk placement (local-lvm vs SSD)
 
 ### Ideas to Explore
 - Backup rotation strategy with multiple repos
