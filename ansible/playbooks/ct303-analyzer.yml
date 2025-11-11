@@ -1,0 +1,111 @@
+---
+# CT303 Analyzer Container Configuration
+# Media analysis, remuxing, and organization tools
+
+- name: Configure analyzer container
+  hosts: ct303
+  become: yes
+  
+  vars:
+    # Enable media user creation
+    media_user_enabled: true
+    # No special groups needed for analyzer (no hardware passthrough)
+    media_user_groups: []
+    
+    # Optional: Enable FileBot installation
+    # Set to true if you want automated FileBot organization
+    media_analyzer_install_filebot: false
+
+  roles:
+    - role: common
+      tags: ['common']
+    
+    - role: media_analyzer
+      tags: ['analyzer', 'media']
+
+# Verification tasks
+- name: Verify analyzer container configuration
+  hosts: ct303
+  become: yes
+  
+  tasks:
+    - name: Wait for container to be ready
+      wait_for_connection:
+        timeout: 30
+      tags: ['verify']
+
+    - name: Verify staging mount exists
+      stat:
+        path: /mnt/staging/1-ripped
+      register: staging_mount
+      tags: ['verify']
+
+    - name: Display staging mount status
+      debug:
+        msg: "Staging directory {{ 'mounted correctly' if staging_mount.stat.exists else 'MISSING - check mount configuration' }}"
+      tags: ['verify']
+
+    - name: Verify scripts are deployed
+      stat:
+        path: "/home/media/scripts/{{ item }}"
+      loop:
+        - analyze-media.sh
+        - organize-and-remux-movie.sh
+        - organize-and-remux-tv.sh
+        - promote-to-ready.sh
+        - filebot-process.sh
+        - fix-current-names.sh
+      register: script_checks
+      tags: ['verify']
+
+    - name: Display script deployment status
+      debug:
+        msg: "{{ item.item }}: {{ 'OK' if item.stat.exists else 'MISSING' }}"
+      loop: "{{ script_checks.results }}"
+      tags: ['verify']
+
+    - name: Test analyze-media.sh script
+      command: /home/media/scripts/analyze-media.sh
+      register: script_test
+      failed_when: false
+      changed_when: false
+      become_user: media
+      tags: ['verify']
+
+    - name: Display script test result
+      debug:
+        msg: "analyze-media.sh {{ 'works correctly' if script_test.rc == 1 else 'has issues' }}"
+      tags: ['verify']
+
+    - name: Verify tools are installed
+      command: "{{ item.cmd }}"
+      loop:
+        - { cmd: "mkvmerge --version", name: "mkvtoolnix" }
+        - { cmd: "mediainfo --version", name: "mediainfo" }
+        - { cmd: "jq --version", name: "jq" }
+      register: tool_checks
+      changed_when: false
+      failed_when: false
+      tags: ['verify']
+
+    - name: Display tool installation status
+      debug:
+        msg: "{{ item.item.name }}: {{ 'INSTALLED' if item.rc == 0 else 'MISSING' }}"
+      loop: "{{ tool_checks.results }}"
+      tags: ['verify']
+
+    - name: Summary of verification
+      debug:
+        msg:
+          - "==================================="
+          - "CT303 Analyzer Verification Summary"
+          - "==================================="
+          - "Staging mount: {{ 'OK' if staging_mount.stat.exists else 'FAIL' }}"
+          - "Scripts deployed: {{ script_checks.results | selectattr('stat.exists') | list | length }}/6"
+          - "Tools installed: {{ tool_checks.results | selectattr('rc', 'equalto', 0) | list | length }}/3"
+          - ""
+          - "Next steps:"
+          - "1. Test with: pct enter 303; su - media"
+          - "2. Run: ~/scripts/analyze-media.sh /mnt/staging/1-ripped/movies/<folder>/"
+          - "3. Process a movie: ~/scripts/organize-and-remux-movie.sh <path>"
+      tags: ['verify']

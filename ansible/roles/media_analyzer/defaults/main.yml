@@ -1,0 +1,32 @@
+---
+# Default variables for media_analyzer role
+
+# Install FileBot (optional, requires Java)
+media_analyzer_install_filebot: false
+
+# FileBot version (if installing)
+filebot_version: "5.1.3"
+
+# Packages to install
+media_analyzer_packages:
+  - mkvtoolnix      # MKV remuxing and analysis
+  - mediainfo       # Media file information
+  - jq              # JSON processing
+  - bc              # Calculator for scripts
+  - rsync           # File synchronization
+  - curl            # Download tool
+  - wget            # Download tool
+  - nano            # Text editor
+  - tree            # Directory visualization
+
+# Scripts to deploy from repository
+media_analyzer_scripts:
+  - { src: "scripts/media/production/analyze-media.sh", dest: "analyze-media.sh" }
+  - { src: "scripts/media/production/organize-and-remux-movie.sh", dest: "organize-and-remux-movie.sh" }
+  - { src: "scripts/media/production/organize-and-remux-tv.sh", dest: "organize-and-remux-tv.sh" }
+  - { src: "scripts/media/production/promote-to-ready.sh", dest: "promote-to-ready.sh" }
+  - { src: "scripts/media/production/filebot-process.sh", dest: "filebot-process.sh" }
+  - { src: "scripts/media/utilities/fix-current-names.sh", dest: "fix-current-names.sh" }
+
+# Staging base path (where media pipeline directories are mounted)
+staging_base_path: "/mnt/staging"
