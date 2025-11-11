@@ -38,9 +38,9 @@ exclude /Temporary Items
 exclude /lxc/
 exclude /images/
 
-# Block size and hash algorithm
+# Block size and hash size
 block_size {{ snapraid_block_size }}
-hash {{ snapraid_hash }}
+hashsize {{ snapraid_hashsize }}
 
 # Auto-save state every N blocks
 autosave {{ snapraid_autosave }}

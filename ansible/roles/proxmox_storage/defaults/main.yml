@@ -2,18 +2,19 @@
 # Default variables for proxmox_storage role
 
 # Storage disks configuration
+# NOTE: Disk names (d1, d2, d3) match existing SnapRAID content files
 storage_disks:
-  - name: disk1
+  - name: d1
     device: /dev/disk/by-id/ata-WDC_WD101EDBZ-11B1DA0_VCHLGZTP-part1
     mount: /mnt/disk1
     fstype: ext4
     opts: defaults
-  - name: disk2
+  - name: d2
     device: /dev/disk/by-id/ata-ST10000DM0004-1ZC101_ZA2DWAHC-part1
     mount: /mnt/disk2
     fstype: ext4
     opts: defaults
-  - name: disk3
+  - name: d3
     device: /dev/disk/by-id/ata-WDC_WD180EDGZ-11B2DA0_3FKXJ3UV-part1
     mount: /mnt/disk3
     fstype: ext4
@@ -39,7 +40,7 @@ snapraid_content_files:
   - /mnt/disk2/.snapraid.content
   - /mnt/disk3/.snapraid.content
 snapraid_block_size: 256
-snapraid_hash: blake2
+snapraid_hashsize: 16  # Hash size in bytes (default 16 = 128 bits)
 snapraid_autosave: 500
 
 # SnapRAID scheduling
