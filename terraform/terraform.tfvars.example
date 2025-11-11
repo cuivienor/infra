@@ -2,9 +2,17 @@
 # DO NOT commit terraform.tfvars to git (it contains secrets)
 
 proxmox_endpoint = "https://192.168.1.56:8006"
-proxmox_username = "root@pam"
-proxmox_password = "your_proxmox_password_here"
 proxmox_insecure = true  # Set to false if using valid SSL cert
 
-# Optional: Add your SSH public key for container access
-# ssh_public_key = "ssh-rsa AAAAB3NzaC... user@host"
+# Option 1: API Token (Recommended - more secure)
+# Create in Proxmox: Datacenter → Permissions → API Tokens → Add
+# Or via CLI: pveum user token add root@pam terraform -privsep 0
+proxmox_api_token = "root@pam!terraform=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# Option 2: Username/Password (Alternative)
+# If using password instead of token, comment out proxmox_api_token above
+# proxmox_username = "root@pam"
+# proxmox_password = "your_proxmox_password_here"
+
+# Note: SSH keys are automatically loaded from ansible/files/ssh-keys/
+# No need to specify ssh_public_key here
