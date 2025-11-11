@@ -5,6 +5,7 @@ This repository contains Infrastructure as Code, automation scripts, and documen
 ## Quick Links
 
 - **[Organization Guide](ORGANIZATION.md)** - How this repo is structured
+- **[Container Documentation](docs/containers/)** - Operational docs for all containers
 - **[IaC Strategy](docs/reference/homelab-iac-strategy.md)** - Terraform & Ansible plan
 - **[Media Pipeline Guide](docs/guides/media-pipeline-v2.md)** - Media workflow documentation
 
@@ -18,6 +19,7 @@ This repository contains Infrastructure as Code, automation scripts, and documen
 │   ├── iac/          # Infrastructure helpers
 │   └── utils/        # Utilities
 ├── docs/             # Formal documentation
+│   ├── containers/   # Container operational docs
 │   ├── guides/       # How-to guides
 │   ├── reference/    # Quick references
 │   ├── plans/        # Planning documents
