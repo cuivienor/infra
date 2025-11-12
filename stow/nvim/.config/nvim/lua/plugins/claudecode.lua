@@ -6,21 +6,26 @@ return {
 			-- Start server automatically when Neovim starts
 			auto_start = true,
 
-			-- Terminal configuration for when using :ClaudeCode command
+			-- Disable internal terminal - using external Claude in separate tmux tab
 			terminal = {
-				provider = "native", -- Use native Neovim terminal
-				split_side = "right",
-				split_width_percentage = 0.30,
+				provider = "none",
 			},
 
 			-- Log level for debugging (optional)
 			-- log_level = "debug",
 		})
 
-		-- Optional keymaps
-		vim.keymap.set("n", "<leader>cc", ":ClaudeCode<CR>", { desc = "[C]laude [C]ode toggle" })
+		-- Keymaps for external Claude integration
 		vim.keymap.set("n", "<leader>cs", ":ClaudeCodeStatus<CR>", { desc = "[C]laude [S]tatus" })
 		vim.keymap.set("n", "<leader>ca", ":ClaudeCodeAdd %<CR>", { desc = "[C]laude [A]dd current file" })
 		vim.keymap.set("v", "<leader>cs", ":ClaudeCodeSend<CR>", { desc = "[C]laude [S]end selection" })
+
+		-- Optional: Add keymap to quickly show connection info
+		vim.keymap.set("n", "<leader>ci", function()
+			local claudecode = require("claudecode")
+			local is_connected = claudecode.is_claude_connected()
+			local status = is_connected and "✓ Connected" or "✗ Not connected"
+			print("Claude: " .. status)
+		end, { desc = "[C]laude [I]nfo" })
 	end,
 }
