@@ -34,16 +34,13 @@ This file contains important context for AI assistants working on this repositor
 - Storage mount: `/mnt/storage` bind-mounted from host
 - Base template: Debian 12
 
-**Active Containers** (Manual):
-- **CT101 jellyfin** (192.168.1.128): Media server (unprivileged)
-- **CT200 ripper-new** (192.168.1.75): MakeMKV with optical drive passthrough
-- **CT201 transcoder-new** (192.168.1.77): FFmpeg with Intel Arc GPU passthrough
-- **CT202 analyzer** (192.168.1.72): Media analysis tools
-
-**IaC Containers** (300 Range):
+**Active Containers** (All IaC - 300 Range):
 - **CT300 backup** (192.168.1.58): Restic + Backrest UI for automated backups to Backblaze B2
 - **CT301 samba** (192.168.1.82): Samba file server for network shares
-- **CT302 ripper** (192.168.1.70): MakeMKV with optical drive (IaC version of CT200, production ready)
+- **CT302 ripper** (192.168.1.70): MakeMKV with optical drive passthrough
+- **CT303 analyzer** (192.168.1.73): Media analysis, remuxing, and organization tools
+- **CT304 transcoder** (192.168.1.77): FFmpeg with Intel Arc GPU passthrough
+- **CT305 jellyfin** (192.168.1.85): Media server with dual GPU support (Intel Arc + NVIDIA)
 
 ### Media Pipeline
 
@@ -384,12 +381,13 @@ su - media
 
 - [x] Repository reorganization for IaC work
 - [x] Comprehensive system documentation (current-state.md)
-- [ ] Complete Phase 1: Test container (CTID 199) with Terraform + Ansible
-- [ ] Import CT200 (ripper-new) to Terraform
-- [ ] Import CT201 (transcoder-new) to Terraform
-- [ ] Import CT202 (analyzer) to Terraform
-- [ ] Create Ansible roles for device passthrough automation
+- [x] Complete Phase 1: Test container with Terraform + Ansible
+- [x] Import all production containers to Terraform (CT300-305)
+- [x] Create Ansible roles for device passthrough automation
+- [x] Migrate all containers to IaC (300 range)
+- [x] Remove legacy containers (CT100, CT101, CT102, CT200, CT201, CT202)
 - [ ] Create deployment automation script
+- [ ] Test end-to-end media pipeline with new containers
 
 ### Medium Term
 
@@ -397,7 +395,6 @@ su - media
 - [x] Create backup/restore procedures (restic + Backblaze B2)
 - [ ] Test disaster recovery workflow
 - [ ] Add monitoring container
-- [ ] Migrate Jellyfin to container
 
 ### Long Term
 
@@ -426,6 +423,14 @@ su - media
 
 ## Changelog
 
+### 2025-11-12
+- ✅ **MAJOR MILESTONE**: Full migration to IaC completed!
+- ✅ Removed all legacy containers (CT101, CT200, CT201, CT202)
+- ✅ All containers now managed by Terraform + Ansible (CT300-305)
+- ✅ Reclaimed 48GB disk space from legacy containers
+- ✅ Updated documentation to reflect IaC-only environment
+- 📊 Final state: 6 active containers, all infrastructure as code
+
 ### 2025-11-11
 - ✅ Repository reorganized for IaC work
 - ✅ Directory structure established (terraform/, ansible/, organized docs/)
@@ -436,7 +441,7 @@ su - media
 - ✅ Created `notes/wip/SYSTEM-SNAPSHOT.md` for tracking dynamic state
 - ✅ Updated AGENTS.md with actual discovered system details
 - 📊 Discovered: Intel Arc A380 + NVIDIA GTX 1080, 35TB MergerFS pool
-- 📊 Containers: 4 active (101, 200, 201, 202), 2 legacy stopped (100, 102)
+- 📊 Deployed first IaC containers (CT300-305)
 
 ---
 
