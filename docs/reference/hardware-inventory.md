@@ -412,8 +412,25 @@ The Intel Z370 chipset provides 6 SATA 6Gb/s ports (ata1-ata6):
 - **NVMe does NOT use SATA ports** - The Samsung 970 EVO Plus uses a dedicated M.2 slot with PCIe lanes, not SATA
 - **Optical drive DOES use a SATA port** - The Blu-ray drive occupies ata6
 - **Only 1 SATA port available** (ata1) for expansion
-- Standard ASRock Z370 boards typically have 2x M.2 slots, but your OEM variant may differ
-- On some Z370 boards, using M.2 slot #2 disables SATA port 0 or 5 (check if this affects you)
+
+### M.2 Slot Configuration
+
+Your ASRock Z370/OEM has **2x M.2 slots** with SATA port sharing:
+
+| M.2 Slot | Current Use | Disables SATA Port | Notes |
+|----------|-------------|-------------------|-------|
+| **M2_1** | **In Use** (Samsung 970 EVO Plus NVMe) | None (NVMe uses PCIe) | Connected to PCIe Root Port #9 (00:1d.0) |
+| **M2_2** | **Empty** | Would disable ata1 if SATA M.2 used | Available for NVMe or SATA M.2 |
+
+**SATA Port Sharing Rules** (ASRock Z370):
+- M2_1 + SATA M.2 → disables **SATA_5** (ata6) ❌ Can't do this (Blu-ray uses ata6)
+- M2_2 + SATA M.2 → disables **SATA_0** (ata1) ❌ Would lose your only free port
+- M2_1 + NVMe → disables nothing ✅ **Current configuration**
+- M2_2 + NVMe → disables nothing ✅ **Safe to use**
+
+**Expansion Strategy**:
+✅ **You CAN add a 2nd NVMe drive** to M2_2 slot without losing any SATA ports!  
+❌ **Don't use SATA M.2 drives** - they would disable your limited SATA ports
 
 ---
 
@@ -427,7 +444,7 @@ Based on ASRock Z370/OEM motherboard (typical configuration):
 |-----------|-------|------|-----------|
 | **PCIe x16** (GPU) | 2-3 | 2 | 0-1 |
 | **PCIe x1** | 2-3 | 0 | 2-3 |
-| **M.2 NVMe** | 1-2 | 1 | 0-1 |
+| **M.2 NVMe** | 2 | 1 | 1 |
 | **RAM DIMM** | 4 | 2 | 2 |
 | **SATA** | 6 | 5 | 1 |
 
@@ -438,13 +455,16 @@ Based on ASRock Z370/OEM motherboard (typical configuration):
 - Cost: ~$60-80 per 16GB module
 
 **Storage**:
-- **Only 1 available SATA port** (ata1) - You were correct!
-  - 4 ports used by data/parity HDDs
-  - 1 port used by Blu-ray drive
-  - NVMe uses M.2 slot (not SATA)
-- Check for second M.2 slot on motherboard (many Z370 boards have 2)
+- **SATA**: Only 1 available port (ata1)
+  - 4 ports: Data/parity HDDs
+  - 1 port: Blu-ray drive
+  - ⚠️ Can't use SATA M.2 drives (would disable ata1 or ata6)
+- **M.2**: 1 available slot (M2_2) ✅ **Best expansion option!**
+  - Current: M2_1 has Samsung 970 EVO Plus 2TB NVMe
+  - Available: M2_2 slot empty - add another NVMe SSD here
+  - No SATA port conflicts with NVMe drives
 - Can expand MergerFS pool by replacing smaller disks with larger ones
-- Consider PCIe HBA card if more SATA ports needed
+- Consider PCIe HBA card for 8+ additional SATA ports
 
 **PCIe**:
 - Available PCIe x1 slots for:
