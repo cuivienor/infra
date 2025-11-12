@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EncodingOptions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <EncodingThreadCount>-1</EncodingThreadCount>
+  <EnableFallbackFont>false</EnableFallbackFont>
+  <EnableAudioVbr>true</EnableAudioVbr>
+  <DownMixAudioBoost>2</DownMixAudioBoost>
+  <DownMixStereoAlgorithm>None</DownMixStereoAlgorithm>
+  <MaxMuxingQueueSize>2048</MaxMuxingQueueSize>
+  <EnableThrottling>false</EnableThrottling>
+  <ThrottleDelaySeconds>180</ThrottleDelaySeconds>
+  <EnableSegmentDeletion>false</EnableSegmentDeletion>
+  <SegmentKeepSeconds>720</SegmentKeepSeconds>
+  
+  <!-- Hardware Acceleration Configuration -->
+  <!-- Intel Arc A380 primary, NVIDIA GTX 1080 ready -->
+  <HardwareAccelerationType>{% if enable_intel_vaapi %}vaapi{% elif enable_nvidia_nvenc %}nvenc{% else %}none{% endif %}</HardwareAccelerationType>
+  <EncoderAppPathDisplay>/usr/lib/jellyfin-ffmpeg/ffmpeg</EncoderAppPathDisplay>
+  
+  <!-- Intel Arc A380 render device (primary) -->
+  <VaapiDevice>{{ intel_arc_render_device }}</VaapiDevice>
+  <QsvDevice />
+  
+  <!-- Tone Mapping Settings -->
+  <EnableTonemapping>{{ enable_tone_mapping | lower }}</EnableTonemapping>
+  <EnableVppTonemapping>{{ enable_vpp_tone_mapping | lower }}</EnableVppTonemapping>
+  <EnableVideoToolboxTonemapping>false</EnableVideoToolboxTonemapping>
+  <TonemappingAlgorithm>bt2390</TonemappingAlgorithm>
+  <TonemappingMode>auto</TonemappingMode>
+  <TonemappingRange>auto</TonemappingRange>
+  <TonemappingDesat>0</TonemappingDesat>
+  <TonemappingPeak>100</TonemappingPeak>
+  <TonemappingParam>0</TonemappingParam>
+  <VppTonemappingBrightness>16</VppTonemappingBrightness>
+  <VppTonemappingContrast>1</VppTonemappingContrast>
+  
+  <!-- Encoding Quality -->
+  <H264Crf>{{ h264_crf }}</H264Crf>
+  <H265Crf>{{ h265_crf }}</H265Crf>
+  <EncoderPreset xsi:nil="true" />
+  
+  <!-- Deinterlacing -->
+  <DeinterlaceDoubleRate>false</DeinterlaceDoubleRate>
+  <DeinterlaceMethod>yadif</DeinterlaceMethod>
+  
+  <!-- Hardware Decoding Options -->
+  <EnableDecodingColorDepth10Hevc>true</EnableDecodingColorDepth10Hevc>
+  <EnableDecodingColorDepth10Vp9>true</EnableDecodingColorDepth10Vp9>
+  <EnableDecodingColorDepth10HevcRext>true</EnableDecodingColorDepth10HevcRext>
+  <EnableDecodingColorDepth12HevcRext>true</EnableDecodingColorDepth12HevcRext>
+  <EnableEnhancedNvdecDecoder>{{ enable_nvidia_nvenc | lower }}</EnableEnhancedNvdecDecoder>
+  <PreferSystemNativeHwDecoder>true</PreferSystemNativeHwDecoder>
+  
+  <!-- Intel Low Power Encoders (for Arc GPU) -->
+  <EnableIntelLowPowerH264HwEncoder>true</EnableIntelLowPowerH264HwEncoder>
+  <EnableIntelLowPowerHevcHwEncoder>true</EnableIntelLowPowerHevcHwEncoder>
+  
+  <!-- Hardware Encoding -->
+  <EnableHardwareEncoding>{{ enable_hardware_acceleration | lower }}</EnableHardwareEncoding>
+  <AllowHevcEncoding>{{ enable_hevc_encoding | lower }}</AllowHevcEncoding>
+  <AllowAv1Encoding>{{ enable_av1_encoding | lower }}</AllowAv1Encoding>
+  
+  <!-- Subtitle Extraction -->
+  <EnableSubtitleExtraction>true</EnableSubtitleExtraction>
+  
+  <!-- Hardware Decoding Codecs -->
+  <HardwareDecodingCodecs>
+    <string>h264</string>
+    <string>hevc</string>
+    <string>vc1</string>
+    <string>vp8</string>
+    <string>vp9</string>
+    <string>av1</string>
+    <string>mpeg2video</string>
+  </HardwareDecodingCodecs>
+  
+  <!-- Keyframe Extraction -->
+  <AllowOnDemandMetadataBasedKeyframeExtractionForExtensions>
+    <string>mkv</string>
+  </AllowOnDemandMetadataBasedKeyframeExtractionForExtensions>
+</EncodingOptions>

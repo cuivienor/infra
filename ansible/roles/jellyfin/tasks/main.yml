@@ -1,0 +1,100 @@
+---
+# Jellyfin installation and configuration
+
+- name: Install prerequisites
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+      - curl
+      - intel-media-va-driver  # Intel Arc VA-API driver
+      - intel-gpu-tools
+      - vainfo
+    state: present
+    update_cache: yes
+
+- name: Add Jellyfin GPG key
+  apt_key:
+    url: "https://repo.jellyfin.org/{{ ansible_distribution | lower }}/jellyfin_team.gpg.key"
+    state: present
+    keyring: /etc/apt/keyrings/jellyfin.gpg
+
+- name: Add Jellyfin repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/jellyfin.gpg] https://repo.jellyfin.org/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
+    state: present
+    filename: jellyfin
+
+- name: Install Jellyfin and FFmpeg
+  apt:
+    name:
+      - jellyfin-server
+      - jellyfin-web
+      - jellyfin-ffmpeg7
+    state: "{{ 'latest' if jellyfin_version == 'latest' else 'present' }}"
+    update_cache: yes
+
+- name: Ensure media group exists
+  group:
+    name: "{{ media_user }}"
+    gid: "{{ media_gid }}"
+    state: present
+
+- name: Ensure media user exists with correct groups
+  user:
+    name: "{{ media_user }}"
+    uid: "{{ media_uid }}"
+    group: "{{ media_user }}"
+    groups:
+      - video
+      - render
+    append: yes
+    shell: /bin/bash
+    create_home: yes
+
+- name: Add jellyfin user to video and render groups
+  user:
+    name: jellyfin
+    groups:
+      - video
+      - render
+    append: yes
+
+- name: Create Jellyfin directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: jellyfin
+    group: jellyfin
+    mode: '0755'
+  loop:
+    - "{{ jellyfin_data_dir }}"
+    - "{{ jellyfin_config_dir }}"
+    - "{{ jellyfin_cache_dir }}"
+
+- name: Deploy hardware acceleration configuration
+  template:
+    src: encoding.xml.j2
+    dest: "{{ jellyfin_config_dir }}/encoding.xml"
+    owner: jellyfin
+    group: jellyfin
+    mode: '0644'
+  notify: restart jellyfin
+  when: enable_hardware_acceleration
+
+- name: Enable and start Jellyfin service
+  systemd:
+    name: jellyfin
+    enabled: yes
+    state: started
+
+- name: Display Jellyfin access information
+  debug:
+    msg:
+      - "Jellyfin is now running!"
+      - "Web UI: http://{{ ansible_default_ipv4.address }}:{{ jellyfin_http_port }}"
+      - "Complete setup wizard in your browser"
+      - "Library paths configured:"
+      - "  - New organized library: {{ jellyfin_library_path }}"
+      - "  - Legacy media: {{ jellyfin_legacy_path }}"

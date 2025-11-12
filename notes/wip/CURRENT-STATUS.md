@@ -99,6 +99,12 @@
   - IP: 192.168.1.70
   - Security: Restricted storage access (staging only)
   - Status: Production ready, CT200 remains as backup
+- **CT305** jellyfin (deployed 2025-11-11) - Media server with dual GPU ✅
+  - IP: 192.168.1.85
+  - Resources: 4 cores, 8GB RAM, 32GB disk (highest priority)
+  - GPU: Intel Arc A380 (primary VA-API) + NVIDIA GTX 1080 (ready)
+  - Hardware accel: AV1, HEVC, H.264 encoding/decoding
+  - Status: Production ready, CT101 remains during transition
 
 ---
 
@@ -173,8 +179,16 @@
   - Security enhancement: Restricted storage mount (staging only)
   - All verification tests passed
   - MakeMKV v1.18.2 compiled and configured
-- [ ] Test CT302 with actual disc ripping ⏳ **NEXT**
+- [x] Create CT305 (Jellyfin IaC version) ✅ **DEPLOYED 2025-11-11**
+  - Dual GPU passthrough (Intel Arc + NVIDIA)
+  - Hardware acceleration fully configured
+  - AV1 encoding support enabled
+  - Fresh install, no metadata migration needed
+- [ ] Test CT305 with media playback and transcoding ⏳ **NEXT**
+- [ ] Add media libraries to CT305 Jellyfin
+- [ ] Test CT302 with actual disc ripping
 - [ ] Plan cutover from CT200 to CT302
+- [ ] Plan cutover from CT101 to CT305
 - [ ] Import CT201 (transcoder) to Terraform
 - [ ] Import CT202 (analyzer) to Terraform
 

@@ -1,0 +1,63 @@
+---
+# Jellyfin Media Server Playbook (CT305)
+# High-priority media streaming with dual GPU hardware transcoding
+
+- name: Configure Jellyfin container
+  hosts: jellyfin
+  become: yes
+  
+  vars:
+    container_id: 305
+
+  roles:
+    - role: common
+      tags: ['common']
+    
+    - role: dual_gpu_passthrough
+      tags: ['gpu', 'passthrough']
+      delegate_to: homelab
+    
+    - role: jellyfin
+      tags: ['jellyfin']
+
+  post_tasks:
+    - name: Verify GPU access in container
+      command: ls -la /dev/dri/
+      register: gpu_check
+      changed_when: false
+      tags: ['verify']
+
+    - name: Display GPU devices
+      debug:
+        var: gpu_check.stdout_lines
+      tags: ['verify']
+
+    - name: Test Intel Arc VA-API
+      command: vainfo --display drm --device /dev/dri/card1
+      register: vainfo_check
+      changed_when: false
+      failed_when: false
+      tags: ['verify']
+
+    - name: Display VA-API status
+      debug:
+        msg: "{{ 'Intel Arc VA-API working!' if vainfo_check.rc == 0 else 'VA-API test failed - may need container restart' }}"
+      tags: ['verify']
+
+    - name: Display Jellyfin access URL
+      debug:
+        msg: 
+          - "========================================"
+          - "Jellyfin is ready!"
+          - "Web UI: http://{{ ansible_default_ipv4.address }}:8096"
+          - "Complete the setup wizard in your browser"
+          - "========================================"
+          - "GPU Configuration:"
+          - "  Primary: Intel Arc A380 (card1, renderD129)"
+          - "  Secondary: NVIDIA GTX 1080 (card0, renderD128) - ready"
+          - "========================================"
+          - "Library Paths:"
+          - "  New: /media/library/{movies,tv}"
+          - "  Legacy: /media/legacy/{movies,tv}"
+          - "========================================"
+      tags: ['verify', 'always']

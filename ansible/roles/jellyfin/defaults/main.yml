@@ -1,0 +1,45 @@
+---
+# Jellyfin installation defaults
+
+# Jellyfin version (use 'latest' or specific version)
+jellyfin_version: "latest"
+
+# Media user configuration (consistent with other containers)
+media_user: "media"
+media_uid: 1000
+media_gid: 1000
+
+# GPU configuration
+# Intel Arc A380 (primary)
+intel_arc_render_device: "/dev/dri/renderD129"
+intel_arc_card_device: "/dev/dri/card1"
+
+# NVIDIA GTX 1080 (secondary/ready)
+nvidia_render_device: "/dev/dri/renderD128"
+nvidia_card_device: "/dev/dri/card0"
+
+# Hardware acceleration settings
+enable_hardware_acceleration: true
+enable_intel_vaapi: true
+enable_nvidia_nvenc: false  # Set to true if NVIDIA drivers installed on host
+enable_tone_mapping: true
+enable_vpp_tone_mapping: true
+
+# Encoding quality settings
+h264_crf: 23
+h265_crf: 28
+enable_hevc_encoding: true
+enable_av1_encoding: true
+
+# Library paths (inside container)
+jellyfin_library_path: "/media/library"
+jellyfin_legacy_path: "/media/legacy"
+
+# Jellyfin data directory
+jellyfin_data_dir: "/var/lib/jellyfin"
+jellyfin_config_dir: "/etc/jellyfin"
+jellyfin_cache_dir: "/var/cache/jellyfin"
+
+# Network configuration
+jellyfin_http_port: 8096
+jellyfin_https_port: 8920
