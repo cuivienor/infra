@@ -393,6 +393,28 @@ Connected to slot 00:1c.4:
 - Thermal Subsystem
 - Management Engine
 
+### SATA Port Mapping
+
+The Intel Z370 chipset provides 6 SATA 6Gb/s ports (ata1-ata6):
+
+| Port | Status | Device | Model | Capacity | Speed |
+|------|--------|--------|-------|----------|-------|
+| **ata1** | Empty | - | - | - | - |
+| **ata2** | In Use | sda (Parity) | WDC WD180EDGZ | 18 TB | 6.0 Gb/s |
+| **ata3** | In Use | sdb (Disk3) | WDC WD180EDGZ | 18 TB | 6.0 Gb/s |
+| **ata4** | In Use | sdc (Disk1) | WDC WD101EDBZ | 10 TB | 6.0 Gb/s |
+| **ata5** | In Use | sdd (Disk2) | Seagate ST10000DM | 10 TB | 6.0 Gb/s |
+| **ata6** | In Use | sr0 | HL-DT-ST BD-RE | Blu-ray | 1.5 Gb/s |
+
+**Available SATA Ports**: 1 (ata1 only)
+
+⚠️ **Important Notes**:
+- **NVMe does NOT use SATA ports** - The Samsung 970 EVO Plus uses a dedicated M.2 slot with PCIe lanes, not SATA
+- **Optical drive DOES use a SATA port** - The Blu-ray drive occupies ata6
+- **Only 1 SATA port available** (ata1) for expansion
+- Standard ASRock Z370 boards typically have 2x M.2 slots, but your OEM variant may differ
+- On some Z370 boards, using M.2 slot #2 disables SATA port 0 or 5 (check if this affects you)
+
 ---
 
 ## Expansion Capacity
@@ -407,7 +429,7 @@ Based on ASRock Z370/OEM motherboard (typical configuration):
 | **PCIe x1** | 2-3 | 0 | 2-3 |
 | **M.2 NVMe** | 1-2 | 1 | 0-1 |
 | **RAM DIMM** | 4 | 2 | 2 |
-| **SATA** | 6 | 4 | 2 |
+| **SATA** | 6 | 5 | 1 |
 
 ### Potential Upgrades
 
@@ -416,9 +438,13 @@ Based on ASRock Z370/OEM motherboard (typical configuration):
 - Cost: ~$60-80 per 16GB module
 
 **Storage**:
-- 2 available SATA ports for additional HDDs/SSDs
-- Possible M.2 slot for additional NVMe SSD (check motherboard)
-- Can expand MergerFS pool with larger disks
+- **Only 1 available SATA port** (ata1) - You were correct!
+  - 4 ports used by data/parity HDDs
+  - 1 port used by Blu-ray drive
+  - NVMe uses M.2 slot (not SATA)
+- Check for second M.2 slot on motherboard (many Z370 boards have 2)
+- Can expand MergerFS pool by replacing smaller disks with larger ones
+- Consider PCIe HBA card if more SATA ports needed
 
 **PCIe**:
 - Available PCIe x1 slots for:
