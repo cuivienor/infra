@@ -1,0 +1,21 @@
+---
+# Dual GPU passthrough defaults
+# Intel Arc A380 (primary) + NVIDIA GTX 1080 (secondary/ready)
+
+# Intel Arc A380 - card1 + renderD129
+intel_gpu_card_device: "/dev/dri/card1"
+intel_gpu_render_device: "/dev/dri/renderD129"
+intel_gpu_major: 226
+intel_gpu_card_minor: 1
+intel_gpu_render_minor: 129
+
+# NVIDIA GTX 1080 - card0 + renderD128
+nvidia_gpu_card_device: "/dev/dri/card0"
+nvidia_gpu_render_device: "/dev/dri/renderD128"
+nvidia_gpu_major: 226
+nvidia_gpu_card_minor: 0
+nvidia_gpu_render_minor: 128
+
+# Host group IDs
+video_gid: 44
+render_gid: 104

@@ -1,0 +1,7 @@
+---
+# Handlers for Jellyfin role
+
+- name: restart jellyfin
+  systemd:
+    name: jellyfin
+    state: restarted

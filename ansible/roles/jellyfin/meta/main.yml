@@ -1,0 +1,16 @@
+---
+# Jellyfin role metadata
+
+dependencies:
+  - role: common
+    tags: ['common']
+
+galaxy_info:
+  author: homelab
+  description: Jellyfin media server with hardware transcoding support
+  license: MIT
+  min_ansible_version: "2.9"
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm

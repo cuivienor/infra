@@ -1,0 +1,6 @@
+---
+# Handlers for dual GPU passthrough role
+
+- name: restart container
+  command: "pct restart {{ container_id }}"
+  delegate_to: homelab

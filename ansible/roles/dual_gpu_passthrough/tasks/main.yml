@@ -1,0 +1,91 @@
+---
+# Dual GPU passthrough configuration for LXC containers
+# Passes both Intel Arc A380 (primary) and NVIDIA GTX 1080 (secondary)
+# This role must run on the Proxmox host (delegate_to: homelab)
+
+- name: Verify container_id is defined
+  assert:
+    that:
+      - container_id is defined
+      - container_id is number
+    fail_msg: "container_id must be defined and numeric"
+
+- name: Check if GPU devices exist on host
+  stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ intel_gpu_card_device }}"
+    - "{{ intel_gpu_render_device }}"
+    - "{{ nvidia_gpu_card_device }}"
+    - "{{ nvidia_gpu_render_device }}"
+  register: gpu_devices_stat
+  delegate_to: homelab
+
+- name: Fail if GPU devices not found
+  fail:
+    msg: "GPU device {{ item.item }} not found on host"
+  when: not item.stat.exists
+  loop: "{{ gpu_devices_stat.results }}"
+
+- name: Get current LXC configuration
+  slurp:
+    path: "/etc/pve/lxc/{{ container_id }}.conf"
+  register: lxc_config_current
+  delegate_to: homelab
+
+- name: Parse current configuration
+  set_fact:
+    lxc_config_content: "{{ lxc_config_current.content | b64decode }}"
+
+- name: Check if dual GPU passthrough already configured
+  set_fact:
+    dual_gpu_passthrough_configured: "{{ ('lxc.cgroup2.devices.allow: c 226:1 rwm' in lxc_config_content) and ('lxc.cgroup2.devices.allow: c 226:0 rwm' in lxc_config_content) }}"
+
+- name: Add cgroup device permissions for Intel Arc card1
+  lineinfile:
+    path: "/etc/pve/lxc/{{ container_id }}.conf"
+    line: "lxc.cgroup2.devices.allow: c {{ intel_gpu_major }}:{{ intel_gpu_card_minor }} rwm"
+    state: present
+  when: not dual_gpu_passthrough_configured
+  delegate_to: homelab
+  notify: restart container
+
+- name: Add cgroup device permissions for Intel Arc renderD129
+  lineinfile:
+    path: "/etc/pve/lxc/{{ container_id }}.conf"
+    line: "lxc.cgroup2.devices.allow: c {{ intel_gpu_major }}:{{ intel_gpu_render_minor }} rwm"
+    state: present
+  when: not dual_gpu_passthrough_configured
+  delegate_to: homelab
+  notify: restart container
+
+- name: Add cgroup device permissions for NVIDIA card0
+  lineinfile:
+    path: "/etc/pve/lxc/{{ container_id }}.conf"
+    line: "lxc.cgroup2.devices.allow: c {{ nvidia_gpu_major }}:{{ nvidia_gpu_card_minor }} rwm"
+    state: present
+  when: not dual_gpu_passthrough_configured
+  delegate_to: homelab
+  notify: restart container
+
+- name: Add cgroup device permissions for NVIDIA renderD128
+  lineinfile:
+    path: "/etc/pve/lxc/{{ container_id }}.conf"
+    line: "lxc.cgroup2.devices.allow: c {{ nvidia_gpu_major }}:{{ nvidia_gpu_render_minor }} rwm"
+    state: present
+  when: not dual_gpu_passthrough_configured
+  delegate_to: homelab
+  notify: restart container
+
+- name: Add mount entry for /dev/dri directory
+  lineinfile:
+    path: "/etc/pve/lxc/{{ container_id }}.conf"
+    line: "lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir"
+    state: present
+  when: not dual_gpu_passthrough_configured
+  delegate_to: homelab
+  notify: restart container
+
+- name: Display configuration status
+  debug:
+    msg: "Dual GPU passthrough (Intel Arc + NVIDIA) {{ 'already configured' if dual_gpu_passthrough_configured else 'configured (container restart required)' }}"
