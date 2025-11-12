@@ -1,11 +1,23 @@
 # Homelab Current Status
 
-**Date**: 2025-11-11
-**Focus**: IaC Implementation + Backup System
+**Date**: 2025-11-12
+**Focus**: Full IaC Migration Complete! 🎉
 
 ---
 
-## 🎯 Current Work: Backup System with IaC
+## 🎉 MAJOR MILESTONE: Full IaC Migration Complete!
+
+### ✅ Completed (2025-11-12)
+
+**Legacy Container Cleanup:**
+- [x] Backed up all LXC configs for CT101, CT200, CT201, CT202
+- [x] Stopped all legacy containers
+- [x] Deleted all legacy containers with storage purge
+- [x] Verified 48GB disk space reclaimed
+- [x] Updated documentation (AGENTS.md, CURRENT-STATUS.md)
+- [x] Created cleanup summary in archive
+
+**Result:** 100% Infrastructure as Code! All 6 containers (CT300-305) managed by Terraform + Ansible
 
 ### ✅ Completed (2025-11-11)
 
@@ -86,25 +98,29 @@
 - **GPU**: Intel Arc A380 (transcoding), NVIDIA GTX 1080
 - **Optical**: /dev/sr0 (Blu-ray)
 
-### Active Containers (Manual)
-- **CT101** jellyfin (192.168.1.128) - Media server
-- **CT200** ripper-new (192.168.1.75) - MakeMKV, optical drive
-- **CT201** transcoder-new (192.168.1.77) - FFmpeg, Intel Arc GPU
-- **CT202** analyzer (192.168.1.72) - Media analysis
-
-### IaC Containers (300 Range)
-- **CT300** backup (deployed) - Restic + Backrest UI ✅
-- **CT301** samba (deployed) - Samba file server ✅
-- **CT302** ripper (deployed 2025-11-11) - MakeMKV with optical drive ✅
-  - IP: 192.168.1.70
+### Active Containers (All IaC - 300 Range)
+- **CT300** backup (192.168.1.58) - Restic + Backrest UI ✅
+- **CT301** samba (192.168.1.82) - Samba file server ✅
+- **CT302** ripper (192.168.1.70) - MakeMKV with optical drive ✅
   - Security: Restricted storage access (staging only)
-  - Status: Production ready, CT200 remains as backup
-- **CT305** jellyfin (deployed 2025-11-11) - Media server with dual GPU ✅
-  - IP: 192.168.1.85
-  - Resources: 4 cores, 8GB RAM, 32GB disk (highest priority)
-  - GPU: Intel Arc A380 (primary VA-API) + NVIDIA GTX 1080 (ready)
+  - Status: Production ready
+- **CT303** analyzer (192.168.1.73) - Media analysis, remuxing, organization ✅
+  - Status: Production ready
+- **CT304** transcoder (192.168.1.77) - FFmpeg with Intel Arc GPU ✅
+  - GPU: Intel Arc A380 (VA-API hardware acceleration)
+  - Status: Production ready
+- **CT305** jellyfin (192.168.1.85) - Media server with dual GPU ✅
+  - Resources: 4 cores, 8GB RAM, 32GB disk
+  - GPU: Intel Arc A380 (primary VA-API) + NVIDIA GTX 1080
   - Hardware accel: AV1, HEVC, H.264 encoding/decoding
-  - Status: Production ready, CT101 remains during transition
+  - Status: Production ready
+
+### Legacy Containers (REMOVED 2025-11-12)
+- ~~CT101 jellyfin~~ → Replaced by CT305
+- ~~CT200 ripper-new~~ → Replaced by CT302
+- ~~CT201 transcoder-new~~ → Replaced by CT304
+- ~~CT202 analyzer~~ → Replaced by CT303
+- **Storage reclaimed**: 48GB
 
 ---
 
@@ -170,27 +186,20 @@
 - [ ] Test Terraform + Ansible workflow
 - [ ] Document lessons learned
 
-### Phase 2: Container Migration (In Progress)
+### Phase 2: Container Migration ✅ **COMPLETE!**
+- [x] Create CT300 (backup) ✅
+- [x] Create CT301 (samba) ✅
 - [x] Create CT302 (ripper IaC version) ✅
-- [x] Create device passthrough Ansible role ✅
-- [x] Create MakeMKV Ansible role ✅
-- [x] Decommission legacy containers (CT100, CT102) ✅
-- [x] Deploy and test CT302 ✅ **DEPLOYED 2025-11-11**
-  - Security enhancement: Restricted storage mount (staging only)
-  - All verification tests passed
-  - MakeMKV v1.18.2 compiled and configured
-- [x] Create CT305 (Jellyfin IaC version) ✅ **DEPLOYED 2025-11-11**
-  - Dual GPU passthrough (Intel Arc + NVIDIA)
-  - Hardware acceleration fully configured
-  - AV1 encoding support enabled
-  - Fresh install, no metadata migration needed
-- [ ] Test CT305 with media playback and transcoding ⏳ **NEXT**
+- [x] Create CT303 (analyzer IaC version) ✅
+- [x] Create CT304 (transcoder IaC version) ✅
+- [x] Create CT305 (Jellyfin IaC version) ✅
+- [x] Create device passthrough Ansible roles ✅
+- [x] Create MakeMKV, Jellyfin, and media roles ✅
+- [x] Decommission ALL legacy containers (CT100, CT101, CT102, CT200, CT201, CT202) ✅
+- [x] 48GB disk space reclaimed ✅
+- [ ] Test end-to-end media pipeline with new containers ⏳ **NEXT**
 - [ ] Add media libraries to CT305 Jellyfin
-- [ ] Test CT302 with actual disc ripping
-- [ ] Plan cutover from CT200 to CT302
-- [ ] Plan cutover from CT101 to CT305
-- [ ] Import CT201 (transcoder) to Terraform
-- [ ] Import CT202 (analyzer) to Terraform
+- [ ] Verify all hardware passthrough working in production
 
 ### Phase 3: Host Configuration (Planned)
 - [ ] Ansible role for MergerFS configuration
@@ -237,14 +246,13 @@ docs/
 
 ## 🎯 Immediate Action Items
 
-1. **Get B2 credentials** (backblaze.com)
-2. **Configure secrets** (terraform.tfvars, backup_secrets.yml)
-3. **Deploy CT300** (terraform apply)
-4. **Run Ansible** (configure backups)
-5. **Test backup** (first manual run)
-6. **Monitor** (verify daily automation)
+1. **Test CT305 Jellyfin** - Add media libraries and verify playback
+2. **Test CT302 Ripper** - Rip a disc end-to-end
+3. **Test CT304 Transcoder** - Verify GPU transcoding working
+4. **Update any scripts** - Check for hardcoded IPs (if any)
+5. **Monitor stability** - Watch all containers for a few days
 
-**Time estimate**: 1-2 hours for complete setup
+**Status**: Infrastructure migration complete, now testing production workflows
 
 ---
 
@@ -291,8 +299,8 @@ CT300 deployment is successful when:
 
 ---
 
-**Current Priority**: Deploy CT300 backup container (first IaC container!)
+**Current Priority**: Test production workflows with new IaC containers
 
-**Next After That**: Test media pipeline with backup in place
+**Achievement**: 🎉 100% Infrastructure as Code - All containers managed by Terraform + Ansible!
 
-**Last Updated**: 2025-11-11
+**Last Updated**: 2025-11-12
