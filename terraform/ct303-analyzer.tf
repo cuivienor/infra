@@ -58,12 +58,18 @@ resource "proxmox_virtual_environment_container" "analyzer" {
     size         = 12  # 12GB for OS, tools, and temporary files
   }
 
-  # Mount only staging directory from host (least privilege)
+  # Mount staging directory from host (media processing)
   mount_point {
     volume = "/mnt/storage/media/staging"
     path   = "/mnt/staging"
-    # Analyzer only needs access to staging directory
-    # This follows security best practices (least privilege)
+    # Analyzer processes files through staging pipeline
+  }
+
+  # Mount library directory from host (FileBot output)
+  mount_point {
+    volume = "/mnt/storage/media/library"
+    path   = "/mnt/library"
+    # Analyzer needs write access to move files to final library via FileBot
   }
 
   # Features
