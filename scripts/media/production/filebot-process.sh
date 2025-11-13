@@ -1,24 +1,26 @@
 #!/bin/bash
-# filebot-process.sh - Process media with FileBot (semi-automated with preview)
+# filebot-process.sh - Process media with FileBot (semi-automated with preview + extras support)
 #
-# Usage: ./filebot-process.sh /path/to/4-ready/[type]/[folder]
+# Usage: ./filebot-process.sh /path/to/3-transcoded/[type]/[folder]
 #
 # This script will:
 # 1. Detect type (movie or TV)
-# 2. Run FileBot dry-run to preview changes
-# 3. Confirm before executing
-# 4. Move files to final library with proper naming
+# 2. Detect and preserve extras folders
+# 3. Run FileBot dry-run to preview changes
+# 4. Confirm before executing
+# 5. Move files to final library with proper naming
+# 6. Copy extras to library location
 
 set -e
 
 INPUT_DIR="$1"
 
 if [ -z "$INPUT_DIR" ]; then
-    echo "Usage: $0 /path/to/4-ready/[type]/[folder]"
+    echo "Usage: $0 /path/to/3-transcoded/[type]/[folder]"
     echo ""
     echo "Examples:"
-    echo "  $0 /staging/4-ready/movies/How_To_Train_Your_Dragon/"
-    echo "  $0 /staging/4-ready/tv/Avatar_The_Last_Airbender/Season_01/"
+    echo "  $0 /mnt/staging/3-transcoded/movies/How_To_Train_Your_Dragon/"
+    echo "  $0 /mnt/staging/3-transcoded/tv/Avatar_The_Last_Airbender/Season_01/"
     exit 1
 fi
 
@@ -35,19 +37,6 @@ if ! command -v filebot &> /dev/null; then
     exit 1
 fi
 
-# Verify this is from 4-ready
-if [[ ! "$INPUT_DIR" =~ staging/4-ready ]]; then
-    echo "⚠️  Warning: This script is designed for staging/4-ready paths"
-    echo "Your path: $INPUT_DIR"
-    echo ""
-    read -p "Continue anyway? [y/N]: " -r
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Aborted"
-        exit 0
-    fi
-    echo ""
-fi
-
 # Detect type (movies or tv)
 if [[ "$INPUT_DIR" =~ /movies/ ]]; then
     TYPE="movies"
@@ -62,7 +51,26 @@ else
     exit 1
 fi
 
-OUTPUT_DIR="/mnt/storage/media/library/${TYPE}"
+# Determine output directory based on mount point
+# CT303 has /mnt/library, other containers might have /mnt/storage/media/library
+if [ -d "/mnt/library" ]; then
+    OUTPUT_DIR="/mnt/library/${TYPE}"
+else
+    OUTPUT_DIR="/mnt/storage/media/library/${TYPE}"
+fi
+
+# Check for extras subdirectories (Jellyfin-supported types)
+EXTRAS_FOUND=()
+EXTRAS_TYPES=("extras" "behind the scenes" "deleted scenes" "interviews" "scenes" "samples" "shorts" "featurettes" "clips" "trailers" "other")
+
+for extras_type in "${EXTRAS_TYPES[@]}"; do
+    if [ -d "$INPUT_DIR/$extras_type" ]; then
+        extras_count=$(find "$INPUT_DIR/$extras_type" -type f -name "*.mkv" 2>/dev/null | wc -l)
+        if [ $extras_count -gt 0 ]; then
+            EXTRAS_FOUND+=("$extras_type:$extras_count")
+        fi
+    fi
+done
 
 echo "=========================================="
 echo "FileBot Processing (DRY RUN)"
@@ -76,46 +84,52 @@ echo "Output:   $OUTPUT_DIR"
 echo "=========================================="
 echo ""
 
-# Count files
-file_count=$(find "$INPUT_DIR" -type f -name "*.mkv" | wc -l)
-echo "Files to process: $file_count"
+# Count main content files (exclude extras directories)
+exclude_pattern=""
+for extras_type in "${EXTRAS_TYPES[@]}"; do
+    exclude_pattern="$exclude_pattern -not -path \"*/$extras_type/*\""
+done
+
+file_count=$(eval "find \"$INPUT_DIR\" -type f -name \"*.mkv\" $exclude_pattern" | wc -l)
+echo "Main content files: $file_count"
+
+# Show extras summary
+if [ ${#EXTRAS_FOUND[@]} -gt 0 ]; then
+    echo ""
+    echo "Extras detected:"
+    for extra_info in "${EXTRAS_FOUND[@]}"; do
+        IFS=':' read -r extra_type extra_count <<< "$extra_info"
+        echo "  - $extra_type/ ($extra_count files)"
+    done
+    echo ""
+    echo "ℹ️  Extras will be copied to library after main content is processed"
+fi
+
 echo ""
 
 if [ $file_count -eq 0 ]; then
-    echo "No MKV files found to process"
+    echo "No main content MKV files found to process"
+    echo "(Extras alone cannot be processed without main content)"
     exit 1
 fi
 
-echo "Running FileBot dry-run to preview changes..."
+echo "Querying metadata from $DB..."
 echo ""
 echo "========================================"
 echo ""
 
-# Run dry-run
-filebot -rename "$INPUT_DIR" \
-    --db "$DB" \
-    --output "$OUTPUT_DIR" \
-    --format "$FORMAT" \
-    --action test \
-    -non-strict \
-    || {
-        echo ""
-        echo "✗ FileBot dry-run failed"
-        echo ""
-        echo "Common issues:"
-        echo "  - Files not recognized by database"
-        echo "  - Incorrect folder/file naming"
-        echo "  - Missing season/episode information"
-        echo ""
-        echo "Try manually searching or adjusting folder names"
-        exit 1
-    }
-
+# FileBot free version doesn't support --action test (requires license)
+# Instead, we'll use interactive mode which shows a preview
+echo "⚠️  FileBot will now process files in INTERACTIVE mode"
 echo ""
-echo "========================================"
+echo "FileBot will:"
+echo "  1. Query $DB for metadata"
+echo "  2. Show you the rename plan"
+echo "  3. Ask for confirmation before making changes"
 echo ""
-
-read -p "Execute this rename/move operation? [y/N]: " -r
+echo "Press Ctrl+C to abort at any time"
+echo ""
+read -p "Ready to proceed? [y/N]: " -r
 echo
 
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -125,45 +139,141 @@ fi
 
 # Execute actual rename/move
 echo ""
-echo "Executing FileBot rename/move..."
+echo "========================================"
+echo "FileBot Interactive Mode"
+echo "========================================"
 echo ""
 
-filebot -rename "$INPUT_DIR" \
+# Run FileBot in interactive mode (free, shows preview + confirmation)
+# This will show the rename plan and ask for confirmation
+filebot_output=$(filebot -rename "$INPUT_DIR" \
     --db "$DB" \
     --output "$OUTPUT_DIR" \
     --format "$FORMAT" \
     --action move \
-    -non-strict
+    --mode interactive \
+    -non-strict 2>&1)
 
 filebot_exit=$?
 
+echo "$filebot_output"
 echo ""
 
 if [ $filebot_exit -eq 0 ]; then
     echo "=========================================="
-    echo "✓ Success!"
+    echo "✓ Main content processed successfully!"
     echo "=========================================="
+    
+    # Process extras if any were found
+    if [ ${#EXTRAS_FOUND[@]} -gt 0 ]; then
+        echo ""
+        echo "=========================================="
+        echo "Processing Extras"
+        echo "=========================================="
+        
+        # Try to detect the output path from FileBot output
+        # Look for lines like: [MOVE] from [...] to [...]
+        # Extract the show/movie name and season (for TV)
+        
+        # For TV shows, we need to find the Season folder that was created
+        if [ "$TYPE" = "tv" ]; then
+            # Extract show name and season from input path
+            show_folder=$(basename "$(dirname "$INPUT_DIR")")
+            season_folder=$(basename "$INPUT_DIR")
+            
+            # Try to find the created directory in library
+            # FileBot renames, so we need to search for it
+            target_base=$(find "$OUTPUT_DIR" -type d -maxdepth 1 2>/dev/null | head -1)
+            if [ -n "$target_base" ]; then
+                # Find the season directory
+                target_extras=$(find "$OUTPUT_DIR" -type d -name "Season*" 2>/dev/null | grep -i "$(echo $season_folder | sed 's/[^0-9]*//g')" | head -1)
+            fi
+        else
+            # For movies, find the movie directory
+            target_extras=$(find "$OUTPUT_DIR" -type d -maxdepth 1 2>/dev/null | tail -1)
+        fi
+        
+        # If we couldn't auto-detect, ask user
+        if [ -z "$target_extras" ] || [ ! -d "$target_extras" ]; then
+            echo ""
+            echo "Could not auto-detect library destination."
+            echo "Please enter the full path where extras should be copied:"
+            echo "(This is where FileBot moved your files)"
+            read -r target_extras
+            
+            if [ ! -d "$target_extras" ]; then
+                echo "⚠️  Warning: Directory does not exist: $target_extras"
+                echo "Extras will NOT be copied. You can copy them manually later."
+                target_extras=""
+            fi
+        fi
+        
+        if [ -n "$target_extras" ]; then
+            echo ""
+            echo "Copying extras to: $target_extras"
+            echo ""
+            
+            # Copy each extras directory
+            for extra_info in "${EXTRAS_FOUND[@]}"; do
+                IFS=':' read -r extra_type extra_count <<< "$extra_info"
+                
+                echo "→ Copying $extra_type/ ($extra_count files)..."
+                
+                # Create extras directory in library
+                mkdir -p "$target_extras/$extra_type"
+                
+                # Copy files
+                cp -v "$INPUT_DIR/$extra_type"/*.mkv "$target_extras/$extra_type/" 2>/dev/null || true
+                
+                # Verify copy
+                copied_count=$(find "$target_extras/$extra_type" -type f -name "*.mkv" 2>/dev/null | wc -l)
+                if [ $copied_count -eq $extra_count ]; then
+                    echo "  ✓ $copied_count extras copied successfully"
+                else
+                    echo "  ⚠️  Warning: Expected $extra_count files, but found $copied_count"
+                fi
+            done
+            
+            echo ""
+            echo "✓ Extras processing complete"
+        fi
+    fi
+    
+    echo ""
     echo "Files moved to library: $OUTPUT_DIR"
     echo ""
     
-    # Check if input directory is now empty
-    remaining_files=$(find "$INPUT_DIR" -type f -name "*.mkv" | wc -l)
+    # Check if input directory is now mostly empty (may have extras left)
+    remaining_files=$(eval "find \"$INPUT_DIR\" -type f -name \"*.mkv\" $exclude_pattern" 2>/dev/null | wc -l)
     
     if [ $remaining_files -eq 0 ]; then
-        echo "Input directory is now empty"
-        read -p "Delete empty directory structure? [Y/n]: " -r
-        echo
+        echo "Main content successfully moved from source"
         
-        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-            rm -rf "$INPUT_DIR"
-            echo "✓ Cleaned up: $INPUT_DIR"
+        if [ ${#EXTRAS_FOUND[@]} -eq 0 ]; then
+            echo ""
+            read -p "Delete empty directory structure? [Y/n]: " -r
+            echo
+            
+            if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+                rm -rf "$INPUT_DIR"
+                echo "✓ Cleaned up: $INPUT_DIR"
+            fi
+        else
+            echo ""
+            echo "ℹ️  Source extras remain at: $INPUT_DIR"
+            echo "You can delete them manually after verifying library extras:"
+            echo "  rm -rf \"$INPUT_DIR\""
         fi
     else
-        echo "⚠️  Warning: $remaining_files file(s) remain in input"
+        echo "⚠️  Warning: $remaining_files main file(s) remain in input"
         echo "These may have failed to process"
         echo "Check: $INPUT_DIR"
     fi
     
+    echo ""
+    echo "=========================================="
+    echo "✓ Complete!"
+    echo "=========================================="
     echo ""
     echo "Jellyfin will automatically detect new content"
     echo "You may need to run a library scan to update metadata"

@@ -2,7 +2,7 @@
 # Default variables for media_analyzer role
 
 # Install FileBot (optional, requires Java)
-media_analyzer_install_filebot: false
+media_analyzer_install_filebot: true
 
 # FileBot version (if installing)
 filebot_version: "5.1.3"
