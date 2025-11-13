@@ -91,15 +91,6 @@
     group: media
     create: yes
 
-- name: Fix locale for FileBot
-  lineinfile:
-    path: /home/media/.bashrc
-    line: 'export LANG=C.UTF-8'
-    state: present
-    owner: media
-    group: media
-    create: yes
-
 - name: Add hostname to /etc/hosts for FileBot
   lineinfile:
     path: /etc/hosts
