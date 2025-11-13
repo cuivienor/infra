@@ -44,6 +44,88 @@ A collection of personal configuration files managed using GNU Stow.
 
 Most modules use the [Catppuccin](https://github.com/catppuccin/catppuccin) color scheme (primarily the Mocha variant).
 
+## ⌨️ Neovim Keybinding Strategy
+
+The Neovim configuration follows a consistent keybinding strategy to minimize conflicts and maximize discoverability.
+
+### Core Principles
+
+1. **Leader-based organization**: Custom actions use `<leader>` (Space) for predictability
+2. **Mnemonic prefixes**: First letter matches the action (d=diagnostics, s=search, etc.)
+3. **Consistent namespacing**: Related actions grouped under same prefix
+4. **No operator conflicts**: Never override Vim's core operators (d, c, y, etc.)
+5. **Which-key integration**: All leader groups documented for discoverability
+
+### Leader Key Namespaces
+
+| Prefix | Purpose | Example Bindings |
+|--------|---------|------------------|
+| `<leader>c` | **C**ode / **C**opy | `ca` (code action), `cp` (copy path), `cf` (copy filename) |
+| `<leader>d` | **D**iagnostics | `dd` (telescope), `dq` (quickfix), `de` (error float) |
+| `<leader>D` | **D**ebug | `Dc` (continue), `Di` (step into), `Db` (breakpoint) |
+| `<leader>f` | **F**ormat | `f` (format buffer), `fi` (format info) |
+| `<leader>g` | **G**it/GitHub | `gh` (actions), `gp` (PRs), `gi` (issues) |
+| `<leader>h` | Git **H**unks | `hs` (stage), `hr` (reset), `hp` (preview) |
+| `<leader>i` | **I**con | `ii` (insert icon), `iy` (yank icon) |
+| `<leader>m` | **M**isc | `mv` (move file) |
+| `<leader>o` | **O**bsidian | `of` (follow link), `oc` (toggle checkbox) - markdown only |
+| `<leader>r` | **R**ename | LSP rename (buffer-local) |
+| `<leader>s` | **S**earch | `sf` (files), `sg` (grep), `sw` (word), `sh` (help) |
+| `<leader>t` | **T**est | `tt` (this file), `ts` (nearest), `tl` (last), `ta` (all) |
+| `<leader>T` | **T**oggle | `Tb` (git blame), `TD` (git deleted) |
+| `<leader>w` | **W**orkspace | `ws*` (swap file management) |
+| `<leader>x` | **X**codebuild | `xb` (build), `xr` (run), `xt` (test) - Swift projects only |
+| `<leader><leader>` | Buffer list | Quick buffer switching |
+
+### Non-Leader Bindings
+
+**LSP Navigation (g-prefix)**
+- `gd` - Goto definition (Telescope)
+- `gr` - Goto references (Telescope)
+- `gI` - Goto implementation (Telescope)
+- `gt` - Goto type definition (Telescope)
+- `gD` - Goto declaration
+- `K` - Hover documentation
+
+**Bracket Navigation**
+- `[d` / `]d` - Previous/next diagnostic
+- `[c` / `]c` - Previous/next git change
+- `[x` / `]x` - Previous/next Xcode error
+
+**Text Objects & Operators**
+- `gc`, `gcc` - Comment.nvim (linewise)
+- `gb`, `gbc` - Comment.nvim (blockwise)
+- `sa`, `sd`, `sr` - Mini.surround (add, delete, replace)
+- `-` - Oil.nvim (open parent directory)
+
+**Control-based**
+- `<C-h/j/k/l>` - Window navigation (tmux integration)
+- `<C-p>` - Git files (Telescope)
+- `<C-\>` - Toggle terminal (toggleterm)
+
+### Adding New Keybindings
+
+When adding new keybindings:
+
+1. **Check for conflicts**: Use `:verbose map <key>` to check existing bindings
+2. **Choose appropriate namespace**: Pick the most semantically correct leader prefix
+3. **Update which-key**: Add group descriptions for new prefixes
+4. **Document in config**: Add clear descriptions for all mappings
+5. **Prefer leader keys**: Use `<leader>` for custom actions, leave g/[ shortcuts for built-ins
+
+### Example
+
+```lua
+-- ✅ Good: Uses leader key with mnemonic prefix
+vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, { desc = "[C]ode [A]ction" })
+
+-- ❌ Bad: Conflicts with Vim's delete operator
+vim.keymap.set("n", "dc", dap.continue, { desc = "Debug Continue" })
+
+-- ✅ Good: Uses leader with clear namespace
+vim.keymap.set("n", "<leader>Dc", dap.continue, { desc = "[D]ebug [C]ontinue" })
+```
+
 ## 🛍️ Shopify Development
 
 ### Neovim LSP Configuration for Shadowenv
