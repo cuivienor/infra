@@ -42,6 +42,8 @@ if [[ "$INPUT_DIR" =~ /movies/ ]]; then
     TYPE="movies"
     DB="TheMovieDB"
     FORMAT='{n} ({y})/{n} ({y})'
+    # For movies, extract potential year from directory name for better matching
+    MOVIE_HINT=$(basename "$INPUT_DIR" | tr '_' ' ')
 elif [[ "$INPUT_DIR" =~ /tv/ ]]; then
     TYPE="tv"
     DB="TheTVDB"
@@ -113,23 +115,60 @@ if [ $file_count -eq 0 ]; then
     exit 1
 fi
 
-echo "Querying metadata from $DB..."
+echo "Running FileBot test to preview changes..."
 echo ""
 echo "========================================"
 echo ""
 
-# FileBot free version doesn't support --action test (requires license)
-# Instead, we'll use interactive mode which shows a preview
-echo "⚠️  FileBot will now process files in INTERACTIVE mode"
+# Run FileBot in test mode (dry-run) with licensed version
+if [ "$TYPE" = "movies" ]; then
+    # For movies, use query hint from directory name for better matching
+    filebot -rename "$INPUT_DIR" \
+        --db "$DB" \
+        --q "$MOVIE_HINT" \
+        --output "$OUTPUT_DIR" \
+        --format "$FORMAT" \
+        --action test \
+        -non-strict \
+        || {
+            echo ""
+            echo "✗ FileBot dry-run failed"
+            echo ""
+            echo "Common issues:"
+            echo "  - Movie not found in database"
+            echo "  - Ambiguous title (multiple matches)"
+            echo "  - Year might be needed for disambiguation"
+            echo ""
+            echo "Hint: Try renaming directory to include year, e.g. 'Movie_Name_2010'"
+            exit 1
+        }
+else
+    # For TV shows, standard query
+    filebot -rename "$INPUT_DIR" \
+        --db "$DB" \
+        --output "$OUTPUT_DIR" \
+        --format "$FORMAT" \
+        --action test \
+        -non-strict \
+        || {
+            echo ""
+            echo "✗ FileBot dry-run failed"
+            echo ""
+            echo "Common issues:"
+            echo "  - Show not recognized by database"
+            echo "  - Incorrect folder/file naming"
+            echo "  - Missing season/episode information"
+            echo ""
+            echo "Try manually searching or adjusting folder names"
+            exit 1
+        }
+fi
+
 echo ""
-echo "FileBot will:"
-echo "  1. Query $DB for metadata"
-echo "  2. Show you the rename plan"
-echo "  3. Ask for confirmation before making changes"
+echo "========================================"
 echo ""
-echo "Press Ctrl+C to abort at any time"
-echo ""
-read -p "Ready to proceed? [y/N]: " -r
+
+read -p "Execute this rename/move operation? [y/N]: " -r
 echo
 
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -139,20 +178,26 @@ fi
 
 # Execute actual rename/move
 echo ""
-echo "========================================"
-echo "FileBot Interactive Mode"
-echo "========================================"
+echo "Executing FileBot rename/move..."
 echo ""
 
-# Run FileBot in interactive mode (free, shows preview + confirmation)
-# This will show the rename plan and ask for confirmation
-filebot_output=$(filebot -rename "$INPUT_DIR" \
-    --db "$DB" \
-    --output "$OUTPUT_DIR" \
-    --format "$FORMAT" \
-    --action move \
-    --mode interactive \
-    -non-strict 2>&1)
+# Run FileBot with proper query for movies vs TV
+if [ "$TYPE" = "movies" ]; then
+    filebot_output=$(filebot -rename "$INPUT_DIR" \
+        --db "$DB" \
+        --q "$MOVIE_HINT" \
+        --output "$OUTPUT_DIR" \
+        --format "$FORMAT" \
+        --action move \
+        -non-strict 2>&1)
+else
+    filebot_output=$(filebot -rename "$INPUT_DIR" \
+        --db "$DB" \
+        --output "$OUTPUT_DIR" \
+        --format "$FORMAT" \
+        --action move \
+        -non-strict 2>&1)
+fi
 
 filebot_exit=$?
 
