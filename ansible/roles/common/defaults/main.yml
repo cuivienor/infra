@@ -10,7 +10,8 @@ ssh_authorized_keys_users:
 timezone: "America/New_York"
 
 # Locale configuration
-locale: "en_US.UTF-8"
+# C.UTF-8 is always available without installing locales package
+locale: "C.UTF-8"
 
 # Basic packages to install on all systems
 common_packages:
