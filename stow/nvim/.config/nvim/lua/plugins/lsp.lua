@@ -108,7 +108,7 @@ return { -- LSP Configuration & Plugins
 				-- Jump to the type of the word under your cursor.
 				--  Useful when you're not sure what type a variable is and you want to see
 				--  the definition of its *type*, not where it was *defined*.
-				map("<leader>D", require("telescope.builtin").lsp_type_definitions, "Type Definition")
+				map("gt", require("telescope.builtin").lsp_type_definitions, "Goto Type definition")
 
 				-- Fuzzy find all the symbols in your current document.
 				--  Symbols are things like variables, functions, types, etc.
@@ -177,6 +177,15 @@ return { -- LSP Configuration & Plugins
 				if client and client.name == "ruff" then
 					client.server_capabilities.hoverProvider = false
 				end
+
+				-- Remove default Neovim 0.11 LSP bindings (gra, grn, grr, gri, grt)
+				-- We use leader-based bindings instead for consistency
+				pcall(vim.keymap.del, "n", "gra", { buffer = event.buf })
+				pcall(vim.keymap.del, "x", "gra", { buffer = event.buf })
+				pcall(vim.keymap.del, "n", "grn", { buffer = event.buf })
+				pcall(vim.keymap.del, "n", "grr", { buffer = event.buf })
+				pcall(vim.keymap.del, "n", "gri", { buffer = event.buf })
+				pcall(vim.keymap.del, "n", "grt", { buffer = event.buf })
 			end,
 		})
 
