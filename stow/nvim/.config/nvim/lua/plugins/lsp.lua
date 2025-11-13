@@ -4,7 +4,16 @@ return { -- LSP Configuration & Plugins
 		{ "williamboman/mason.nvim", config = true }, -- NOTE: Must be loaded before dependents
 		"williamboman/mason-lspconfig.nvim",
 		"WhoIsSethDaniel/mason-tool-installer.nvim",
-		{ "j-hui/fidget.nvim", opts = {} },
+		{
+			"j-hui/fidget.nvim",
+			opts = {
+				notification = {
+					window = {
+						avoid = { "TestExplorer" }  -- Explicitly avoid xcodebuild.nvim's explorer window
+					}
+				}
+			}
+		},
 		{ "folke/neodev.nvim", opts = {} },
 	},
 	config = function()
