@@ -49,6 +49,22 @@
     - media_analyzer_install_filebot | bool
     - filebot_check.rc != 0
 
+- name: Deploy FileBot license
+  copy:
+    src: "{{ playbook_dir }}/../files/filebot_license.psm"
+    dest: "/home/media/FileBot_License.psm"
+    owner: media
+    group: media
+    mode: '0600'
+  when: media_analyzer_install_filebot | bool
+
+- name: Install FileBot license
+  shell: su - media -c "filebot --license /home/media/FileBot_License.psm"
+  register: filebot_license_install
+  changed_when: "'has been activated successfully' in filebot_license_install.stdout"
+  failed_when: false
+  when: media_analyzer_install_filebot | bool
+
 - name: Create scripts directory for media user
   file:
     path: /home/media/scripts
@@ -74,6 +90,13 @@
     owner: media
     group: media
     create: yes
+
+- name: Add hostname to /etc/hosts for FileBot
+  lineinfile:
+    path: /etc/hosts
+    line: "127.0.0.1 {{ ansible_hostname }}"
+    state: present
+  when: media_analyzer_install_filebot | bool
 
 - name: Verify mkvtoolnix installation
   command: mkvmerge --version

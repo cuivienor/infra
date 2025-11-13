@@ -2,8 +2,24 @@
 # System configuration tasks
 
 - name: Set timezone
-  community.general.timezone:
+  timezone:
     name: "{{ timezone }}"
+
+- name: Set system locale to C.UTF-8
+  lineinfile:
+    path: /etc/default/locale
+    line: 'LANG=C.UTF-8'
+    create: yes
+    state: present
+
+- name: Set locale for all users via profile.d
+  copy:
+    content: |
+      # Set UTF-8 locale for all users
+      export LANG=C.UTF-8
+      export LC_ALL=C.UTF-8
+    dest: /etc/profile.d/locale.sh
+    mode: '0644'
   when: timezone is defined
 
 - name: Set locale
