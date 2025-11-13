@@ -35,12 +35,12 @@ return {
 		})
 
 		-- Basic debugging keymaps, feel free to change to your liking!
-		vim.keymap.set("n", "dc", dap.continue, { desc = "Debug: Start/Continue" })
-		vim.keymap.set("n", "di", dap.step_into, { desc = "Debug: Step Into" })
-		vim.keymap.set("n", "dv", dap.step_over, { desc = "Debug: Step Over" })
-		vim.keymap.set("n", "do", dap.step_out, { desc = "Debug: Step Out" })
-		vim.keymap.set("n", "<leader>b", dap.toggle_breakpoint, { desc = "Debug: Toggle Breakpoint" })
-		vim.keymap.set("n", "<leader>B", function()
+		vim.keymap.set("n", "<leader>Dc", dap.continue, { desc = "Debug: Start/Continue" })
+		vim.keymap.set("n", "<leader>Di", dap.step_into, { desc = "Debug: Step Into" })
+		vim.keymap.set("n", "<leader>Dv", dap.step_over, { desc = "Debug: Step Over" })
+		vim.keymap.set("n", "<leader>Do", dap.step_out, { desc = "Debug: Step Out" })
+		vim.keymap.set("n", "<leader>Db", dap.toggle_breakpoint, { desc = "Debug: Toggle Breakpoint" })
+		vim.keymap.set("n", "<leader>DB", function()
 			dap.set_breakpoint(vim.fn.input("Breakpoint condition: "))
 		end, { desc = "Debug: Set Breakpoint" })
 
@@ -67,8 +67,8 @@ return {
 		})
 
 		-- Toggle to see last session result. Without this, you can't see session output in case of unhandled exception.
-		vim.keymap.set("n", "dr", dapui.toggle, { desc = "Debug: See last session result." })
-		vim.keymap.set("n", "dq", dapui.close, { desc = "Debug: Close ui" })
+		vim.keymap.set("n", "<leader>Dr", dapui.toggle, { desc = "Debug: See last session result." })
+		vim.keymap.set("n", "<leader>Dq", dapui.close, { desc = "Debug: Close ui" })
 
 		dap.listeners.after.event_initialized["dapui_config"] = dapui.open
 		dap.listeners.before.event_terminated["dapui_config"] = dapui.close
@@ -120,8 +120,8 @@ return {
 
 		dap_python = require("dap-python")
 
-		vim.keymap.set("n", "dpm", dap_python.test_method, { desc = "Debug: Debug Python method" })
-		vim.keymap.set("n", "dpc", dap_python.test_class, { desc = "Debug: Debug Python class" })
+		vim.keymap.set("n", "<leader>Dpm", dap_python.test_method, { desc = "Debug: Debug Python method" })
+		vim.keymap.set("n", "<leader>Dpc", dap_python.test_class, { desc = "Debug: Debug Python class" })
 
 		table.insert(dap.configurations.python, {
 			type = "python",
