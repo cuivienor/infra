@@ -167,7 +167,7 @@ while IFS= read -r -d '' file; do
     else
         extras["$file"]="${duration}min, ${size}GB"
     fi
-done < <(find "$INPUT_DIR" -maxdepth 1 -name "*.mkv" -type f -print0 | sort -z)
+done < <(find "$INPUT_DIR" -name "*.mkv" -type f -not -path "*/discarded/*" -print0 | sort -z)
 
 # Display categorization
 echo "MAIN FEATURES (>30min, >5GB):"
