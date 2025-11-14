@@ -12,6 +12,41 @@ This file contains important context for AI assistants working on this repositor
 
 ---
 
+## Working Environment
+
+**IMPORTANT**: Commands are typically executed from a client machine (laptop/workstation), NOT directly on the Proxmox host.
+
+### SSH Access Required
+
+- **Proxmox Host**: `ssh root@192.168.1.56` or `ssh root@homelab`
+- **Containers**: `ssh root@<container-ip>` or `ssh root@<container-hostname>`
+
+### Command Execution Patterns
+
+**❌ WRONG** (will fail if not on Proxmox host):
+```bash
+pct list
+cat /etc/pve/lxc/305.conf
+```
+
+**✅ CORRECT** (works from client):
+```bash
+ssh root@homelab "pct list"
+ssh root@homelab "cat /etc/pve/lxc/305.conf"
+```
+
+**Container commands**:
+```bash
+ssh root@192.168.1.85 "systemctl status jellyfin"
+ssh root@homelab "pct enter 305 -- systemctl status jellyfin"
+```
+
+### When Working Locally
+
+The repository is located at `/home/cuiv/dev/homelab-notes/` on the client machine. Terraform and Ansible commands should be run from this directory, which will connect to the Proxmox host remotely.
+
+---
+
 ## Key Information
 
 ### Infrastructure
