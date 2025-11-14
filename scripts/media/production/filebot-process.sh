@@ -42,8 +42,9 @@ if [[ "$INPUT_DIR" =~ /movies/ ]]; then
     TYPE="movies"
     DB="TheMovieDB"
     FORMAT='{n} ({y})/{n} ({y})'
-    # For movies, extract potential year from directory name for better matching
-    MOVIE_HINT=$(basename "$INPUT_DIR" | tr '_' ' ')
+    # For movies, extract movie name from directory name
+    # Strip date suffixes like _2025-11-10 that we add during ripping
+    MOVIE_HINT=$(basename "$INPUT_DIR" | sed 's/_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}$//' | tr '_' ' ')
 elif [[ "$INPUT_DIR" =~ /tv/ ]]; then
     TYPE="tv"
     DB="TheTVDB"
