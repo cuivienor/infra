@@ -15,6 +15,10 @@ This guide walks you through the complete workflow for ripping, transcoding, and
    1-ripped/           2-remuxed/           3-transcoded/           library/movies/
 ```
 
+**For multi-disc movies**: Rip all discs first → Merge into single folder → Continue workflow
+
+See [Multi-Disc Movies](#multi-disc-movies) section below for detailed instructions.
+
 ---
 
 ## Step 1: Rip the Disc (CT302 - ripper)
@@ -38,9 +42,13 @@ tail -f ~/logs/rip-disc_*.log
 
 **Wait for completion** before proceeding.
 
+> **📀 Multi-Disc Movie?** If your movie spans multiple discs (like "How to Train Your Dragon: The Hidden World"), see the [Multi-Disc Movies](#multi-disc-movies) section below for special instructions. You'll need to rip all discs first, then merge them into one folder before Step 2.
+
 ---
 
 ## Step 2: Analyze & Remux (CT303 - analyzer)
+
+> **💡 Tip**: Your extras will have generic names (`title_t01.mkv`) for now. This is fine! You can organize and rename them properly in Jellyfin after FileBot completes. See [Extras Labeling Workflow](extras-labeling-workflow.md) for details.
 
 ```bash
 ssh ct303
@@ -58,7 +66,7 @@ tail -f ~/logs/organize-and-remux-movie_*.log
 
 **What happens:**
 - Analyzes all MKV files
-- Identifies main movie and extras
+- Identifies main movie and extras (by duration >30min and size >5GB)
 - Remuxes to remove unwanted streams
 - Output: `/mnt/staging/2-remuxed/movies/Movie_Title_Here/` (date stamp removed)
 - Time: ~5-15 minutes
@@ -149,6 +157,86 @@ ls /mnt/library/movies/
 
 ---
 
+## Multi-Disc Movies
+
+Some movies span **multiple discs** (e.g., extended editions, director's cuts with bonus disc). The workflow differs slightly from single-disc movies.
+
+### Strategy: Merge Before Processing
+
+**Best Practice**: Rip all discs first, then **manually merge** into one folder before running organize/remux.
+
+#### Step-by-Step for Multi-Disc Movies
+
+1. **Rip Disc 1** with a descriptive name:
+   ```bash
+   ssh ct302
+   cd ~/scripts
+   ./run-bg.sh ./rip-disc.sh movie "How to Train Your Dragon 3 Disc 1"
+   ```
+
+2. **Rip Disc 2** with matching name:
+   ```bash
+   # Wait for Disc 1 to finish, then swap discs
+   ./run-bg.sh ./rip-disc.sh movie "How to Train Your Dragon 3 Disc 2"
+   ```
+
+3. **Merge the ripped files** into a single directory:
+   ```bash
+   ssh ct303  # Switch to analyzer container
+   
+   # List the ripped directories
+   ls /mnt/staging/1-ripped/movies/ | grep -i "dragon"
+   
+   # Create a merged directory
+   mkdir -p /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_merged
+   
+   # Move all MKV files from both discs into merged folder
+   mv /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_Disc_1_2024-11-13/*.mkv \
+      /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_merged/
+   
+   mv /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_Disc_2_2024-11-13/*.mkv \
+      /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_merged/
+   ```
+
+4. **Continue normal workflow** using the merged folder:
+   ```bash
+   # Now proceed with organize-and-remux
+   ./run-bg.sh ./organize-and-remux-movie.sh \
+     /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_merged/
+   ```
+
+5. **Cleanup** the original disc folders after verification:
+   ```bash
+   # After confirming merged folder looks good
+   rm -rf /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_Disc_*
+   ```
+
+### Why Merge First?
+
+- **organize-and-remux-movie.sh** analyzes all MKV files in a folder together
+- It auto-detects main features vs extras by duration/size
+- Multi-disc movies often have:
+  - **Disc 1**: Main movie
+  - **Disc 2**: Extras (behind the scenes, deleted scenes, etc.)
+- By merging first, the script correctly categorizes everything in one pass
+
+### Alternative: Manual Processing
+
+If you prefer manual control:
+
+1. Process each disc separately through organize/remux/transcode
+2. After FileBot, manually move extras from Disc 2 to the Disc 1 movie folder:
+   ```bash
+   # Example: Move Disc 2 extras to main movie folder
+   mv /mnt/library/movies/Movie\ Name\ \(Year\)\ Disc\ 2/* \
+      /mnt/library/movies/Movie\ Name\ \(Year\)/extras/
+   
+   # Delete the Disc 2 movie entry
+   rm -rf /mnt/library/movies/Movie\ Name\ \(Year\)\ Disc\ 2
+   ```
+
+---
+
 ## Troubleshooting
 
 ### Script fails during rip
@@ -171,14 +259,22 @@ ls /mnt/library/movies/
 - Use the exact paths shown in this guide
 - The scripts auto-detect mount points now
 
+### Multi-disc: Wrong files categorized as main feature
+- The script uses >30min AND >5GB as criteria for main features
+- If extras are large/long, they may be miscategorized
+- Review the categorization when organize-and-remux prompts for confirmation
+- You can manually move files between main folder and extras/ afterward
+
 ---
 
 ## Tips
 
 - **Background jobs**: All long-running scripts use `run-bg.sh` so you can disconnect
 - **Monitor remotely**: SSH back in anytime to check `tail -f ~/logs/`
-- **Multiple discs**: You can queue up multiple rips, just use different movie names
+- **Multiple discs**: Rip all discs first, then merge into one folder before processing
 - **Cleanup**: Scripts automatically clean up staging directories after FileBot completes
+- **Verify before transcoding**: Always check organize-and-remux output before starting the long transcode step
+- **Organize extras in Jellyfin**: Use Jellyfin category folders for clean presentation - see [Extras Labeling Workflow](extras-labeling-workflow.md)
 
 ---
 
