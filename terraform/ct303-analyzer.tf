@@ -58,18 +58,25 @@ resource "proxmox_virtual_environment_container" "analyzer" {
     size         = 12  # 12GB for OS, tools, and temporary files
   }
 
-  # Mount staging directory from host (media processing)
+  # Mount complete media directory from host (for analysis and organization)
+  mount_point {
+    volume = "/mnt/storage/media"
+    path   = "/mnt/media"
+    # Analyzer needs access to all media: staging, library, legacy-media, etc.
+  }
+
+  # Mount staging directory from host (media processing) - DEPRECATED, use /mnt/media/staging
   mount_point {
     volume = "/mnt/storage/media/staging"
     path   = "/mnt/staging"
-    # Analyzer processes files through staging pipeline
+    # Kept for backward compatibility with existing scripts
   }
 
-  # Mount library directory from host (FileBot output)
+  # Mount library directory from host (FileBot output) - DEPRECATED, use /mnt/media/library
   mount_point {
     volume = "/mnt/storage/media/library"
     path   = "/mnt/library"
-    # Analyzer needs write access to move files to final library via FileBot
+    # Kept for backward compatibility with existing scripts
   }
 
   # Features
