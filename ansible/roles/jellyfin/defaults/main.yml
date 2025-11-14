@@ -10,12 +10,13 @@ media_uid: 1000
 media_gid: 1000
 
 # GPU configuration
-# Intel Arc A380 (primary)
-intel_arc_render_device: "/dev/dri/renderD129"
+# Intel Arc A380 (primary) - CORRECT MAPPING
+# Note: renderD128 = Intel Arc, renderD129 = NVIDIA
+intel_arc_render_device: "/dev/dri/renderD128"
 intel_arc_card_device: "/dev/dri/card1"
 
 # NVIDIA GTX 1080 (secondary/ready)
-nvidia_render_device: "/dev/dri/renderD128"
+nvidia_render_device: "/dev/dri/renderD129"
 nvidia_card_device: "/dev/dri/card0"
 
 # Hardware acceleration settings
@@ -26,10 +27,13 @@ enable_tone_mapping: true
 enable_vpp_tone_mapping: true
 
 # Encoding quality settings
-h264_crf: 23
-h265_crf: 28
+# Optimized for high-quality playback on projector
+# Lower CRF = higher quality (18-28 typical range)
+# For reference: 18 = visually lossless, 23 = good, 28 = acceptable
+h264_crf: 20  # High quality for H264 (was 23)
+h265_crf: 25  # High quality for HEVC (was 28)
 enable_hevc_encoding: true
-enable_av1_encoding: true
+enable_av1_encoding: true  # Intel Arc supports AV1!
 
 # Library paths (inside container)
 jellyfin_library_path: "/media/library"
