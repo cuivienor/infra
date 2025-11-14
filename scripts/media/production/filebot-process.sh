@@ -121,47 +121,59 @@ echo "========================================"
 echo ""
 
 # Run FileBot in test mode (dry-run) with licensed version
+# Note: FileBot may return non-zero exit codes even on success with -non-strict
+# So we capture output and check if files were processed instead
 if [ "$TYPE" = "movies" ]; then
     # For movies, use query hint from directory name for better matching
-    filebot -rename "$INPUT_DIR" \
+    filebot_test_output=$(filebot -rename "$INPUT_DIR" \
         --db "$DB" \
         --q "$MOVIE_HINT" \
         --output "$OUTPUT_DIR" \
         --format "$FORMAT" \
         --action test \
-        -non-strict \
-        || {
-            echo ""
-            echo "✗ FileBot dry-run failed"
-            echo ""
-            echo "Common issues:"
-            echo "  - Movie not found in database"
-            echo "  - Ambiguous title (multiple matches)"
-            echo "  - Year might be needed for disambiguation"
-            echo ""
-            echo "Hint: Try renaming directory to include year, e.g. 'Movie_Name_2010'"
-            exit 1
-        }
+        -non-strict 2>&1)
+    filebot_test_exit=$?
+    
+    echo "$filebot_test_output"
+    
+    # Check if any files were processed (look for [TEST] or "Processed" in output)
+    if ! echo "$filebot_test_output" | grep -q -E '\[TEST\]|Processed [0-9]+ file'; then
+        echo ""
+        echo "✗ FileBot dry-run failed - no files processed"
+        echo ""
+        echo "Common issues:"
+        echo "  - Movie not found in database"
+        echo "  - Ambiguous title (multiple matches)"
+        echo "  - Year might be needed for disambiguation"
+        echo ""
+        echo "Hint: Try renaming directory to include year, e.g. 'Movie_Name_2010'"
+        exit 1
+    fi
 else
     # For TV shows, standard query
-    filebot -rename "$INPUT_DIR" \
+    filebot_test_output=$(filebot -rename "$INPUT_DIR" \
         --db "$DB" \
         --output "$OUTPUT_DIR" \
         --format "$FORMAT" \
         --action test \
-        -non-strict \
-        || {
-            echo ""
-            echo "✗ FileBot dry-run failed"
-            echo ""
-            echo "Common issues:"
-            echo "  - Show not recognized by database"
-            echo "  - Incorrect folder/file naming"
-            echo "  - Missing season/episode information"
-            echo ""
-            echo "Try manually searching or adjusting folder names"
-            exit 1
-        }
+        -non-strict 2>&1)
+    filebot_test_exit=$?
+    
+    echo "$filebot_test_output"
+    
+    # Check if any files were processed
+    if ! echo "$filebot_test_output" | grep -q -E '\[TEST\]|Processed [0-9]+ file'; then
+        echo ""
+        echo "✗ FileBot dry-run failed - no files processed"
+        echo ""
+        echo "Common issues:"
+        echo "  - Show not recognized by database"
+        echo "  - Incorrect folder/file naming"
+        echo "  - Missing season/episode information"
+        echo ""
+        echo "Try manually searching or adjusting folder names"
+        exit 1
+    fi
 fi
 
 echo ""
