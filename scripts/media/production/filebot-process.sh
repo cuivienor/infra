@@ -132,8 +132,8 @@ if [ "$TYPE" = "movies" ]; then
         --output "$OUTPUT_DIR" \
         --format "$FORMAT" \
         --action test \
-        -non-strict 2>&1)
-    filebot_test_exit=$?
+        -non-strict 2>&1) || filebot_test_exit=$?
+    filebot_test_exit=${filebot_test_exit:-0}
     
     echo "$filebot_test_output"
     
@@ -157,8 +157,8 @@ else
         --output "$OUTPUT_DIR" \
         --format "$FORMAT" \
         --action test \
-        -non-strict 2>&1)
-    filebot_test_exit=$?
+        -non-strict 2>&1) || filebot_test_exit=$?
+    filebot_test_exit=${filebot_test_exit:-0}
     
     echo "$filebot_test_output"
     
@@ -202,17 +202,17 @@ if [ "$TYPE" = "movies" ]; then
         --output "$OUTPUT_DIR" \
         --format "$FORMAT" \
         --action move \
-        -non-strict 2>&1)
+        -non-strict 2>&1) || filebot_exit=$?
 else
     filebot_output=$(filebot -rename "$INPUT_DIR" \
         --db "$DB" \
         --output "$OUTPUT_DIR" \
         --format "$FORMAT" \
         --action move \
-        -non-strict 2>&1)
+        -non-strict 2>&1) || filebot_exit=$?
 fi
 
-filebot_exit=$?
+filebot_exit=${filebot_exit:-0}
 
 echo "$filebot_output"
 echo ""
