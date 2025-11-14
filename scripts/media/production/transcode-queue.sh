@@ -21,7 +21,7 @@ else
     STAGING_BASE="${STAGING_BASE:-/mnt/storage/media/staging}"
 fi
 
-FOLDER="$1"
+FOLDER="${1%/}"  # Remove trailing slash if present
 CRF="${2:-20}"
 MODE="${3:-software}"
 AUTO_MODE=0
@@ -109,6 +109,7 @@ if [ ! -f "$QUEUE_FILE" ]; then
             echo "ERROR: Path mismatch detected!"
             echo "  FOLDER=$FOLDER"
             echo "  File found=$file"
+            echo "  Relative path extracted=$rel_path"
             echo "  The file path doesn't start with FOLDER path."
             echo "  This usually means STAGING_BASE is incorrect for this container."
             rm -f "$QUEUE_FILE"
