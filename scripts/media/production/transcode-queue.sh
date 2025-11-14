@@ -12,8 +12,14 @@
 #   - Writes to:  /mnt/staging/3-transcoded/... (mirrors structure)
 #   - Or legacy: creates *_transcoded.mkv in same folder
 
-# Use STAGING_BASE environment variable if set, otherwise default to /mnt/storage/media/staging
-STAGING_BASE="${STAGING_BASE:-/mnt/storage/media/staging}"
+# Auto-detect staging base path
+# In CT304 (transcoder), storage is mounted at /mnt/staging
+# On host or other containers, it may be /mnt/storage/media/staging
+if [ -d "/mnt/staging/1-ripped" ]; then
+    STAGING_BASE="${STAGING_BASE:-/mnt/staging}"
+else
+    STAGING_BASE="${STAGING_BASE:-/mnt/storage/media/staging}"
+fi
 
 FOLDER="$1"
 CRF="${2:-20}"
@@ -97,6 +103,17 @@ if [ ! -f "$QUEUE_FILE" ]; then
     while IFS= read -r -d '' file; do
         # Calculate relative path from input folder
         rel_path="${file#$FOLDER/}"
+        
+        # Safety check: if rel_path starts with /, the strip failed (path mismatch)
+        if [[ "$rel_path" == /* ]]; then
+            echo "ERROR: Path mismatch detected!"
+            echo "  FOLDER=$FOLDER"
+            echo "  File found=$file"
+            echo "  The file path doesn't start with FOLDER path."
+            echo "  This usually means STAGING_BASE is incorrect for this container."
+            rm -f "$QUEUE_FILE"
+            exit 1
+        fi
         
         # Determine output path
         if [ $NEW_STRUCTURE -eq 1 ]; then
