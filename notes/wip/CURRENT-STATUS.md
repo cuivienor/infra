@@ -1,306 +1,201 @@
-# Homelab Current Status
+# Current Work Status
 
-**Date**: 2025-11-12
-**Focus**: Full IaC Migration Complete! 🎉
+**Date**: 2025-11-14  
+**Focus**: Testing Production Workflows
 
----
-
-## 🎉 MAJOR MILESTONE: Full IaC Migration Complete!
-
-### ✅ Completed (2025-11-12)
-
-**Legacy Container Cleanup:**
-- [x] Backed up all LXC configs for CT101, CT200, CT201, CT202
-- [x] Stopped all legacy containers
-- [x] Deleted all legacy containers with storage purge
-- [x] Verified 48GB disk space reclaimed
-- [x] Updated documentation (AGENTS.md, CURRENT-STATUS.md)
-- [x] Created cleanup summary in archive
-
-**Result:** 100% Infrastructure as Code! All 6 containers (CT300-305) managed by Terraform + Ansible
-
-### ✅ Completed (2025-11-11)
-
-**Infrastructure as Code Setup:**
-- [x] Created Terraform configuration for CT300 (backup container)
-- [x] Created Ansible role `restic_backup` for automated backups
-- [x] Designed hybrid approach: custom scripts + Backrest UI
-- [x] Simplified backup policy to "data" (all /mnt/storage except media)
-- [x] Complete documentation for deployment
-
-**Files Created:**
-- `terraform/main.tf` - Terraform provider config
-- `terraform/variables.tf` - Variable definitions
-- `terraform/containers/ct300-backup.tf` - Backup container definition
-- `terraform/terraform.tfvars.example` - Example secrets
-- `terraform/README.md` - Terraform usage guide
-- `ansible/roles/restic_backup/` - Complete backup role
-- `ansible/playbooks/ct300-backup.yml` - Container playbook
-- `ansible/vars/backup_secrets.yml.example` - B2/restic secrets template
-- `docs/guides/ct300-backup-deployment.md` - Deployment walkthrough
-- `docs/guides/backup-setup.md` - Detailed backup guide
-- `docs/reference/backup-quick-reference.md` - Command reference
-- `docs/plans/backup-implementation-summary.md` - Complete overview
-
-### 🎯 Next Steps
-
-**Deploy CT300 Backup Container:**
-
-1. **Get Backblaze B2 credentials**
-   - Sign up at backblaze.com
-   - Create app key
-   - Create bucket: `homelab-data`
-   - Generate restic password
-
-2. **Configure secrets**
-   ```bash
-   cd ~/dev/homelab-notes
-   
-   # Terraform secrets
-   cp terraform/terraform.tfvars.example terraform/terraform.tfvars
-   nano terraform/terraform.tfvars  # Add Proxmox password
-   
-   # Ansible secrets
-   cp ansible/vars/backup_secrets.yml.example ansible/vars/backup_secrets.yml
-   nano ansible/vars/backup_secrets.yml  # Add B2 credentials
-   ansible-vault encrypt ansible/vars/backup_secrets.yml
-   ```
-
-3. **Deploy with Terraform**
-   ```bash
-   cd terraform
-   terraform init
-   terraform plan
-   terraform apply
-   ```
-
-4. **Configure with Ansible**
-   ```bash
-   export CT300_IP="<ip-from-terraform>"
-   ansible-playbook ansible/playbooks/ct300-backup.yml --vault-password-file ~/.vault_pass
-   ```
-
-5. **Test backup**
-   ```bash
-   ssh homelab "pct exec 300 -- systemctl start restic-backup-data.service"
-   ssh homelab "pct exec 300 -- /etc/restic/scripts/maintenance.sh snapshots data"
-   ```
-
-**See**: `docs/guides/ct300-backup-deployment.md` for complete walkthrough
+> **📖 For system specifications**, see `docs/reference/current-state.md`
 
 ---
 
-## 📁 Current Infrastructure
+## 🎉 Recent Achievement
 
-### Proxmox Host (homelab - 192.168.1.56)
-- **Hardware**: i5-9600K, 32GB RAM, 35TB MergerFS pool
-- **Storage**: `/mnt/storage` (4.1TB used, 29TB free)
-- **GPU**: Intel Arc A380 (transcoding), NVIDIA GTX 1080
-- **Optical**: /dev/sr0 (Blu-ray)
-
-### Active Containers (All IaC - 300 Range)
-- **CT300** backup (192.168.1.58) - Restic + Backrest UI ✅
-- **CT301** samba (192.168.1.82) - Samba file server ✅
-- **CT302** ripper (192.168.1.70) - MakeMKV with optical drive ✅
-  - Security: Restricted storage access (staging only)
-  - Status: Production ready
-- **CT303** analyzer (192.168.1.73) - Media analysis, remuxing, organization ✅
-  - Status: Production ready
-- **CT304** transcoder (192.168.1.77) - FFmpeg with Intel Arc GPU ✅
-  - GPU: Intel Arc A380 (VA-API hardware acceleration)
-  - Status: Production ready
-- **CT305** jellyfin (192.168.1.85) - Media server with dual GPU ✅
-  - Resources: 4 cores, 8GB RAM, 32GB disk
-  - GPU: Intel Arc A380 (primary VA-API) + NVIDIA GTX 1080
-  - Hardware accel: AV1, HEVC, H.264 encoding/decoding
-  - Status: Production ready
-
-### Legacy Containers (REMOVED 2025-11-12)
-- ~~CT101 jellyfin~~ → Replaced by CT305
-- ~~CT200 ripper-new~~ → Replaced by CT302
-- ~~CT201 transcoder-new~~ → Replaced by CT304
-- ~~CT202 analyzer~~ → Replaced by CT303
-- **Storage reclaimed**: 48GB
+**2025-11-12**: Full IaC Migration Complete!
+- ✅ All 6 containers (CT300-305) managed by Terraform + Ansible
+- ✅ All legacy containers (CT101, CT200-202) removed
+- ✅ 48GB disk space reclaimed
+- ✅ 100% Infrastructure as Code
 
 ---
 
-## 💾 Backup Strategy
+## 🎯 Current Priorities
 
-### Current State: Ready for Deployment
+### 1. Test Production Workflows ⏳
 
-**Backup Policy: `data`**
-- **What**: Everything in `/mnt/storage` except large media
-- **Included**: photos, documents, backups, e-books, audiobooks
-- **Excluded**: Movies, TV, media pipeline directories
-- **Target**: Backblaze B2 (`homelab-data` bucket)
-- **Schedule**: Daily at 2 AM
-- **Retention**: 7 daily, 4 weekly, 6 monthly, 2 yearly
-- **Encryption**: Restic (client-side)
+**Need to verify**:
+- [ ] CT305 (Jellyfin) - Add media libraries and test playback
+- [ ] CT302 (Ripper) - Rip a test disc end-to-end
+- [ ] CT304 (Transcoder) - Verify GPU transcoding working
+- [ ] CT303 (Analyzer) - Test FileBot organization
+- [ ] End-to-end pipeline: Rip → Transcode → Organize → Serve
 
-**3-2-1 Backup Strategy:**
-1. ✅ Live data on MergerFS (35TB with SnapRAID parity)
-2. ⏳ Restic → Backblaze B2 (encrypted cloud) **← Deploying now**
-3. ⏳ Future: Local/family member backup
-
-**Estimated Cost**: $0.50-$2.50/month depending on data size
+**Status**: Infrastructure ready, workflows not yet tested
 
 ---
 
-## 🎬 Media Pipeline Status
+### 2. Documentation Cleanup ✅
 
-### Current: v2 Implementation Complete
-
-**Directory Structure:**
-```
-/mnt/storage/media/staging/
-├── 1-ripped/          ← Migrated files here
-│   ├── movies/
-│   └── tv/
-├── 2-remuxed/         ← Ready for use
-├── 3-transcoded/      ← Ready for use
-└── 4-ready/           ← Ready for use
-```
-
-**Scripts Ready:**
-- `rip-disc.sh` - MakeMKV automation
-- `analyze-media.sh` - Media analysis
-- `organize-and-remux-movie.sh` - Movie processing
-- `organize-and-remux-tv.sh` - TV processing
-- `transcode-queue.sh` - Transcoding
-- `promote-to-ready.sh` - Stage promotion
-- `filebot-process.sh` - FileBot automation
-
-**Status**: Ready for testing (pending backup deployment)
+- [x] Consolidated current-state.md (updated Nov 14)
+- [x] Archived SYSTEM-SNAPSHOT.md
+- [x] Streamlined CURRENT-STATUS.md (this file)
+- [x] Updated AGENTS.md to concise format
 
 ---
 
-## 📊 IaC Progress
+## 📊 Infrastructure Status
 
-### Phase 1: Foundation (In Progress)
-- [x] Repository organized for IaC
-- [x] Comprehensive documentation (current-state.md)
-- [x] Terraform setup (main.tf, variables.tf)
-- [x] First container definition (CT300)
-- [x] Ansible role created (restic_backup)
-- [ ] Deploy first IaC container ⏳ **NEXT**
-- [ ] Test Terraform + Ansible workflow
-- [ ] Document lessons learned
+**Active Containers**: 6 (all IaC-managed)
 
-### Phase 2: Container Migration ✅ **COMPLETE!**
-- [x] Create CT300 (backup) ✅
-- [x] Create CT301 (samba) ✅
-- [x] Create CT302 (ripper IaC version) ✅
-- [x] Create CT303 (analyzer IaC version) ✅
-- [x] Create CT304 (transcoder IaC version) ✅
-- [x] Create CT305 (Jellyfin IaC version) ✅
-- [x] Create device passthrough Ansible roles ✅
-- [x] Create MakeMKV, Jellyfin, and media roles ✅
-- [x] Decommission ALL legacy containers (CT100, CT101, CT102, CT200, CT201, CT202) ✅
-- [x] 48GB disk space reclaimed ✅
-- [ ] Test end-to-end media pipeline with new containers ⏳ **NEXT**
-- [ ] Add media libraries to CT305 Jellyfin
-- [ ] Verify all hardware passthrough working in production
+| CTID | Name | Status | Notes |
+|------|------|--------|-------|
+| 300 | backup | ✅ Running | Restic + Backrest |
+| 301 | samba | ✅ Running | File shares |
+| 302 | ripper | ✅ Running | Optical drive passthrough configured |
+| 303 | analyzer | ✅ Running | FileBot ready |
+| 304 | transcoder | ✅ Running | Intel Arc GPU passthrough configured |
+| 305 | jellyfin | ✅ Running | Dual GPU passthrough configured |
 
-### Phase 3: Host Configuration (Planned)
-- [ ] Ansible role for MergerFS configuration
-- [ ] Ansible role for SnapRAID configuration
-- [ ] Host backup (Proxmox configs, LXC configs)
-- [ ] Disaster recovery testing
-
----
-
-## 🔑 Secrets Management
-
-**Terraform Secrets** (git-ignored):
-- `terraform/terraform.tfvars` - Proxmox credentials
-
-**Ansible Secrets** (vault-encrypted):
-- `ansible/vars/backup_secrets.yml` - B2 + restic passwords
-
-**Vault Password**:
-- Stored in `~/.vault_pass` (chmod 600)
-- Used with `--vault-password-file ~/.vault_pass`
-
----
-
-## 📚 Documentation Structure
-
-```
-docs/
-├── guides/               # Step-by-step how-to
-│   ├── backup-setup.md
-│   ├── ct300-backup-deployment.md
-│   ├── jellyfin-setup.md
-│   └── media-pipeline-v2.md
-├── reference/            # Quick reference
-│   ├── backup-quick-reference.md
-│   ├── current-state.md
-│   └── media-pipeline-quick-reference.md
-├── plans/                # Planning docs
-│   ├── backup-implementation-summary.md
-│   └── storage-iac-plan.md
-└── archive/              # Completed work
-```
-
----
-
-## 🎯 Immediate Action Items
-
-1. **Test CT305 Jellyfin** - Add media libraries and verify playback
-2. **Test CT302 Ripper** - Rip a disc end-to-end
-3. **Test CT304 Transcoder** - Verify GPU transcoding working
-4. **Update any scripts** - Check for hardcoded IPs (if any)
-5. **Monitor stability** - Watch all containers for a few days
-
-**Status**: Infrastructure migration complete, now testing production workflows
+**Storage**: 4.6TB / 35TB used (14%)
 
 ---
 
 ## 🐛 Known Issues
 
-**Backup System:**
-- None - ready for deployment
+### High Priority
+- None currently blocking
 
-**Media Pipeline:**
-- [ ] Duplicate filenames in TV shows (fix-current-names.sh)
-- [ ] Dragon folder still in old structure
+### Medium Priority
+- [ ] Duplicate filenames in TV shows (need to run fix-current-names.sh)
+- [ ] Legacy library migration to new `/media/library` structure incomplete
 
-**Infrastructure:**
-- [ ] CT300-302 range not yet defined in AGENTS.md
-- [ ] Backup role not yet listed in AGENTS.md
-
----
-
-## 📖 Key Reference Files
-
-**For Deployment:**
-- `docs/guides/ct300-backup-deployment.md` - Start here
-- `terraform/README.md` - Terraform usage
-- `ansible/roles/restic_backup/README.md` - Role documentation
-
-**For Reference:**
-- `docs/reference/backup-quick-reference.md` - Daily commands
-- `docs/reference/current-state.md` - Full system inventory
-- `AGENTS.md` - AI context and conventions
+### Low Priority
+- [ ] Some old docs may reference legacy container numbers (CT200 vs CT302)
 
 ---
 
-## 🚀 Success Criteria
+## 📋 Next Steps
 
-CT300 deployment is successful when:
-- [x] Terraform creates container
-- [ ] Container gets DHCP IP
-- [ ] Storage mounted at /mnt/storage
-- [ ] Ansible completes without errors
-- [ ] First backup finishes
-- [ ] Snapshot visible in B2
-- [ ] Test restore succeeds
-- [ ] Daily timer is active
+### Immediate (This Week)
+1. Test Jellyfin with existing media libraries
+2. Rip one test disc through full pipeline
+3. Verify GPU transcoding performance
+4. Document any issues discovered
+
+### Short Term (This Month)
+1. Complete media library migration to new structure
+2. Run full backup test (restic + restore)
+3. Create deployment automation script
+4. Update any scripts with hardcoded IPs/paths
+
+### Medium Term (Next 3 Months)
+1. Automate host configuration with Ansible
+2. Test disaster recovery workflow
+3. Add monitoring solution
+4. Consider CI/CD for IaC changes
 
 ---
 
-**Current Priority**: Test production workflows with new IaC containers
+## 🔧 Recent Changes
 
-**Achievement**: 🎉 100% Infrastructure as Code - All containers managed by Terraform + Ansible!
+### 2025-11-14
+- ✅ Updated `current-state.md` with accurate CT300-305 container info
+- ✅ Archived `SYSTEM-SNAPSHOT.md` to `docs/archive/`
+- ✅ Streamlined `CURRENT-STATUS.md` (removed redundant static info)
+- ✅ Updated `AGENTS.md` to concise ~30 line format
 
-**Last Updated**: 2025-11-12
+### 2025-11-12
+- ✅ Removed all legacy containers (CT101, CT200-202)
+- ✅ Verified all IaC containers production-ready
+- ✅ Reclaimed 48GB disk space
+
+### 2025-11-11
+- ✅ Deployed all CT300-305 containers via Terraform
+- ✅ Configured all Ansible roles and playbooks
+- ✅ Set up device passthrough for GPU and optical drive
+- ✅ Created comprehensive IaC documentation
+
+---
+
+## 🔑 Quick Commands
+
+### Daily Operations
+
+```bash
+# Check all containers
+ssh root@homelab "pct list"
+
+# Check storage usage
+ssh root@homelab "df -h /mnt/storage"
+
+# Enter a container
+ssh root@homelab "pct enter <CTID>"
+```
+
+### Testing
+
+```bash
+# Test GPU in transcoder
+ssh root@homelab "pct exec 304 -- vainfo --display drm --device /dev/dri/renderD128"
+
+# Test optical drive in ripper
+ssh root@homelab "pct exec 302 -- makemkvcon info disc:0"
+
+# Check Jellyfin GPU
+ssh root@homelab "pct exec 305 -- vainfo --display drm --device /dev/dri/renderD128"
+```
+
+### IaC Operations
+
+```bash
+# Apply Terraform changes
+cd ~/dev/homelab-notes/terraform
+terraform plan
+terraform apply
+
+# Run Ansible playbook
+cd ~/dev/homelab-notes
+ansible-playbook ansible/playbooks/site.yml --vault-password-file .vault_pass
+
+# Dry-run with tags
+ansible-playbook ansible/playbooks/site.yml --tags jellyfin --check
+```
+
+---
+
+## 📚 Key Documentation
+
+**Reference** (static info):
+- `docs/reference/current-state.md` - Full system specifications
+- `docs/reference/backup-quick-reference.md` - Backup commands
+- `docs/reference/media-pipeline-quick-reference.md` - Pipeline commands
+- `AGENTS.md` - AI agent context and conventions
+
+**Guides** (how-to):
+- `docs/guides/jellyfin-setup.md` - Jellyfin configuration
+- `docs/guides/ct302-ripper-deployment.md` - Ripper setup
+- `docs/guides/backup-setup.md` - Backup configuration
+- `docs/guides/media-pipeline-v2.md` - Pipeline workflow
+
+**Planning**:
+- `docs/plans/storage-iac-plan.md` - Storage IaC strategy
+- `docs/reference/homelab-iac-strategy.md` - Overall IaC approach
+
+---
+
+## 💡 Notes
+
+### Lessons Learned
+- Privileged containers simplified GPU/optical drive passthrough significantly
+- Terraform + Ansible combination works well (Terraform provisions, Ansible configures)
+- Static IPs in Terraform avoid DHCP issues during deployment
+- Restricted storage mounts (staging-only) improve security for ripper/transcoder
+
+### Future Improvements
+- Consider read-only mounts for Jellyfin library access
+- Add monitoring container (Grafana/Prometheus)
+- Implement automated testing for Ansible playbooks
+- Create snapshot backup before major changes
+
+---
+
+**Status**: 🚀 Ready for production testing  
+**Last Updated**: 2025-11-14

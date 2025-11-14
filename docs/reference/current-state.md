@@ -1,7 +1,7 @@
 # Homelab Current State
 
-**Last Updated**: 2025-11-11  
-**Generated From**: Live system inspection via SSH
+**Last Updated**: 2025-11-14  
+**Status**: ✅ Full Infrastructure as Code - All containers managed by Terraform + Ansible
 
 ---
 
@@ -16,93 +16,67 @@
 | **OS** | Debian GNU/Linux 12 (bookworm) |
 | **Kernel** | `6.8.12-10-pve` |
 | **Proxmox Version** | `8.4.14` (pve-manager) |
-| **Proxmox VE** | `8.4.0` |
 
 ### Hardware Specifications
 
 #### CPU
 - **Model**: Intel Core i5-9600K @ 3.70GHz
 - **Cores**: 6 physical cores (no hyperthreading)
-- **Threads**: 6
-- **Sockets**: 1
 - **Architecture**: x86_64
 
 #### Memory
-- **Total RAM**: 32 GB (31 GiB)
-- **Used**: ~2.2 GiB
-- **Available**: ~29 GiB
-- **Swap**: 8 GiB (21 MiB used)
+- **Total RAM**: 32 GB
+- **Swap**: 8 GB
 
 #### Graphics/Transcoding Hardware
 
-| Device | Type | PCIe Slot | Purpose |
-|--------|------|-----------|---------|
-| **Intel Arc A380** | DG2 Graphics | `07:00.0` | Primary transcoding GPU |
-| **NVIDIA GTX 1080** | GP104 | `01:00.0` | Secondary/Display GPU |
-
-**DRI Devices**:
-- `/dev/dri/card0` - NVIDIA GTX 1080
-- `/dev/dri/card1` - Intel Arc A380
-- `/dev/dri/renderD128` - Intel Arc (primary for transcoding)
-- `/dev/dri/renderD129` - NVIDIA
+| Device | Type | DRI Device | Purpose |
+|--------|------|------------|---------|
+| **Intel Arc A380** | DG2 Graphics | `/dev/dri/card1`, `/dev/dri/renderD128` | Primary transcoding GPU |
+| **NVIDIA GTX 1080** | GP104 | `/dev/dri/card0`, `/dev/dri/renderD129` | Secondary/Display GPU |
 
 **Loaded Modules**: `i915` (Intel graphics driver)
 
 #### Optical Drive
 - **Device**: `/dev/sr0` (block device for disc access)
 - **SCSI Generic**: `/dev/sg4` (for MakeMKV access)
-- **Group**: `cdrom`
+- **Group**: `cdrom` (24)
 
 #### Network
 - **Primary Interface**: `eno1` (Ethernet)
 - **Bridge**: `vmbr0` (192.168.1.56/24)
-- **Wireless**: `wlp4s0` (Intel Dual Band Wireless-AC 3168NGW - not in use)
 
 ---
 
 ## Storage Configuration
 
-### Host Storage
+### MergerFS Pool
 
-#### Boot/System Storage
-- **Boot**: `/dev/nvme0n1p2` (1022M EFI partition)
-- **Root**: `/dev/mapper/pve-root` (94G ext4, 9% used)
+**Mount Point**: `/mnt/storage`  
+**Total Capacity**: 35TB  
+**Used**: 4.6TB (14%)  
+**Available**: 29TB
 
-#### Data Disks (MergerFS Pool)
+#### Data Disks
 
-| Device | Mount Point | Size | Used | Available | Use% | Type |
-|--------|-------------|------|------|-----------|------|------|
-| `/dev/sdc1` (WD101EDBZ) | `/mnt/disk1` | 9.1T | 4.1T | 4.6T | 48% | Data |
-| `/dev/sdd1` (ST10000DM) | `/mnt/disk2` | 9.1T | 205M | 8.6T | 1% | Data |
-| `/dev/sdb1` (WD180EDGZ) | `/mnt/disk3` | 17T | 23G | 16T | 1% | Data |
-| `/dev/sda1` (WD180EDGZ) | `/mnt/parity` | 17T | 3.1T | 13T | 20% | Parity |
+| Device | Mount Point | Size | Used | Type |
+|--------|-------------|------|------|------|
+| `/dev/sdc1` (WD101EDBZ) | `/mnt/disk1` | 9.1T | 4.1T | Data |
+| `/dev/sdd1` (ST10000DM) | `/mnt/disk2` | 9.1T | ~200M | Data |
+| `/dev/sdb1` (WD180EDGZ) | `/mnt/disk3` | 17T | ~24G | Data |
+| `/dev/sda1` (WD180EDGZ) | `/mnt/parity` | 17T | 3.1T | Parity |
 
-**MergerFS Pool**:
-- **Mount**: `/mnt/storage` (mergerfs)
-- **Total Capacity**: 35T
-- **Used**: 4.1T (13%)
-- **Available**: 29T
-
-**MergerFS Options**:
-```
-defaults,nonempty,allow_other,use_ino,cache.files=off,
-moveonenospc=true,dropcacheonclose=true,category.create=eppfrd,minfreespace=200G
-```
-
-**Distribution Policy**: `eppfrd` (Existing Path, Percentage Free space, Round-robin Distribution)
-- Automatically distributes new files across disks with most free space
-- Requires directory structure to exist on all disks
-- Updated 2025-11-11 from `mfs` to `eppfrd` for balanced usage
-
-**Disk Identification**: All disks mounted by `/dev/disk/by-id/` for stability
+**MergerFS Policy**: `eppfrd` (Existing Path, Percentage Free space, Round-robin Distribution)
+- Automatically distributes new files to disks with most free space
+- All disks mounted by `/dev/disk/by-id/` for stability
 
 ### Proxmox Storage
 
-| Storage | Type | Total | Used | Available | Use% |
-|---------|------|-------|------|-----------|------|
-| `local` | dir | 94 GB | 7.7 GB | 85 GB | 8.10% |
-| `local-lvm` | lvmthin | 1.7 TB | 21 GB | 1.7 TB | 1.18% |
-| `storage` | dir | 35 TB | 4.1 TB | 29 TB | 11.81% |
+| Storage | Type | Total | Used | Available |
+|---------|------|-------|------|-----------|
+| `local` | dir | 94 GB | ~8 GB | ~86 GB |
+| `local-lvm` | lvmthin | 1.7 TB | ~130 GB | ~1.6 TB |
+| `storage` | dir | 35 TB | 4.6 TB | 29 TB |
 
 ---
 
@@ -110,9 +84,11 @@ moveonenospc=true,dropcacheonclose=true,category.create=eppfrd,minfreespace=200G
 
 ```
 /mnt/storage/media/
-├── library/          # Organized media ready for Jellyfin
-├── movies/           # Movie library (managed by FileBot)
-├── tv/               # TV show library (managed by FileBot)
+├── library/          # New organized media (FileBot managed)
+│   ├── movies/
+│   └── tv/
+├── movies/           # Legacy movie library (being migrated)
+├── tv/               # Legacy TV library (being migrated)
 └── staging/          # Media pipeline staging area
     ├── 1-ripped/     # Raw MakeMKV output
     ├── 2-remuxed/    # Remuxed files
@@ -120,60 +96,70 @@ moveonenospc=true,dropcacheonclose=true,category.create=eppfrd,minfreespace=200G
     └── 4-ready/      # Organized and ready to move to library
 ```
 
-**Note**: Directory structure replicated across all three data disks (disk1, disk2, disk3) as of 2025-11-11 to enable MergerFS `eppfrd` distribution policy.
-
 **Ownership**: `media:media` (UID/GID 1000:1000)  
-**Permissions**: Directories `0775`, Files managed by scripts
+**Permissions**: Directories `0775`
 
 ---
 
 ## LXC Container Inventory
 
-### Running Containers
+### Active Containers (All IaC-Managed)
 
-| CTID | Name | Status | IP | Cores | RAM | Disk | Purpose |
-|------|------|--------|-----|-------|-----|------|---------|
-| 101 | `jellyfin` | Running | 192.168.1.128 | 2 | 6 GB | 8 GB | Media server |
-| 200 | `ripper-new` | Running | 192.168.1.75 | 2 | 4 GB | 8 GB | Blu-ray ripping (MakeMKV) |
-| 201 | `transcoder-new` | Running | 192.168.1.77 | 4 | 8 GB | 20 GB | Video transcoding (FFmpeg) |
-| 202 | `analyzer` | Running | 192.168.1.72 | 2 | 4 GB | 12 GB | Media analysis tools |
+| CTID | Name | IP | Cores | RAM | Disk | Purpose |
+|------|------|-----|-------|-----|------|---------|
+| 300 | `backup` | 192.168.1.58 | 2 | 2 GB | 20 GB | Restic backup + Backrest UI |
+| 301 | `samba` | 192.168.1.82 | 1 | 1 GB | 8 GB | Samba file server |
+| 302 | `ripper` | 192.168.1.70 | 2 | 4 GB | 8 GB | MakeMKV Blu-ray ripping |
+| 303 | `analyzer` | 192.168.1.73 | 2 | 4 GB | 12 GB | Media analysis & organization |
+| 304 | `transcoder` | 192.168.1.77 | 4 | 8 GB | 20 GB | FFmpeg transcoding (Intel Arc GPU) |
+| 305 | `jellyfin` | 192.168.1.85 | 4 | 8 GB | 32 GB | Media server (dual GPU) |
 
-### Stopped Containers (Legacy)
-
-| CTID | Name | Status | Purpose | Notes |
-|------|------|--------|---------|-------|
-| 100 | `ripper` | Stopped | Old ripper | Being replaced by CT200 |
-| 102 | `transcoder` | Stopped | Old transcoder | Being replaced by CT201 |
+**All containers**: Privileged, Debian 12, managed via Terraform + Ansible  
+**Tags**: `iac`, `media`, plus role-specific tags
 
 ---
 
 ## Container Details
 
-### CT101: Jellyfin (Media Server)
+### CT300: Backup
 
-**Type**: Unprivileged  
-**OS**: Ubuntu  
-**Network**: DHCP on vmbr0  
-**Storage Mount**: `/mnt/storage/media` → `/data` (container)
+**Type**: Privileged LXC  
+**Storage Mount**: `/mnt/storage` → `/mnt/storage` (full storage access)  
+**Purpose**: Restic backups to Backblaze B2 + Backrest UI
 
-**Purpose**: Serves media library to clients
+**Installed Software**:
+- Restic (automated backups)
+- Backrest UI (web-based management)
 
-**Status**: ✅ Running  
-**Notes**: Unprivileged container, no hardware passthrough needed
+**Backup Policy**:
+- Target: Backblaze B2 (`homelab-data`)
+- Schedule: Daily at 2 AM
+- Retention: 7 daily, 4 weekly, 6 monthly, 2 yearly
+- Scope: All `/mnt/storage` data except media library
+
+**Status**: ✅ Production
 
 ---
 
-### CT200: Ripper-New (Active Production)
+### CT301: Samba
 
-**Type**: Privileged  
-**OS**: Debian  
-**Network**: DHCP on vmbr0, Firewall disabled  
-**Storage Mount**: `/mnt/storage` → `/mnt/storage` (unified path)  
-**Tags**: `media`
+**Type**: Privileged LXC  
+**Storage Mount**: `/mnt/storage` → `/mnt/storage` (full storage access)  
+**Purpose**: Samba network file shares
+
+**Status**: ✅ Production
+
+---
+
+### CT302: Ripper
+
+**Type**: Privileged LXC  
+**Storage Mount**: `/mnt/storage/media/staging` → `/mnt/staging` (restricted access)  
+**Purpose**: Blu-ray/DVD ripping with MakeMKV
 
 **Hardware Passthrough**:
 ```bash
-# Optical Drive Access
+# Optical Drive Access (configured via Ansible)
 lxc.cgroup2.devices.allow: c 11:0 rwm      # /dev/sr0 (block)
 lxc.cgroup2.devices.allow: c 21:4 rwm      # /dev/sg4 (SCSI generic)
 lxc.mount.entry: /dev/sr0 dev/sr0 none bind,optional,create=file
@@ -181,63 +167,92 @@ lxc.mount.entry: /dev/sg4 dev/sg4 none bind,optional,create=file
 ```
 
 **Installed Software**:
-- MakeMKV (`makemkvcon` available)
+- MakeMKV
 - Media user (UID 1000, member of `cdrom` group)
 
-**Purpose**: Rip Blu-ray discs to `/mnt/storage/media/staging/0-raw/`
-
-**Status**: ✅ Running, actively used for ripping
+**Status**: ✅ Production, optical drive passthrough working
 
 ---
 
-### CT201: Transcoder-New (Active Production)
+### CT303: Analyzer
 
-**Type**: Privileged  
-**OS**: Debian  
-**Network**: DHCP on vmbr0, Firewall disabled  
-**Storage Mount**: `/mnt/storage` → `/mnt/storage` (unified path)  
-**Tags**: `media`
+**Type**: Privileged LXC  
+**Storage Mount**: `/mnt/storage/media` → `/mnt/media` (media directory access)  
+**Purpose**: Media file analysis, validation, and organization
+
+**Installed Software**:
+- MediaInfo, mkvtoolnix, ffprobe
+- FileBot (for organization)
+- Media user (UID 1000)
+
+**Status**: ✅ Production
+
+---
+
+### CT304: Transcoder
+
+**Type**: Privileged LXC  
+**Storage Mount**: `/mnt/storage/media/staging` → `/mnt/staging` (restricted access)  
+**Purpose**: Hardware-accelerated video transcoding
 
 **Hardware Passthrough**:
 ```bash
-# Intel Arc A380 GPU
-lxc.cgroup2.devices.allow: c 226:0 rwm      # card0
+# Intel Arc A380 GPU (configured via Ansible)
+lxc.cgroup2.devices.allow: c 226:0 rwm      # card1
+lxc.cgroup2.devices.allow: c 226:1 rwm      # card1
 lxc.cgroup2.devices.allow: c 226:128 rwm    # renderD128
-lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
+lxc.mount.entry: /dev/dri/card1 dev/dri/card1 none bind,optional,create=file
+lxc.mount.entry: /dev/dri/renderD128 dev/dri/renderD128 none bind,optional,create=file
 ```
 
 **Installed Software**:
-- FFmpeg 5.1.7 (with VA-API support)
-- Intel Media Driver (VA-API working on renderD128)
+- FFmpeg (with VA-API support)
+- Intel Media Driver (iHD)
 - Media user (UID 1000, member of `video` and `render` groups)
 
 **GPU Verification**:
 ```
-vainfo: VA-API version: 1.17 (libva 2.12.0)
+vainfo: VA-API version 1.17 (libva 2.12.0)
 Driver: Intel iHD driver for Intel(R) Gen Graphics
 ```
 
-**Purpose**: Hardware-accelerated transcoding using Intel Arc GPU
-
-**Status**: ✅ Running, GPU passthrough working
+**Status**: ✅ Production, GPU passthrough working
 
 ---
 
-### CT202: Analyzer
+### CT305: Jellyfin
 
-**Type**: Privileged  
-**OS**: Debian  
-**Network**: DHCP on vmbr0, Firewall disabled  
-**Storage Mount**: `/mnt/storage` → `/mnt/storage` (unified path)  
-**Tags**: `media`
+**Type**: Privileged LXC  
+**Storage Mounts**:
+- `/mnt/storage/media/library` → `/media/library` (new organized library)
+- `/mnt/storage/media` → `/media/legacy` (legacy movies/tv during migration)
+
+**Purpose**: Media streaming server with hardware transcoding
+
+**Hardware Passthrough**:
+```bash
+# Dual GPU Support (configured via Ansible)
+# Intel Arc A380 (primary for VA-API)
+lxc.cgroup2.devices.allow: c 226:0 rwm      # card1
+lxc.cgroup2.devices.allow: c 226:1 rwm      # card1
+lxc.cgroup2.devices.allow: c 226:128 rwm    # renderD128
+
+# NVIDIA GTX 1080 (secondary, available but not primary)
+lxc.cgroup2.devices.allow: c 226:129 rwm    # renderD129
+
+lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
+```
 
 **Installed Software**:
-- Media analysis tools
-- Media user (UID 1000)
+- Jellyfin media server
+- Intel VA-API drivers (iHD)
+- Media user (UID 1000, member of `video` and `render` groups)
 
-**Purpose**: Media file analysis and validation
+**Hardware Acceleration**:
+- Intel Arc A380 (primary): AV1, HEVC, H.264 encode/decode via VA-API
+- NVIDIA GTX 1080: Available for future use
 
-**Status**: ✅ Running
+**Status**: ✅ Production, dual GPU passthrough configured
 
 ---
 
@@ -250,63 +265,15 @@ Driver: Intel iHD driver for Intel(R) Gen Graphics
 - **UID**: 1000
 - **GID**: 1000
 - **Groups**: `media`, `cdrom`, `video`, `render`
-- **Home**: `/home/media`
 
 **In Containers**:
+All containers use `media` user with UID/GID 1000 for consistent file ownership.
 
-| Container | UID | GID | Groups |
-|-----------|-----|-----|--------|
-| CT200 (ripper-new) | 1000 | 1000 | `media`, `cdrom` |
-| CT201 (transcoder-new) | 1000 | 1000 | `media`, `video`, `render` |
-| CT202 (analyzer) | 1000 | 1000 | `media` |
-
-**Permissions Strategy**: 
-- All containers use privileged mode for hardware access
-- Unified UID/GID 1000 across host and containers
-- Storage mounted with consistent paths (`/mnt/storage`)
-
----
-
-## Network Configuration
-
-### Host Network
-
-**Primary Bridge**: `vmbr0`
-- **Type**: Linux bridge
-- **Address**: 192.168.1.56/24
-- **Method**: Static
-- **Bridge Ports**: `eno1`
-
-**Container Networking**: All containers use DHCP on vmbr0
-
-### Container IP Addresses
-
-| Container | IP Address | Hostname |
-|-----------|------------|----------|
-| jellyfin (101) | 192.168.1.128 | jellyfin |
-| ripper-new (200) | 192.168.1.75 | ripper-new |
-| transcoder-new (201) | 192.168.1.77 | transcoder-new |
-| analyzer (202) | 192.168.1.72 | analyzer |
-
-**DHCP Server**: Managed by router (not on Proxmox host)
-
----
-
-## Installed Software (Host)
-
-### Key Packages
-
-- **MergerFS**: `2.40.2~debian-bookworm`
-- **Graphics Drivers**: `i915` module loaded (Intel integrated)
-- **LXC**: `6.0.0-1`
-- **Proxmox Kernel**: `6.8.12-10-pve`
-
-### Notable Proxmox Components
-
-- `pve-container`: 5.3.3
-- `qemu-server`: 8.4.4
-- `proxmox-backup-client`: 3.4.7-1
-- `ceph-fuse`: 17.2.7-pve3 (installed but not in use)
+| Container | Additional Groups |
+|-----------|-------------------|
+| CT302 (ripper) | `cdrom` |
+| CT304 (transcoder) | `video`, `render` |
+| CT305 (jellyfin) | `video`, `render` |
 
 ---
 
@@ -320,14 +287,28 @@ Driver: Intel iHD driver for Intel(R) Gen Graphics
 
 **Groups**: `video` (226), `render` (104)
 
-**Container Usage**: CT201 (transcoder-new)
+**Used By**: CT304 (transcoder), CT305 (jellyfin)
 
-**Verification Command**:
+**Verification**:
 ```bash
-pct exec 201 -- vainfo --display drm --device /dev/dri/renderD128
+pct exec 304 -- vainfo --display drm --device /dev/dri/renderD128
 ```
 
 **Status**: ✅ Working (VA-API 1.17, Intel iHD driver)
+
+---
+
+### NVIDIA GTX 1080
+
+**Host Devices**:
+- `/dev/dri/card0` (NVIDIA card)
+- `/dev/dri/renderD129` (NVIDIA render node)
+
+**Used By**: CT305 (jellyfin, secondary GPU)
+
+**Status**: ✅ Passed through, available for use
+
+---
 
 ### Optical Drive (Blu-ray)
 
@@ -337,106 +318,149 @@ pct exec 201 -- vainfo --display drm --device /dev/dri/renderD128
 
 **Group**: `cdrom` (24)
 
-**Container Usage**: CT200 (ripper-new)
+**Used By**: CT302 (ripper)
 
-**Verification Command**:
+**Verification**:
 ```bash
-pct exec 200 -- makemkvcon info disc:0
+pct exec 302 -- makemkvcon info disc:0
 ```
 
-**Status**: ✅ Working (MakeMKV can read discs)
+**Status**: ✅ Working
 
 ---
 
-## Current Operational Status
+## Infrastructure as Code
 
-### Active Workflows
+### Terraform
 
-1. **Ripping**: CT200 (ripper-new) with optical drive passthrough ✅
-2. **Transcoding**: CT201 (transcoder-new) with Intel Arc GPU ✅
-3. **Media Serving**: CT101 (jellyfin) ✅
-4. **Analysis**: CT202 (analyzer) ✅
+**Location**: `terraform/`  
+**Provider**: BPG Proxmox (`~> 0.50.0`)
 
-### Pending Migrations
+**Container Definitions**:
+- `ct300-backup.tf` - Backup container
+- `ct301-samba.tf` - Samba file server
+- `ct302-ripper.tf` - Ripper with optical drive
+- `ct303-analyzer.tf` - Media analyzer
+- `ct304-transcoder.tf` - Transcoder with GPU
+- `ct305-jellyfin.tf` - Jellyfin with dual GPU
 
-- [ ] Migrate CT100 (old ripper) configuration to IaC
-- [ ] Migrate CT102 (old transcoder) configuration to IaC
-- [ ] Document and archive old containers
-- [ ] Remove old containers after IaC validation
-
-### Known Issues
-
-1. **Container Networking**: Containers sometimes need manual network activation after creation (fixed with proper fstab in container)
-2. **Unprivileged Containers**: Permission issues with MergerFS write access (why we use privileged)
-3. **GPU Driver**: Intel Arc requires `i915` module, `intel-media-va-driver` package not installed on host (but works in container)
+**Status**: ✅ All containers managed by Terraform
 
 ---
 
-## Infrastructure as Code Status
+### Ansible
 
-### Current State
+**Location**: `ansible/`  
+**Inventory**: `ansible/inventory/hosts.yml`
 
-**Manual Management**:
-- ✅ Host configuration (MergerFS, storage, network)
-- ✅ Active production containers (CT200, CT201, CT202)
-- ✅ Legacy containers (CT100, CT102)
+**Key Roles**:
+- `common` - Base configuration for all containers
+- `restic_backup` - Restic backup + Backrest UI
+- `optical_drive_passthrough` - Optical drive device passthrough
+- `intel_gpu_passthrough` - Intel Arc GPU passthrough
+- `dual_gpu_passthrough` - Dual GPU passthrough for Jellyfin
+- `makemkv` - MakeMKV installation and configuration
+- `media_analyzer` - Media analysis tools (MediaInfo, FileBot)
+- `jellyfin` - Jellyfin media server
 
-**IaC Ready**:
-- [ ] Terraform configurations
-- [ ] Ansible playbooks
-- [ ] Container definitions
-- [ ] Device passthrough automation
+**Playbooks**:
+- `site.yml` - Main playbook for all containers
+- `ct300-backup.yml` - Backup container
+- `ct301-samba.yml` - Samba container
+- `ct302-ripper.yml` - Ripper container
+- `ct303-analyzer.yml` - Analyzer container
+- `ct304-transcoder.yml` - Transcoder container
+- `ct305-jellyfin.yml` - Jellyfin container
 
-**Next Steps**:
-1. Create Terraform definitions for new containers (200, 201, 202)
-2. Create Ansible roles for MakeMKV, FFmpeg, GPU passthrough
-3. Test import workflow with test container (CTID 199)
-4. Document disaster recovery procedure
+**Status**: ✅ All containers configured via Ansible
 
 ---
 
-## Reference Information
+## Media Pipeline Workflow
 
-### Important File Locations
+1. **Rip** (CT302): Insert disc → MakeMKV → `/mnt/staging/1-ripped/`
+2. **Remux** (CT303): Analyze & remux → `/mnt/staging/2-remuxed/`
+3. **Transcode** (CT304): Hardware transcode → `/mnt/staging/3-transcoded/`
+4. **Organize** (CT303): FileBot → `/mnt/staging/4-ready/`
+5. **Promote** (CT303): Move to `/mnt/storage/media/library/`
+6. **Serve** (CT305): Jellyfin streams from `/media/library/`
 
-**Host**:
-- LXC Configs: `/etc/pve/lxc/<CTID>.conf`
-- fstab: `/etc/fstab`
-- MergerFS Mount: `/mnt/storage`
+**Scripts Location**: `scripts/media/production/`
 
-**Media Pipeline**:
-- Scripts: `/home/cuiv/dev/homelab-notes/scripts/media/`
-- Staging: `/mnt/storage/media/staging/`
-- Library: `/mnt/storage/media/{movies,tv}/`
+---
 
-**Documentation**:
-- IaC Strategy: `/home/cuiv/dev/homelab-notes/docs/reference/homelab-iac-strategy.md`
-- This Document: `/home/cuiv/dev/homelab-notes/docs/reference/current-state.md`
+## Backup Strategy
 
-### Quick Commands
+### Restic → Backblaze B2
+
+**Container**: CT300 (backup)
+
+**Policy**:
+- **Scope**: All `/mnt/storage` data except media library
+- **Included**: Photos, documents, backups, e-books, audiobooks
+- **Excluded**: Movies, TV shows, staging directories
+- **Encryption**: Client-side (restic)
+- **Schedule**: Daily at 2 AM
+- **Retention**: 7 daily, 4 weekly, 6 monthly, 2 yearly
+
+**3-2-1 Backup**:
+1. ✅ Live data on MergerFS (35TB with SnapRAID parity)
+2. ✅ Restic → Backblaze B2 (encrypted cloud)
+3. ⏳ Future: Local/family member backup
+
+---
+
+## Quick Reference Commands
+
+### Container Management
 
 ```bash
-# SSH to host
-ssh homelab
-
 # List containers
-pct list
+ssh root@homelab "pct list"
 
 # Enter container
-pct enter <CTID>
+ssh root@homelab "pct enter <CTID>"
 
+# Start/stop container
+ssh root@homelab "pct start <CTID>"
+ssh root@homelab "pct stop <CTID>"
+
+# View container config
+ssh root@homelab "cat /etc/pve/lxc/<CTID>.conf"
+```
+
+### Verification
+
+```bash
 # Check storage
-df -h /mnt/storage
+ssh root@homelab "df -h /mnt/storage"
 
 # Check GPU in transcoder
-pct exec 201 -- vainfo --display drm --device /dev/dri/renderD128
+ssh root@homelab "pct exec 304 -- vainfo --display drm --device /dev/dri/renderD128"
 
 # Check optical drive in ripper
-pct exec 200 -- ls -la /dev/sr0 /dev/sg4
+ssh root@homelab "pct exec 302 -- ls -la /dev/sr0 /dev/sg4"
+
+# Check Jellyfin GPU
+ssh root@homelab "pct exec 305 -- vainfo --display drm --device /dev/dri/renderD128"
+```
+
+### Infrastructure as Code
+
+```bash
+# Terraform
+cd terraform
+terraform plan
+terraform apply
+
+# Ansible
+cd ansible
+ansible-playbook playbooks/site.yml --vault-password-file ../.vault_pass
+ansible-playbook playbooks/site.yml --tags <tag> --check  # dry-run
 ```
 
 ---
 
-**Document Status**: ✅ Current as of 2025-11-11  
-**Data Source**: Live SSH inspection of homelab system  
+**Document Status**: ✅ Current as of 2025-11-14  
+**IaC Status**: ✅ 100% Infrastructure as Code  
 **Maintenance**: Update when infrastructure changes occur
