@@ -3,7 +3,7 @@
 variable "proxmox_endpoint" {
   description = "Proxmox API endpoint"
   type        = string
-  default     = "https://192.168.1.56:8006"
+  default     = "https://192.168.1.100:8006"
 }
 
 variable "proxmox_username" {
