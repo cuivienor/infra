@@ -38,3 +38,23 @@ variable "ssh_public_key" {
   type        = string
   default     = ""
 }
+
+# Network configuration
+variable "gateway" {
+  description = "Default gateway for containers"
+  type        = string
+  default     = "192.168.1.1"
+}
+
+variable "dns_servers" {
+  description = "DNS servers for containers (will use local DNS when AdGuard is deployed)"
+  type        = list(string)
+  default     = ["1.1.1.1", "8.8.8.8"]
+  # Future: ["192.168.1.110", "192.168.1.111", "1.1.1.1"] when AdGuard is deployed
+}
+
+variable "dns_domain" {
+  description = "DNS search domain"
+  type        = string
+  default     = " "  # Empty space to match Proxmox API behavior
+}
