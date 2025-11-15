@@ -15,7 +15,7 @@ resource "proxmox_virtual_environment_container" "backup" {
     
     ip_config {
       ipv4 {
-        address = "192.168.1.58/24"
+        address = "192.168.1.120/24"
         gateway = "192.168.1.1"
       }
     }

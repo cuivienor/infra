@@ -18,7 +18,7 @@ resource "proxmox_virtual_environment_container" "transcoder" {
     
     ip_config {
       ipv4 {
-        address = "192.168.1.77/24"  # Keep existing IP from CT201
+        address = "192.168.1.132/24"  # Keep existing IP from CT201
         gateway = "192.168.1.1"
       }
     }
