@@ -86,7 +86,6 @@ This repository uses a structured planning workflow in `docs/plans/`:
 - **`active/`** - Current/upcoming implementation plans
 - **`archive/`** - Completed implementations (for reference)
 
-See [docs/plans/README.md](docs/plans/README.md) for details on the planning process.
 
 ## Infrastructure Overview
 
