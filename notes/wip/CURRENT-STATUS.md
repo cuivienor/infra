@@ -1,7 +1,7 @@
 # Current Work Status
 
-**Date**: 2025-11-14  
-**Focus**: Testing Production Workflows
+**Date**: 2025-11-15  
+**Focus**: Container DNS Configuration & Base Setup
 
 > **📖 For system specifications**, see `docs/reference/current-state.md`
 
@@ -66,9 +66,11 @@
 ### Medium Priority
 - [ ] Duplicate filenames in TV shows (need to run fix-current-names.sh)
 - [ ] Legacy library migration to new `/media/library` structure incomplete
+- [ ] Ansible deprecation warnings for `ansible_os_family` (should use `ansible_facts`)
 
 ### Low Priority
 - [ ] Some old docs may reference legacy container numbers (CT200 vs CT302)
+- [ ] Some containers have systemd-hostnamed timeouts (normal for LXC)
 
 ---
 
@@ -95,6 +97,14 @@
 ---
 
 ## 🔧 Recent Changes
+
+### 2025-11-15
+- ✅ Fixed container DNS configuration (containers had no nameservers)
+- ✅ Added DNS servers (1.1.1.1, 8.8.8.8) to all Terraform container configs
+- ✅ Applied base Ansible configuration to all containers (locale, timezone, packages)
+- ✅ Installed common packages (sudo, vim, curl, htop, tmux) on all containers
+- ✅ Fixed SSH config to use new Proxmox IP (.100)
+- ✅ Fixed hostname issue in Ansible inventory (ct301_samba → ct301-samba)
 
 ### 2025-11-14
 - ✅ Updated `current-state.md` with accurate CT300-305 container info
@@ -198,4 +208,4 @@ ansible-playbook ansible/playbooks/site.yml --tags jellyfin --check
 ---
 
 **Status**: 🚀 Ready for production testing  
-**Last Updated**: 2025-11-14
+**Last Updated**: 2025-11-15
