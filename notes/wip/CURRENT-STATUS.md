@@ -66,7 +66,6 @@
 ### Medium Priority
 - [ ] Duplicate filenames in TV shows (need to run fix-current-names.sh)
 - [ ] Legacy library migration to new `/media/library` structure incomplete
-- [ ] Ansible deprecation warnings for `ansible_os_family` (should use `ansible_facts`)
 
 ### Low Priority
 - [ ] Some old docs may reference legacy container numbers (CT200 vs CT302)
