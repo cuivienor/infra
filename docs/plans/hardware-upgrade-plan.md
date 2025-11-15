@@ -466,7 +466,6 @@ After upgrade complete:
 - `docs/guides/fix-vlan-isolation-manual.md` - Manual VLAN fix (do NOW)
 - `docs/plans/network-iac-implementation-plan.md` - Terraform migration (do AFTER hardware upgrade)
 - `docs/reference/unifi-hardware-versions.md` - Current hardware details
-- `docs/reference/network-topology-detailed.md` - Current network state
 
 ---
 

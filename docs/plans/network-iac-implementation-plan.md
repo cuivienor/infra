@@ -663,5 +663,3 @@ Consider upgrading USG to UXG-Lite ($129) or UDM-SE ($299) when:
 ## Related Documents
 
 - `docs/reference/unifi-hardware-versions.md` - Compatibility details
-- `docs/reference/network-topology-detailed.md` - Current network state
-- `docs/reference/homelab-iac-strategy.md` - Overall IaC philosophy

@@ -365,7 +365,7 @@ fi
 
 - `ansible/files/ssh-keys/README.md` - SSH keys directory documentation
 - `ansible/roles/common/README.md` - Common role documentation
-- `docs/reference/homelab-iac-strategy.md` - Overall IaC strategy
+- `docs/reference/current-state.md` - Overall IaC strategy
 
 ---
 

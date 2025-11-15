@@ -83,4 +83,3 @@ Active planning documents for homelab infrastructure improvements.
 
 - [Current Network State](../reference/network-topology-detailed.md)
 - [Hardware Versions](../reference/unifi-hardware-versions.md)
-- [Homelab IaC Strategy](../reference/homelab-iac-strategy.md)
