@@ -24,6 +24,7 @@ resource "proxmox_virtual_environment_container" "analyzer" {
     }
 
     dns {
+      domain  = " "
       servers = ["1.1.1.1", "8.8.8.8"]
     }
 
