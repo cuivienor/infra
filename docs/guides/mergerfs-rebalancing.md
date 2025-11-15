@@ -457,6 +457,6 @@ chmod +x ~/quick-move.sh
 ---
 
 **Last Updated**: 2025-11-11  
-**Related Docs**: 
+**Related Docs**:
 - `docs/reference/current-state.md` - Storage configuration
 - `ansible/roles/proxmox_storage/defaults/main.yml` - MergerFS settings

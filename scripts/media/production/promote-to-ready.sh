@@ -51,13 +51,13 @@ if [[ "$TYPE" == "tv" ]]; then
     # For TV: preserve Show/Season structure
     SHOW_NAME=$(basename "$(dirname "$INPUT_DIR")")
     SEASON_NAME="$FOLDER_NAME"  # e.g., Season_01
-    
+
     # No date stamp removal for TV seasons
     OUTPUT_DIR="/mnt/storage/media/staging/4-ready/tv/${SHOW_NAME}/${SEASON_NAME}"
 else
     # For movies: clean the date stamp
     CLEAN_NAME=$(echo "$FOLDER_NAME" | sed 's/_[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}$//')
-    
+
     # If no date stamp found, use original name
     if [ "$CLEAN_NAME" = "$FOLDER_NAME" ]; then
         OUTPUT_DIR="/mnt/storage/media/staging/4-ready/movies/${FOLDER_NAME}"
@@ -96,9 +96,9 @@ while IFS= read -r -d '' file; do
     size_bytes=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null || echo "0")
     size_h=$(du -h "$file" | cut -f1)
     rel_path="${file#$INPUT_DIR/}"
-    
+
     echo "  $rel_path ($size_h)"
-    
+
     ((file_count++))
     total_size=$((total_size + size_bytes))
 done < <(find "$INPUT_DIR" -type f -name "*.mkv" -print0 | sort -z)
@@ -139,17 +139,17 @@ if [ $rsync_exit -eq 0 ]; then
     echo ""
     echo "✓ Files copied successfully"
     echo ""
-    
+
     # Verify file count matches
     copied_count=$(find "$OUTPUT_DIR" -type f -name "*.mkv" | wc -l)
-    
+
     if [ $copied_count -eq $file_count ]; then
         echo "✓ Verified: All $file_count files present in output"
         echo ""
-        
+
         read -p "Delete source files from 3-transcoded? [y/N]: " -r
         echo
-        
+
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             echo "Deleting source directory..."
             rm -rf "$INPUT_DIR"

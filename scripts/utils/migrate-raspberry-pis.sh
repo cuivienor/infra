@@ -41,10 +41,10 @@ echo "=========================================="
 deploy_ssh_key() {
     local ip=$1
     local user=$2
-    
+
     echo ""
     echo "→ Deploying SSH key to $user@$ip"
-    
+
     # Create cuiv user if needed (on pi-hole)
     if [ "$user" = "pi" ]; then
         echo "  Creating cuiv user..."
@@ -54,18 +54,18 @@ deploy_ssh_key() {
              echo 'cuiv ALL=(ALL) NOPASSWD: ALL' | sudo tee /etc/sudoers.d/cuiv"
         user="cuiv"
     fi
-    
+
     # Ensure .ssh directory exists
     sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no "$user@$ip" \
         "mkdir -p ~/.ssh && chmod 700 ~/.ssh"
-    
+
     # Deploy SSH key
     sshpass -p "$PASSWORD" ssh-copy-id -i "$SSH_KEY" -o StrictHostKeyChecking=no "$user@$ip"
-    
+
     # Ensure sudo without password
     sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no "$user@$ip" \
         "echo 'cuiv ALL=(ALL) NOPASSWD: ALL' | sudo tee /etc/sudoers.d/cuiv"
-    
+
     echo "  ✅ SSH key deployed to cuiv@$ip"
 }
 
@@ -86,10 +86,10 @@ echo "=========================================="
 cleanup_pi() {
     local ip=$1
     local name=$2
-    
+
     echo ""
     echo "→ Cleaning up $name ($ip)"
-    
+
     ssh cuiv@"$ip" << 'ENDSSH'
 set -e
 
@@ -139,11 +139,11 @@ echo "=========================================="
 upgrade_pi() {
     local ip=$1
     local name=$2
-    
+
     echo ""
     echo "→ Upgrading $name ($ip) to Debian 12"
     echo "  This will take 15-30 minutes..."
-    
+
     ssh cuiv@"$ip" << 'ENDSSH'
 set -e
 
@@ -170,10 +170,10 @@ ENDSSH
 
     echo "  Rebooting $name..."
     ssh cuiv@"$ip" "sudo reboot" || true
-    
+
     echo "  Waiting for reboot..."
     sleep 30
-    
+
     # Wait for Pi to come back
     for i in {1..30}; do
         if ssh -o ConnectTimeout=5 cuiv@"$ip" "echo ok" &>/dev/null; then
@@ -204,10 +204,10 @@ echo "=========================================="
 final_cleanup() {
     local ip=$1
     local name=$2
-    
+
     echo ""
     echo "→ Final cleanup on $name ($ip)"
-    
+
     ssh cuiv@"$ip" << 'ENDSSH'
 set -e
 
@@ -243,10 +243,10 @@ echo "=========================================="
 verify_pi() {
     local ip=$1
     local name=$2
-    
+
     echo ""
     echo "→ Verifying $name ($ip)"
-    
+
     ssh cuiv@"$ip" << 'ENDSSH'
 echo "  OS Version: $(grep PRETTY_NAME /etc/os-release | cut -d'"' -f2)"
 echo "  Kernel: $(uname -r)"

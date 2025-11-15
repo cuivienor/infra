@@ -357,31 +357,31 @@ try {
         '8.0.28',
         true  // SSL verify
     );
-    
+
     $login = $unifi_connection->login();
-    
+
     // Get all networks (VLANs)
     $networks = $unifi_connection->list_networkconf();
     print_r($networks);
-    
+
     // Get all devices
     $devices = $unifi_connection->list_devices();
     print_r($devices);
-    
+
     // Get firewall rules
     $firewall_rules = $unifi_connection->list_firewallrules();
     print_r($firewall_rules);
-    
+
     // Get port forwarding rules
     $port_forwards = $unifi_connection->list_portforwarding();
     print_r($port_forwards);
-    
+
     // Get all clients
     $clients = $unifi_connection->list_clients();
     print_r($clients);
-    
+
     $unifi_connection->logout();
-    
+
 } catch (Exception $e) {
     echo 'Error: ' . $e->getMessage() . PHP_EOL;
 }

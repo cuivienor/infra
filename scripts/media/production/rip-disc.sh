@@ -101,12 +101,12 @@ echo "=========================================="
 if [ "$TYPE" == "show" ]; then
     echo ""
     echo "Adding disc identifier to filenames..."
-    
+
     # Extract disc number from DISC_INFO (e.g., "S01 Disc1" → "Disc1")
     DISC_ID=$(echo "$DISC_INFO" | tr ' ' '_' | grep -oP '(S[0-9]+_)?Disc[0-9]+' || echo "Disc")
-    
+
     cd "$OUTPUT_DIR"
-    
+
     # Rename all files to include show name and disc ID
     # Pattern: title_t00.mkv → ShowName_DiscX_t00.mkv
     for file in *.mkv; do
@@ -115,7 +115,7 @@ if [ "$TYPE" == "show" ]; then
             if [[ "$file" =~ _t([0-9]+)\.mkv ]]; then
                 track_num="${BASH_REMATCH[1]}"
                 new_name="${SAFE_NAME}_${DISC_ID}_t${track_num}.mkv"
-                
+
                 if [ "$file" != "$new_name" ]; then
                     mv "$file" "$new_name"
                     echo "  Renamed: $file → $new_name"
@@ -123,9 +123,9 @@ if [ "$TYPE" == "show" ]; then
             fi
         fi
     done
-    
+
     cd - > /dev/null
-    
+
     echo ""
     echo "✓ Files renamed with disc identifier"
 fi

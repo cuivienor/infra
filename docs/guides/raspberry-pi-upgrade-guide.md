@@ -154,7 +154,7 @@ raspberry_pis:
       ansible_host: 192.168.1.107
       ansible_user: cuiv  # ← Standard user
       # No passwords! Uses SSH key
-      
+
     raspberrypi:
       ansible_host: 192.168.1.114
       ansible_user: cuiv  # ← Standard user

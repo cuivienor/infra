@@ -103,9 +103,9 @@ mkdir -p "$SHOW_DIR"
 for disc in 1 2 3 4; do
     DISC_DIR="$SHOW_DIR/S01_Disc${disc}_${DATE_STAMP}"
     mkdir -p "$DISC_DIR"
-    
+
     echo "    → S01_Disc${disc}_${DATE_STAMP}/"
-    
+
     # Move and rename files to include disc identifier
     # Pattern: "COSMOS- A SpaceTime Odyssey, Season 1 Disc X_tYY.mkv"
     find "$STAGING_BASE/Cosmos" -maxdepth 1 -name "*Disc ${disc}_t*.mkv" -print0 | while IFS= read -r -d '' file; do

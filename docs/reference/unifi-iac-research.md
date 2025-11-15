@@ -133,14 +133,14 @@ provider "unifi" {
 resource "unifi_network" "iot_vlan" {
   name    = "IoT"
   purpose = "corporate"
-  
+
   vlan_id      = 20
   subnet       = "192.168.20.1/24"
   dhcp_enabled = true
   dhcp_start   = "192.168.20.10"
   dhcp_stop    = "192.168.20.254"
   dhcp_dns     = ["192.168.1.1"]
-  
+
   igmp_snooping              = true
   multicast_dns              = false
   internet_access_enabled    = true
@@ -152,14 +152,14 @@ resource "unifi_wlan" "guest_wifi" {
   name       = "Guest-WiFi"
   passphrase = var.guest_wifi_password
   security   = "wpapsk"
-  
+
   wpa3_support    = true
   wpa3_transition = true
   pmf_mode        = "optional"
-  
+
   network_id    = unifi_network.guest_vlan.id
   user_group_id = data.unifi_user_group.default.id
-  
+
   is_guest    = true
   hide_ssid   = false
   l2_isolation = true
@@ -171,12 +171,12 @@ resource "unifi_firewall_rule" "block_iot_to_lan" {
   action     = "drop"
   ruleset    = "LAN_IN"
   rule_index = 2010
-  
+
   protocol = "all"
-  
+
   src_network_id = unifi_network.iot_vlan.id
   dst_network_id = unifi_network.lan.id
-  
+
   logging = true
   enabled = true
 }
@@ -184,13 +184,13 @@ resource "unifi_firewall_rule" "block_iot_to_lan" {
 # Switch Port Profile
 resource "unifi_port_profile" "iot_devices" {
   name = "IoT Devices"
-  
+
   native_networkconf_id = unifi_network.iot_vlan.id
   poe_mode              = "auto"
-  
+
   forward    = "native"
   isolation  = true
-  
+
   autoneg = true
 }
 ```
@@ -278,7 +278,7 @@ resource "unifi_port_profile" "iot_devices" {
    - `ppouliot/ansible-role-ubnt_platform_mgmt` (16 stars)
      - Manages EdgeMAX and UniFi devices
      - Limited, not actively maintained
-   
+
    - `aioue/ansible-unifi-inventory` (5 stars)
      - Dynamic inventory plugin (reads from UniFi)
      - Not for configuration management

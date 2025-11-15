@@ -126,7 +126,7 @@ ssh root@192.168.1.73
    ```bash
    # Check organized movies
    ls -R /mnt/media/library/movies/
-   
+
    # Check organized TV
    ls -R /mnt/media/library/tv/
    ```

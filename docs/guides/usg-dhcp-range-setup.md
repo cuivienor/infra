@@ -68,14 +68,14 @@ Configure DHCP to ONLY assign from safe ranges, leaving gaps for your static all
    - (This reserves .50-.199 for static allocations)
 
 5. **Add Second DHCP Range (Overflow)**
-   
+
    **⚠️ Note:** UniFi Controller may not support multiple DHCP ranges in the UI.
-   
+
    **If you see a "+ Add Range" button:**
    - Click it
    - DHCP Range Start: `192.168.1.200`
    - DHCP Range Stop: `192.168.1.254`
-   
+
    **If you DON'T see "+ Add Range":**
    - You can only configure one range
    - Choose: `192.168.1.6` - `192.168.1.49` (primary range)

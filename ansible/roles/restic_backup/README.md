@@ -71,10 +71,10 @@ vault_restic_password_media: "strong_password_2"
 - name: Configure backups
   hosts: proxmox_host
   become: true
-  
+
   vars_files:
     - ../vars/backup_secrets.yml
-  
+
   roles:
     - restic_backup
 ```

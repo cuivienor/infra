@@ -35,7 +35,7 @@ Jellyfin recognizes these specific folder names for organizing movie/TV extras. 
 - **Behind the Scenes**: Longer (10-60 min), comprehensive making-of, broader scope
   - Example: "The Making of How to Train Your Dragon", "From Page to Screen"
 
-**Rule of thumb**: 
+**Rule of thumb**:
 - If it's < 5 minutes and feels like a promo → `clips/`
 - If it's 5-20 minutes and explores one topic → `featurettes/`
 - If it's > 10 minutes and shows production process → `behind the scenes/`

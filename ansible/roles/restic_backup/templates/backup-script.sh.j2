@@ -53,7 +53,7 @@ BACKUP_EXIT=$?
 
 if [ $BACKUP_EXIT -eq 0 ]; then
     echo "Backup completed successfully"
-    
+
     # Prune old backups
     echo "Pruning old snapshots..."
     {{ restic_bin_path }} forget \
@@ -64,9 +64,9 @@ if [ $BACKUP_EXIT -eq 0 ]; then
         --keep-yearly {{ item.retention.keep_yearly }} \
         --prune \
         --verbose=1
-    
+
     PRUNE_EXIT=$?
-    
+
     if [ $PRUNE_EXIT -eq 0 ]; then
         echo "Prune completed successfully"
     else

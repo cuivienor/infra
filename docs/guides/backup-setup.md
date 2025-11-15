@@ -254,7 +254,7 @@ sudo /etc/restic/scripts/maintenance.sh prune sensitive
    ```bash
    # Pick a small file you can verify
    sudo /etc/restic/scripts/restore.sh -p sensitive -t /tmp/restore-test
-   
+
    # Check the restored files
    ls -lah /tmp/restore-test
    diff -r /mnt/storage/documents /tmp/restore-test/mnt/storage/documents

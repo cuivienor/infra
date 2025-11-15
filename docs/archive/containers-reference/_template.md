@@ -230,10 +230,10 @@ ssh root@192.168.1.XX "
   - Terraform: `terraform/ctXXX-name.tf`
   - Ansible Playbook: `ansible/playbooks/ctXXX-name.yml`
   - Ansible Role: `ansible/roles/role_name/`
-  
+
 - **Guides**:
   - [Setup Guide](../guides/ctXXX-name-setup.md)
-  
+
 - **Reference**:
   - [Quick Reference](../reference/name-quick-reference.md)
   - [External Documentation](https://example.com)

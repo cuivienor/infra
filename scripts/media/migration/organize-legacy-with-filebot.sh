@@ -65,15 +65,15 @@ if [ "$movie_count" -gt 0 ]; then
     echo "Processing Movies with FileBot"
     echo "================================================"
     echo ""
-    
+
     # List files to process
     echo "Movies to process:"
     find "$STAGING_DIR/movies" -name "*.mkv" -type f -exec basename {} \; | sort
     echo ""
-    
+
     echo "Running FileBot DRY RUN..."
     echo "========================================"
-    
+
     # Run dry-run first
     filebot -rename "$STAGING_DIR/movies" \
         --db TheMovieDB \
@@ -81,29 +81,29 @@ if [ "$movie_count" -gt 0 ]; then
         --format "$MOVIE_FORMAT" \
         --action test \
         -non-strict || true
-    
+
     echo ""
     echo "========================================"
     echo ""
-    
+
     read -p "Execute movie organization? [y/N]: " -r
     echo
-    
+
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo "Organizing movies..."
         echo ""
-        
+
         filebot -rename "$STAGING_DIR/movies" \
             --db TheMovieDB \
             --output "$LIBRARY_DIR" \
             --format "$MOVIE_FORMAT" \
             --action move \
             -non-strict
-        
+
         echo ""
         echo "✓ Movies organized successfully!"
         echo ""
-        
+
         # Check remaining files
         remaining=$(find "$STAGING_DIR/movies" -name "*.mkv" -type f 2>/dev/null | wc -l || echo "0")
         if [ "$remaining" -gt 0 ]; then
@@ -122,15 +122,15 @@ if [ "$tv_count" -gt 0 ]; then
     echo "Processing TV Shows with FileBot"
     echo "================================================"
     echo ""
-    
+
     # List files to process
     echo "TV episodes to process:"
     find "$STAGING_DIR/tv" -name "*.mkv" -type f -exec basename {} \; | sort
     echo ""
-    
+
     echo "Running FileBot DRY RUN..."
     echo "========================================"
-    
+
     # Run dry-run first
     filebot -rename "$STAGING_DIR/tv" \
         --db TheTVDB \
@@ -138,29 +138,29 @@ if [ "$tv_count" -gt 0 ]; then
         --format "$TV_FORMAT" \
         --action test \
         -non-strict || true
-    
+
     echo ""
     echo "========================================"
     echo ""
-    
+
     read -p "Execute TV show organization? [y/N]: " -r
     echo
-    
+
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo "Organizing TV shows..."
         echo ""
-        
+
         filebot -rename "$STAGING_DIR/tv" \
             --db TheTVDB \
             --output "$LIBRARY_DIR" \
             --format "$TV_FORMAT" \
             --action move \
             -non-strict
-        
+
         echo ""
         echo "✓ TV shows organized successfully!"
         echo ""
-        
+
         # Check remaining files
         remaining=$(find "$STAGING_DIR/tv" -name "*.mkv" -type f 2>/dev/null | wc -l || echo "0")
         if [ "$remaining" -gt 0 ]; then

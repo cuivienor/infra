@@ -252,7 +252,7 @@ date -Iseconds > "$OUTPUT_DIR/.pipeline/remux.timestamp"
     job_001_rip_MovieTitle_20251114_120000/
       spec.json
       state              # "PENDING"
-      
+
   running/
     job_002_transcode_MovieTitle_20251114_120500/
       spec.json
@@ -260,7 +260,7 @@ date -Iseconds > "$OUTPUT_DIR/.pipeline/remux.timestamp"
       claimed_by         # "ct304"
       claimed_at         # "2025-11-14T12:05:00Z"
       pid                # "12345"
-      
+
   completed/
     job_003_remux_MovieTitle_20251114_110000/
       spec.json

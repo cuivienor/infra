@@ -116,7 +116,7 @@ mv /mnt/storage/photos/1d8620a3-158b-4d3a-a9bf-43b869d4ca50 \
 chown -R media:media /mnt/storage/photos/
 ```
 
-**Result**: 
+**Result**:
 - All photos preserved in `/mnt/storage/photos/consolidated/`
 - `Photos-archive/` contains 2010-2014, Nexus backups, sony camera
 - `recent-uuid-backup/` contains recent UUID-named photos
@@ -144,7 +144,7 @@ chown -R media:media /mnt/storage/media/e-books
 chown -R media:media /mnt/storage/documents
 ```
 
-**Result**: 
+**Result**:
 - Audiobooks and e-books now in `media/` alongside movies/tv/staging
 - Empty `documents/` directory created for future use
 
@@ -207,18 +207,18 @@ excludes:
   - "/mnt/storage/media/**"
   - "/mnt/storage/Movies/**"      # Legacy - now in archives/
   - "/mnt/storage/tv/**"           # Legacy - now in archives/
-  
+
   # Private content (excluded from backup)
   - "/mnt/storage/private/**"
-  
+
   # Archives - old Movies/TV (already have these backed up elsewhere)
   - "/mnt/storage/archives/legacy-media/**"
-  
+
   # Temporary/cache directories
   - "/mnt/storage/temp/**"
   - "/mnt/storage/lost+found/**"
   - "/mnt/storage/.snapraid.*"
-  
+
   # Common patterns to skip
   - "**/.Trash-*/**"
   - "**/Thumbs.db"

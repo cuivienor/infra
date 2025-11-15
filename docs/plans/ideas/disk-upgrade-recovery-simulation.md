@@ -269,16 +269,16 @@ nano /etc/fstab
 1. **Partition the new 18TB drive**
    ```bash
    ssh root@homelab
-   
+
    # Identify new drive (should be /dev/sde or similar)
    lsblk
-   
+
    # Create partition table
    parted /dev/sde
    (parted) mklabel gpt
    (parted) mkpart primary ext4 0% 100%
    (parted) quit
-   
+
    # Format with ext4
    mkfs.ext4 -L disk2-new /dev/sde1
    ```
@@ -287,10 +287,10 @@ nano /etc/fstab
    ```bash
    # Get new disk UUID
    blkid /dev/sde1
-   
+
    # Edit fstab
    nano /etc/fstab
-   
+
    # Replace old disk2 entry with new UUID:
    UUID=<new-uuid> /mnt/disk2 ext4 defaults 0 0
    ```
@@ -329,7 +329,7 @@ snapraid fix -d d2
    ```bash
    # Generate new file list
    find /mnt/disk2 -type f > /root/disk2-recovered-list.txt
-   
+
    # Compare with original
    diff /root/disk2-file-list.txt /root/disk2-recovered-list.txt
    # Should be identical!
@@ -597,7 +597,7 @@ After completing this plan, you will:
 
 **Created**: 2025-11-13  
 **Status**: Ready to execute when new disk arrives  
-**Next Steps**: 
+**Next Steps**:
 1. Order 18TB drive (WD Red Plus or Seagate IronWolf recommended)
 2. Run SnapRAID sync + scrub while waiting for delivery
 3. Follow Phase 1 when disk arrives

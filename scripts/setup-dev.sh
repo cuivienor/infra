@@ -67,7 +67,7 @@ check_tools() {
     echo ""
     echo "Git hooks:"
     print_status "pre-commit"
-    
+
     if [[ -f ".git/hooks/pre-commit" ]]; then
         echo -e "  ${GREEN}✓${NC} pre-commit hooks installed"
     else
@@ -78,7 +78,7 @@ check_tools() {
 # Install on Arch Linux
 install_arch() {
     echo "Installing tools for Arch Linux..."
-    
+
     # System packages
     echo "Installing system packages..."
     sudo pacman -S --needed --noconfirm \
@@ -86,13 +86,13 @@ install_arch() {
         shfmt \
         yamllint \
         python-pip
-    
+
     # Python tools (user-local)
     echo "Installing Python tools..."
     pip install --user --upgrade --break-system-packages \
         ansible-lint \
         pre-commit
-    
+
     # Ensure ~/.local/bin is in PATH
     if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
         echo -e "${YELLOW}Warning:${NC} ~/.local/bin is not in your PATH"
@@ -104,13 +104,13 @@ install_arch() {
 # Install on macOS
 install_macos() {
     echo "Installing tools for macOS..."
-    
+
     # Check for Homebrew
     if ! check_cmd brew; then
         echo -e "${RED}Error:${NC} Homebrew not found. Install from https://brew.sh"
         exit 1
     fi
-    
+
     # Homebrew packages
     echo "Installing Homebrew packages..."
     brew install \
@@ -120,7 +120,7 @@ install_macos() {
         ansible-lint \
         pre-commit \
         tflint
-    
+
     # Note: ansible-lint and pre-commit available via brew on macOS
 }
 
@@ -130,7 +130,7 @@ install_tflint() {
         echo "tflint already installed"
         return
     fi
-    
+
     echo "Installing tflint..."
     curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
 }
@@ -139,10 +139,10 @@ install_tflint() {
 install_tools() {
     local os
     os=$(detect_os)
-    
+
     echo "Detected OS: $os"
     echo ""
-    
+
     case "$os" in
         arch)
             install_arch
@@ -169,11 +169,11 @@ install_tools() {
             exit 1
             ;;
     esac
-    
+
     echo ""
     echo -e "${GREEN}Installation complete!${NC}"
     echo ""
-    
+
     # Setup pre-commit hooks if config exists
     if [[ -f ".pre-commit-config.yaml" ]]; then
         echo "Setting up pre-commit hooks..."
@@ -183,7 +183,7 @@ install_tools() {
         echo -e "${YELLOW}Note:${NC} No .pre-commit-config.yaml found"
         echo "Create one to enable automatic linting on commit"
     fi
-    
+
     echo ""
     echo "Next steps:"
     echo "  1. Run './scripts/setup-dev.sh --check' to verify installation"
