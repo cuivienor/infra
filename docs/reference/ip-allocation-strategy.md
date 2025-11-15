@@ -50,7 +50,8 @@
 
 | IP | Device/Service | Type | Status | Notes |
 |----|----------------|------|--------|-------|
-| .100-.106 | Reserved | - | Available | Future services |
+| .100 | **Proxmox Host** | Physical | ✅ Active | 70:85:c2:a5:c3:c4 - Managed by Ansible |
+| .101-.106 | Reserved | - | Available | Future hypervisors/infrastructure |
 | .107 | **Pi-hole** | Raspberry Pi | Active | b8:27:eb:7c:24:24 - Will retire |
 | .108-.113 | Reserved | - | Available | Future services |
 | .114 | **Raspberry Pi** | Physical | Active | dc:a6:32:d4:85:77 - Will migrate to .53 for DNS |
@@ -238,9 +239,9 @@ terraform apply
 | 68:d7:9a:31:c9:19 | .9 | Bedroom Switch | Static (UniFi Controller) |
 | 68:d7:9a:31:c9:26 | .10 | Living Room Switch | Static (UniFi Controller) |
 | f0:9f:c2:c6:d7:af | .11 | Cloud Key | Static (UniFi Controller) |
-| 70:85:c2:a5:c3:c4 | .56 | Proxmox Host | DHCP Reservation (recommended) |
-| dc:a6:32:d4:85:77 | .114 | Raspberry Pi | Static (will migrate to .53 for DNS) |
-| 48:b0:2d:92:b7:be | .141 | NVidia Shield TV | Static Reservation |
+| 70:85:c2:a5:c3:c4 | .100 | Proxmox Host | ✅ Static (Ansible-managed) |
+| dc:a6:32:d4:85:77 | .114 | Raspberry Pi | DHCP Reservation (will migrate to .53 for DNS) |
+| 48:b0:2d:92:b7:be | .141 | NVidia Shield TV | DHCP Reservation |
 
 **Why DHCP reservation for some, static for others?**
 - **DHCP reservations:** Physical devices, UniFi gear (managed by controller)

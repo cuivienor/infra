@@ -12,7 +12,7 @@
 | Component | Details |
 |-----------|---------|
 | **Hostname** | `homelab` |
-| **IP Address** | `192.168.1.56/24` |
+| **IP Address** | `192.168.1.100/24` (Ansible-managed) |
 | **OS** | Debian GNU/Linux 12 (bookworm) |
 | **Kernel** | `6.8.12-10-pve` |
 | **Proxmox Version** | `8.4.14` (pve-manager) |

@@ -1,0 +1,23 @@
+---
+# Default variables for proxmox_host_network role
+
+# Network configuration
+proxmox_host_ip: "192.168.1.100"
+proxmox_host_netmask: "24"
+proxmox_host_gateway: "192.168.1.1"
+proxmox_host_dns_servers:
+  - "1.1.1.1"
+  - "1.0.0.1"
+
+# Bridge interface (Proxmox standard)
+proxmox_bridge_name: "vmbr0"
+proxmox_physical_interface: "eno1"
+
+# Bridge settings
+proxmox_bridge_stp: "off"
+proxmox_bridge_fd: "0"
+
+# Optional: Additional interfaces (WiFi, etc.)
+proxmox_additional_interfaces:
+  - name: "wlp4s0"
+    method: "manual"
