@@ -21,8 +21,8 @@ resource "proxmox_virtual_environment_container" "samba" {
     }
 
     dns {
-      domain  = " "
-      servers = ["1.1.1.1", "8.8.8.8"]
+      domain  = var.dns_domain
+      servers = var.dns_servers
     }
 
     user_account {
