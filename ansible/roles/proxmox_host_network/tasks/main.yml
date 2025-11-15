@@ -13,7 +13,7 @@
 - name: Backup current network configuration
   ansible.builtin.copy:
     src: /etc/network/interfaces
-    dest: /etc/network/interfaces.backup.{{ ansible_date_time.epoch }}
+    dest: /etc/network/interfaces.backup.{{ ansible_facts['date_time'].epoch }}
     remote_src: true
   register: backup_result
 
@@ -23,13 +23,13 @@
 
 - name: Check if IP change is needed
   ansible.builtin.set_fact:
-    ip_changing: "{{ ansible_default_ipv4.address != proxmox_host_ip.split('/')[0] }}"
+    ip_changing: "{{ ansible_facts['default_ipv4'].address != proxmox_host_ip.split('/')[0] }}"
 
 - name: Warning - IP address will change
   ansible.builtin.debug:
     msg: |
       ⚠️  WARNING: IP address will change!
-      Current: {{ ansible_default_ipv4.address }}
+      Current: {{ ansible_facts['default_ipv4'].address }}
       New: {{ proxmox_host_ip }}
 
       SSH connection will be lost. Reconnect at new IP after applying.

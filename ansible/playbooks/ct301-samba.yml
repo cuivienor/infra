@@ -29,7 +29,7 @@
       ansible.builtin.debug:
         msg:
           - "Samba server configured successfully!"
-          - "Access via: \\\\{{ ansible_default_ipv4.address }}\\storage"
+          - "Access via: \\\\{{ ansible_facts['default_ipv4'].address }}\\storage"
           - "Username: media"
           - "Password: (stored in Ansible Vault)"
       tags: always

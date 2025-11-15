@@ -16,13 +16,16 @@
 
 - name: Add Jellyfin GPG key
   ansible.builtin.apt_key:
-    url: "https://repo.jellyfin.org/{{ ansible_distribution | lower }}/jellyfin_team.gpg.key"
+    url: "https://repo.jellyfin.org/{{ ansible_facts['distribution'] | lower }}/jellyfin_team.gpg.key"
     state: present
     keyring: /etc/apt/keyrings/jellyfin.gpg
 
 - name: Add Jellyfin repository
   ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/etc/apt/keyrings/jellyfin.gpg] https://repo.jellyfin.org/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
+    repo: >-
+      deb [signed-by=/etc/apt/keyrings/jellyfin.gpg]
+      https://repo.jellyfin.org/{{ ansible_facts['distribution'] | lower }}
+      {{ ansible_facts['distribution_release'] }} main
     state: present
     filename: jellyfin
 
@@ -93,7 +96,7 @@
   ansible.builtin.debug:
     msg:
       - "Jellyfin is now running!"
-      - "Web UI: http://{{ ansible_default_ipv4.address }}:{{ jellyfin_http_port }}"
+      - "Web UI: http://{{ ansible_facts['default_ipv4'].address }}:{{ jellyfin_http_port }}"
       - "Complete setup wizard in your browser"
       - "Library paths configured:"
       - "  - New organized library: {{ jellyfin_library_path }}"

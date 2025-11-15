@@ -49,7 +49,7 @@
         msg:
           - "========================================"
           - "Jellyfin is ready!"
-          - "Web UI: http://{{ ansible_default_ipv4.address }}:8096"
+          - "Web UI: http://{{ ansible_facts['default_ipv4'].address }}:8096"
           - "Complete the setup wizard in your browser"
           - "========================================"
           - "GPU Configuration:"

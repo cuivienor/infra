@@ -22,7 +22,7 @@
       ansible.builtin.debug:
         msg: |
           Container: {{ inventory_hostname }}
-          IP: {{ ansible_default_ipv4.address }}
-          Hostname: {{ ansible_hostname }}
-          Timezone: {{ ansible_date_time.tz }}
+          IP: {{ ansible_facts['default_ipv4'].address }}
+          Hostname: {{ ansible_facts['hostname'] }}
+          Timezone: {{ ansible_facts['date_time'].tz }}
       tags: ['verify']
