@@ -18,4 +18,4 @@ export RESTIC_CACHE_DIR="{{ restic_cache_dir }}/{{ item.name }}"
 
 # Backup metadata
 export BACKUP_POLICY="{{ item.name }}"
-export BACKUP_HOSTNAME="{{ ansible_hostname }}"
+export BACKUP_HOSTNAME="{{ ansible_facts['hostname'] }}"

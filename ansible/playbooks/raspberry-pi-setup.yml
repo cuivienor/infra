@@ -50,9 +50,9 @@
         msg: |
           Configuring: {{ inventory_hostname }}
           Model: {{ pi_model }}
-          OS: {{ ansible_distribution }} {{ ansible_distribution_release }}
+          OS: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_release'] }}
           User: {{ ansible_user }}
-          IP: {{ ansible_default_ipv4.address }}
+          IP: {{ ansible_facts['default_ipv4'].address }}
 
     # === System Updates ===
 

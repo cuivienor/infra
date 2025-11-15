@@ -65,7 +65,7 @@
   when: makemkv_needs_install
 
 - name: Build MakeMKV OSS
-  ansible.builtin.command: make -j{{ ansible_processor_vcpus }}
+  ansible.builtin.command: make -j{{ ansible_facts['processor_vcpus'] }}
   args:
     chdir: "{{ makemkv_build_dir }}/makemkv-oss-{{ makemkv_version }}"
   when: makemkv_needs_install

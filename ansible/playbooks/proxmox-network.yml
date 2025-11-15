@@ -10,9 +10,9 @@
         msg: |
           Current Proxmox Host Network:
           - Hostname: {{ inventory_hostname }}
-          - Current IP: {{ ansible_default_ipv4.address }}
-          - Interface: {{ ansible_default_ipv4.interface }}
-          - Gateway: {{ ansible_default_ipv4.gateway }}
+          - Current IP: {{ ansible_facts['default_ipv4'].address }}
+          - Interface: {{ ansible_facts['default_ipv4'].interface }}
+          - Gateway: {{ ansible_facts['default_ipv4'].gateway }}
 
     - name: Confirm IP change
       ansible.builtin.pause:
@@ -20,7 +20,7 @@
 
           ⚠️  This will change the Proxmox host IP address!
 
-          Current IP: {{ ansible_default_ipv4.address }}
+          Current IP: {{ ansible_facts['default_ipv4'].address }}
           New IP: {{ proxmox_host_ip | default('192.168.1.100') }}
 
           After applying:
@@ -30,7 +30,7 @@
           4. Remove DHCP reservation from UniFi
 
           Press ENTER to continue or Ctrl+C to abort
-      when: ansible_default_ipv4.address != (proxmox_host_ip | default('192.168.1.100')).split('/')[0]
+      when: ansible_facts['default_ipv4'].address != (proxmox_host_ip | default('192.168.1.100')).split('/')[0]
 
   roles:
     - proxmox_host_network

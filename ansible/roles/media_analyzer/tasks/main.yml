@@ -94,7 +94,7 @@
 - name: Add hostname to /etc/hosts for FileBot
   ansible.builtin.lineinfile:
     path: /etc/hosts
-    line: "127.0.0.1 {{ ansible_hostname }}"
+    line: "127.0.0.1 {{ ansible_facts['hostname'] }}"
     state: present
   when: media_analyzer_install_filebot | bool
 
