@@ -1,0 +1,8 @@
+---
+# Handlers for network configuration changes
+
+- name: reload network interfaces
+  command: ifreload -a
+  async: 1
+  poll: 0
+  ignore_errors: yes

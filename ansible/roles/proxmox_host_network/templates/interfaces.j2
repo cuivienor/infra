@@ -1,0 +1,30 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+auto lo
+iface lo inet loopback
+
+# Physical interface (bridged)
+iface {{ proxmox_physical_interface }} inet manual
+
+# Bridge interface (Proxmox VMs/Containers)
+auto {{ proxmox_bridge_name }}
+iface {{ proxmox_bridge_name }} inet static
+	address {{ proxmox_host_ip }}/{{ proxmox_host_netmask }}
+	gateway {{ proxmox_host_gateway }}
+	bridge-ports {{ proxmox_physical_interface }}
+	bridge-stp {{ proxmox_bridge_stp }}
+	bridge-fd {{ proxmox_bridge_fd }}
+{% if proxmox_host_dns_servers is defined and proxmox_host_dns_servers | length > 0 %}
+	dns-nameservers {{ proxmox_host_dns_servers | join(' ') }}
+{% endif %}
+
+{% if proxmox_additional_interfaces is defined %}
+# Additional interfaces
+{% for iface in proxmox_additional_interfaces %}
+iface {{ iface.name }} inet {{ iface.method }}
+{% endfor %}
+{% endif %}
+
+source /etc/network/interfaces.d/*
