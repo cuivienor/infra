@@ -597,9 +597,8 @@ resource "proxmox_lxc" "ct307_proxy" {
 
 ## Related Documentation
 
-- [Current State](../reference/current-state.md)
-- [Homelab IaC Strategy](../reference/homelab-iac-strategy.md)
-- [Container README](../containers/README.md)
+- [Current State](../../reference/current-state.md)
+- [Homelab IaC Strategy](../../reference/current-state.md)
 
 ---
 
