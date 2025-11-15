@@ -1,0 +1,197 @@
+---
+# Raspberry Pi Base Setup
+# 
+# This playbook configures a FRESH Raspberry Pi with standard settings.
+# Use this when:
+# - Setting up a brand new Pi
+# - After fresh OS installation
+# - After running migrate-raspberry-pis.sh
+#
+# Prerequisites:
+# - Fresh Raspberry Pi OS (Debian 12 preferred)
+# - User 'cuiv' exists with sudo access
+# - SSH key already deployed
+#
+# Run with: ansible-playbook raspberry-pi-setup.yml
+
+- name: Configure Raspberry Pi Base System
+  hosts: raspberry_pis
+  become: yes
+  gather_facts: yes
+
+  vars:
+    # Standard user configuration
+    standard_user: cuiv
+    
+    # Essential packages
+    base_packages:
+      - vim
+      - git
+      - curl
+      - wget
+      - htop
+      - tmux
+      - net-tools
+      - dnsutils
+      - rsync
+      - sudo
+      - openssh-server
+      - python3
+      - python3-pip
+    
+    # Timezone
+    system_timezone: America/Los_Angeles  # Adjust as needed
+
+  tasks:
+    # === System Information ===
+    
+    - name: Display Pi information
+      debug:
+        msg: |
+          Configuring: {{ inventory_hostname }}
+          Model: {{ pi_model }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_release }}
+          User: {{ ansible_user }}
+          IP: {{ ansible_default_ipv4.address }}
+
+    # === System Updates ===
+    
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: full
+        autoremove: yes
+        autoclean: yes
+      register: upgrade_result
+      changed_when: upgrade_result.changed
+
+    # === Essential Packages ===
+    
+    - name: Install base packages
+      apt:
+        name: "{{ base_packages }}"
+        state: present
+
+    # === User Configuration ===
+    
+    - name: Ensure cuiv user exists
+      user:
+        name: "{{ standard_user }}"
+        shell: /bin/bash
+        create_home: yes
+        groups: sudo
+        append: yes
+
+    - name: Ensure cuiv has passwordless sudo
+      lineinfile:
+        path: /etc/sudoers.d/cuiv
+        line: 'cuiv ALL=(ALL) NOPASSWD: ALL'
+        create: yes
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
+    - name: Deploy SSH key for cuiv
+      authorized_key:
+        user: "{{ standard_user }}"
+        state: present
+        key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_ed25519.pub') }}"
+
+    # === System Configuration ===
+    
+    - name: Set timezone
+      community.general.timezone:
+        name: "{{ system_timezone }}"
+
+    - name: Set hostname
+      hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Update /etc/hosts with hostname
+      lineinfile:
+        path: /etc/hosts
+        regexp: '^127\.0\.1\.1'
+        line: "127.0.1.1       {{ inventory_hostname }}"
+
+    # === Disable WiFi/Bluetooth ===
+    
+    - name: Check if config.txt exists
+      stat:
+        path: /boot/firmware/config.txt
+      register: config_txt
+
+    - name: Disable WiFi and Bluetooth
+      blockinfile:
+        path: /boot/firmware/config.txt
+        block: |
+          # Disable WiFi and Bluetooth (Ethernet only)
+          dtoverlay=disable-wifi
+          dtoverlay=disable-bt
+        marker: "# {mark} ANSIBLE MANAGED - DISABLE WIRELESS"
+      when: config_txt.stat.exists
+      notify: reboot required
+
+    - name: Disable WiFi services
+      systemd:
+        name: "{{ item }}"
+        enabled: no
+        state: stopped
+      loop:
+        - wpa_supplicant
+      failed_when: false
+
+    # === SSH Configuration ===
+    
+    - name: Harden SSH configuration
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+        - { regexp: '^#?PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
+      notify: restart ssh
+
+    # === Cleanup ===
+    
+    - name: Remove unnecessary packages
+      apt:
+        autoremove: yes
+        autoclean: yes
+        purge: yes
+
+    - name: Clean old journal logs
+      shell: journalctl --vacuum-time=7d
+      changed_when: false
+
+    # === Verification ===
+    
+    - name: Verify cuiv user
+      command: id cuiv
+      register: user_check
+      changed_when: false
+
+    - name: Display setup summary
+      debug:
+        msg: |
+          ✅ {{ inventory_hostname }} configuration complete
+          
+          User: {{ standard_user }}
+          SSH: Key-based authentication only
+          Sudo: Passwordless for cuiv
+          WiFi: Disabled (Ethernet only)
+          Packages: {{ base_packages | length }} essential packages installed
+
+  handlers:
+    - name: restart ssh
+      systemd:
+        name: ssh
+        state: restarted
+
+    - name: reboot required
+      debug:
+        msg: "Reboot required for wireless disable to take effect"
