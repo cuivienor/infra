@@ -258,22 +258,62 @@ lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
 
 ## User Configuration
 
-### Media User (Standardized)
+### User Strategy
 
-**On Host**:
+**Principle**: Consistent user across all physical hosts, separate service user for media file ownership.
+
+| Host Type | SSH User | Groups | Purpose |
+|-----------|----------|--------|---------|
+| Physical hosts (Proxmox, Pis) | `cuiv` | sudo, media* | Your interactive user |
+| LXC Containers | `root` | - | Ansible configuration |
+
+*media group only on hosts with media storage access
+
+### Admin User (cuiv)
+
+**On Physical Hosts** (Proxmox, pi3, pi4):
+- **Username**: `cuiv`
+- **Shell**: `/bin/bash`
+- **Groups**: `sudo` (+ `media` on Proxmox)
+- **SSH Key**: Deployed via Ansible
+- **Sudo**: Passwordless (`NOPASSWD: ALL`)
+
+**Usage**:
+```bash
+# SSH to any physical host
+ssh cuiv@192.168.1.100  # Proxmox (homelab)
+ssh cuiv@192.168.1.101  # pi3
+ssh cuiv@192.168.1.102  # pi4
+
+# Run commands with sudo
+sudo systemctl status ...
+
+# Work with media files on Proxmox
+sudo -u media ffmpeg ...  # New files owned by media:media
+```
+
+### Media User (Service Account)
+
+**On Proxmox Host**:
 - **Username**: `media`
 - **UID**: 1000
 - **GID**: 1000
 - **Groups**: `media`, `cdrom`, `video`, `render`
+- **Purpose**: File ownership for media storage
 
-**In Containers**:
-All containers use `media` user with UID/GID 1000 for consistent file ownership.
+**In LXC Containers**:
+All containers use `media` user with UID/GID 1000 for consistent file ownership across bind mounts.
 
 | Container | Additional Groups |
 |-----------|-------------------|
 | CT302 (ripper) | `cdrom` |
 | CT304 (transcoder) | `video`, `render` |
 | CT305 (jellyfin) | `video`, `render` |
+
+**Why Two Users?**
+- `cuiv` = You, for interactive work and audit trail
+- `media` = Service account for file ownership consistency
+- Running `sudo -u media command` ensures new files have correct ownership
 
 ---
 
@@ -416,33 +456,33 @@ pct exec 302 -- makemkvcon info disc:0
 
 ```bash
 # List containers
-ssh root@homelab "pct list"
+ssh cuiv@homelab "sudo pct list"
 
 # Enter container
-ssh root@homelab "pct enter <CTID>"
+ssh cuiv@homelab "sudo pct enter <CTID>"
 
 # Start/stop container
-ssh root@homelab "pct start <CTID>"
-ssh root@homelab "pct stop <CTID>"
+ssh cuiv@homelab "sudo pct start <CTID>"
+ssh cuiv@homelab "sudo pct stop <CTID>"
 
 # View container config
-ssh root@homelab "cat /etc/pve/lxc/<CTID>.conf"
+ssh cuiv@homelab "sudo cat /etc/pve/lxc/<CTID>.conf"
 ```
 
 ### Verification
 
 ```bash
 # Check storage
-ssh root@homelab "df -h /mnt/storage"
+ssh cuiv@homelab "df -h /mnt/storage"
 
 # Check GPU in transcoder
-ssh root@homelab "pct exec 304 -- vainfo --display drm --device /dev/dri/renderD128"
+ssh cuiv@homelab "sudo pct exec 304 -- vainfo --display drm --device /dev/dri/renderD128"
 
 # Check optical drive in ripper
-ssh root@homelab "pct exec 302 -- ls -la /dev/sr0 /dev/sg4"
+ssh cuiv@homelab "sudo pct exec 302 -- ls -la /dev/sr0 /dev/sg4"
 
 # Check Jellyfin GPU
-ssh root@homelab "pct exec 305 -- vainfo --display drm --device /dev/dri/renderD128"
+ssh cuiv@homelab "sudo pct exec 305 -- vainfo --display drm --device /dev/dri/renderD128"
 ```
 
 ### Infrastructure as Code

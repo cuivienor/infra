@@ -1,0 +1,26 @@
+---
+# Global variables for all hosts
+
+# Timezone (Eastern US)
+timezone: "America/New_York"
+
+# Locale
+locale: "en_US.UTF-8"
+
+# SSH hardening defaults
+sshd_password_authentication: "no"
+sshd_permit_root_login: "prohibit-password"
+sshd_pubkey_authentication: "yes"
+
+# Common packages for all Debian-based systems
+common_packages:
+  - vim
+  - htop
+  - curl
+  - wget
+  - git
+  - ca-certificates
+  - gnupg
+  - sudo
+  - rsync
+  - tmux

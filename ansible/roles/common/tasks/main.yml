@@ -1,13 +1,9 @@
 ---
 # Main tasks for common role
 
-- name: Import SSH keys tasks
-  ansible.builtin.import_tasks: ssh-keys.yml
-  tags: ['ssh-keys', 'ssh']
-
 - name: Import system configuration tasks
   ansible.builtin.import_tasks: system.yml
-  tags: ['system']
+  tags: ['system', 'hostname', 'locale', 'timezone']
 
 - name: Import package management tasks
   ansible.builtin.import_tasks: packages.yml
@@ -15,5 +11,20 @@
 
 - name: Import media user tasks
   ansible.builtin.import_tasks: media-user.yml
-  tags: ['media-user']
+  tags: ['media-user', 'users']
   when: media_user_enabled | bool
+
+- name: Import admin user tasks
+  ansible.builtin.import_tasks: admin-user.yml
+  tags: ['admin-user', 'users']
+  when: admin_user is defined
+
+- name: Import SSH keys tasks
+  ansible.builtin.import_tasks: ssh-keys.yml
+  tags: ['ssh-keys', 'ssh']
+
+# SSH hardening disabled for now - don't want to risk lockout
+# TODO: Enable once backup key strategy is in place
+# - name: Import SSHD hardening tasks
+#   ansible.builtin.import_tasks: sshd.yml
+#   tags: ['sshd', 'ssh', 'security']

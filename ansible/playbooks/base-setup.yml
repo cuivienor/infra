@@ -1,0 +1,19 @@
+---
+# Base setup playbook for all physical hosts
+# Applies consistent configuration for hostnames, locales, SSH, etc.
+
+- name: Configure Raspberry Pis
+  hosts: raspberry_pis
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+  tags: ['raspberry_pis', 'pis']
+
+- name: Configure Proxmox host
+  hosts: proxmox_host
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+  tags: ['proxmox']

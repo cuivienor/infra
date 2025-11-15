@@ -1,0 +1,17 @@
+# dhcpcd.conf - managed by Ansible
+# Static IP configuration for {{ inventory_hostname }}
+
+hostname
+clientid
+persistent
+option rapid_commit
+option domain_name_servers, domain_name, domain_search, host_name
+option classless_static_routes
+option interface_mtu
+require dhcp_server_identifier
+slaac private
+
+interface eth0
+    static ip_address={{ static_ip }}/24
+    static routers={{ gateway }}
+    static domain_name_servers={{ dns_servers }}

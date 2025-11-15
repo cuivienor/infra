@@ -1,0 +1,22 @@
+---
+# Variables specific to Raspberry Pi hosts
+
+# Admin user config - cuiv already exists, just ensure groups
+admin_user: "cuiv"
+admin_user_groups:
+  - sudo
+
+# SSH keys - deploy to cuiv user (not root)
+ssh_authorized_keys_users:
+  - cuiv
+
+# Sudo configuration - cuiv needs passwordless sudo
+configure_sudo: true
+sudo_users:
+  - cuiv
+
+# Pis don't need media user (no media storage access)
+media_user_enabled: false
+
+# Root login - since we use cuiv user, can be more restrictive
+sshd_permit_root_login: "no"
