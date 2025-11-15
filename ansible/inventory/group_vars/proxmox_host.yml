@@ -1,0 +1,25 @@
+---
+# Variables specific to Proxmox host
+
+# Create cuiv user for consistent access
+admin_user: "cuiv"
+admin_user_groups:
+  - sudo
+  - media
+
+# SSH keys - deploy to cuiv user (transitioning from root)
+ssh_authorized_keys_users:
+  - root  # Keep root access during transition
+  - cuiv
+
+# Sudo configuration
+configure_sudo: true
+sudo_users:
+  - cuiv
+
+# Don't change Proxmox hostname or /etc/hosts (managed by Proxmox)
+configure_hostname: false
+configure_hosts_file: false
+
+# No media user creation needed (already exists on Proxmox)
+media_user_enabled: false

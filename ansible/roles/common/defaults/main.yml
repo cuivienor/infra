@@ -6,12 +6,21 @@ ssh_keys_directory: "{{ playbook_dir }}/../files/ssh-keys"
 ssh_authorized_keys_users:
   - root  # Default: deploy keys to root user
 
+# SSH hardening
+sshd_password_authentication: "no"
+sshd_permit_root_login: "prohibit-password"  # Allow root with key only
+sshd_pubkey_authentication: "yes"
+
 # Timezone configuration
 timezone: "America/New_York"
 
 # Locale configuration
-# C.UTF-8 is always available without installing locales package
-locale: "C.UTF-8"
+locale: "en_US.UTF-8"
+
+# Hostname configuration (uses inventory_hostname by default)
+# Override with host_vars if needed
+configure_hostname: true
+configure_hosts_file: true
 
 # Basic packages to install on all systems
 common_packages:
@@ -22,6 +31,11 @@ common_packages:
   - git
   - ca-certificates
   - gnupg
+  - sudo
+
+# Sudo configuration
+configure_sudo: true
+sudo_users: []  # Users to grant passwordless sudo (set per host/group)
 
 # Media user configuration (for media pipeline containers)
 media_user_enabled: false
