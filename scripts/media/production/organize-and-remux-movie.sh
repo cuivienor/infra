@@ -1,6 +1,5 @@
 #!/bin/bash
 # organize-and-remux-movie.sh - Process movies from 1-ripped to 2-remuxed
-# shellcheck disable=SC2155,SC2034
 #
 # Usage: ./organize-and-remux-movie.sh /path/to/1-ripped/movies/Movie_Name_2024-11-10/
 #
@@ -13,7 +12,6 @@
 set -e
 
 INPUT_DIR="$1"
-LANGUAGES="eng,bul"  # English and Bulgarian only
 
 if [ -z "$INPUT_DIR" ]; then
     echo "Usage: $0 /path/to/1-ripped/movies/Movie_Name_2024-11-10/"
@@ -63,9 +61,11 @@ echo ""
 # Function to get duration in minutes
 get_duration() {
     local file="$1"
-    local json=$(mkvmerge -J "$file" 2>/dev/null)
+    local json
+    local duration_ns
+    json=$(mkvmerge -J "$file" 2>/dev/null)
     if [ $? -eq 0 ] && [ -n "$json" ]; then
-        local duration_ns=$(echo "$json" | jq -r '.container.properties.duration // 0')
+        duration_ns=$(echo "$json" | jq -r '.container.properties.duration // 0')
         echo $((duration_ns / 1000000000 / 60))
     else
         echo "0"
@@ -75,7 +75,8 @@ get_duration() {
 # Function to get size in GB
 get_size_gb() {
     local file="$1"
-    local size_bytes=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null || echo "0")
+    local size_bytes
+    size_bytes=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null || echo "0")
     echo "scale=2; $size_bytes/1024/1024/1024" | bc
 }
 
@@ -84,27 +85,33 @@ remux_filter_tracks() {
     local input_file="$1"
     local output_file="$2"
     local temp_file="${output_file%.*}_temp.mkv"
+    local json_data
+    local audio_tracks
+    local subtitle_tracks
+    local cmd
+    local orig_size
+    local new_size
 
     # Get JSON data
-    local json_data=$(mkvmerge -J "$input_file" 2>/dev/null)
+    json_data=$(mkvmerge -J "$input_file" 2>/dev/null)
     if [ $? -ne 0 ] || [ -z "$json_data" ]; then
         echo "  ✗ Error: Could not read file with mkvmerge"
         return 1
     fi
 
     # Get all track IDs for English and Bulgarian
-    local audio_tracks=$(echo "$json_data" | jq -r '
+    audio_tracks=$(echo "$json_data" | jq -r '
         [.tracks[] |
          select(.type == "audio" and (.properties.language == "eng" or .properties.language == "bul")) |
          .id] | join(",")')
 
-    local subtitle_tracks=$(echo "$json_data" | jq -r '
+    subtitle_tracks=$(echo "$json_data" | jq -r '
         [.tracks[] |
          select(.type == "subtitles" and (.properties.language == "eng" or .properties.language == "bul")) |
          .id] | join(",")')
 
     # Build mkvmerge command
-    local cmd="mkvmerge -o \"$temp_file\""
+    cmd="mkvmerge -o \"$temp_file\""
 
     # Add audio tracks
     if [ -n "$audio_tracks" ] && [ "$audio_tracks" != "" ]; then
@@ -127,8 +134,8 @@ remux_filter_tracks() {
 
     if [ $? -eq 0 ] && [ -f "$temp_file" ]; then
         # Get sizes
-        local orig_size=$(stat -c%s "$input_file" 2>/dev/null || stat -f%z "$input_file" 2>/dev/null || echo "0")
-        local new_size=$(stat -c%s "$temp_file" 2>/dev/null || stat -f%z "$temp_file" 2>/dev/null || echo "0")
+        orig_size=$(stat -c%s "$input_file" 2>/dev/null || stat -f%z "$input_file" 2>/dev/null || echo "0")
+        new_size=$(stat -c%s "$temp_file" 2>/dev/null || stat -f%z "$temp_file" 2>/dev/null || echo "0")
 
         if [ "$orig_size" -gt 0 ] && [ "$new_size" -gt 0 ]; then
             local saved=$((orig_size - new_size))
