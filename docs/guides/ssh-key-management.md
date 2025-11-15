@@ -230,7 +230,7 @@ ansible-playbook playbooks/site.yml --tags ssh-keys
 locals {
   # Automatically finds all .pub files
   ssh_key_files = fileset("${path.module}/../ansible/files/ssh-keys", "*.pub")
-  
+
   # Reads content of each file
   ssh_public_keys = [
     for f in local.ssh_key_files :

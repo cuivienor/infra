@@ -62,10 +62,10 @@ provider "unifi" {
   username = "cuiv"
   password = var.unifi_password
   api_url  = "https://192.168.1.7:8443"
-  
+
   # Allow insecure since you're on local network
   allow_insecure = true
-  
+
   # Important for Cloud Key Gen1 (resource constrained)
   # Add delays between API calls
 }
@@ -95,12 +95,12 @@ resource "unifi_network" "iot" {
   purpose = "corporate"
   subnet  = "192.168.20.1/24"
   vlan_id = 20
-  
+
   dhcp_enabled = true
   dhcp_start   = "192.168.20.6"
   dhcp_stop    = "192.168.20.254"
   dhcp_lease   = 86400
-  
+
   domain_name = "lan"
 }
 EOF
@@ -123,11 +123,11 @@ resource "unifi_network" "test" {
   purpose = "corporate"
   subnet  = "192.168.99.1/24"
   vlan_id = 99
-  
+
   dhcp_enabled = true
   dhcp_start   = "192.168.99.10"
   dhcp_stop    = "192.168.99.254"
-  
+
   # Test on Private interface
   site = "default"
 }
@@ -177,14 +177,14 @@ resource "unifi_network" "private" {
   name    = "Private"
   purpose = "corporate"
   subnet  = "192.168.1.1/24"
-  
+
   dhcp_enabled = true
   dhcp_start   = "192.168.1.6"
   dhcp_stop    = "192.168.1.254"
   dhcp_lease   = 86400
-  
+
   domain_name = "lan"
-  
+
   # DNS: USG itself
   dhcp_dns = ["192.168.1.1"]
 }
@@ -195,12 +195,12 @@ resource "unifi_network" "iot" {
   purpose = "corporate"
   subnet  = "192.168.20.1/24"
   vlan_id = 20
-  
+
   dhcp_enabled = true
   dhcp_start   = "192.168.20.6"
   dhcp_stop    = "192.168.20.254"
   dhcp_lease   = 86400
-  
+
   dhcp_dns = ["192.168.20.1"]
 }
 
@@ -210,11 +210,11 @@ resource "unifi_network" "guest" {
   purpose = "guest"  # Note: guest isolation
   subnet  = "192.168.10.1/24"
   vlan_id = 10
-  
+
   dhcp_enabled = true
   dhcp_start   = "192.168.10.10"
   dhcp_stop    = "192.168.10.254"
-  
+
   # Guest network isolation
   igmp_snooping = true
 }
@@ -237,13 +237,13 @@ resource "unifi_wlan" "main" {
   name       = "Paniland"
   security   = "wpapsk"
   passphrase = var.wifi_main_password
-  
+
   network_id = unifi_network.private.id
-  
+
   wpa3_support       = false  # U6-Lite supports this
   wpa3_transition    = false
   pmf_mode          = "optional"
-  
+
   user_group_id = unifi_user_group.default.id
 }
 
@@ -252,12 +252,12 @@ resource "unifi_wlan" "main_24" {
   name       = "Paniland-2.4"
   security   = "wpapsk"
   passphrase = var.wifi_main_password
-  
+
   network_id = unifi_network.private.id
-  
+
   # Force 2.4GHz only
   # (Check if supported on Controller 7.2.97)
-  
+
   user_group_id = unifi_user_group.default.id
 }
 
@@ -266,10 +266,10 @@ resource "unifi_wlan" "iot" {
   name       = "Paniland-IoT"
   security   = "wpapsk"
   passphrase = var.wifi_iot_password
-  
+
   # FIX: This should be VLAN 20, not default!
   network_id = unifi_network.iot.id  # Changed from default
-  
+
   user_group_id = unifi_user_group.default.id
 }
 
@@ -277,10 +277,10 @@ resource "unifi_wlan" "iot" {
 resource "unifi_wlan" "guest" {
   name       = "Paniland-Guest"
   security   = "open"  # Open network
-  
+
   # FIX: This should be VLAN 10
   network_id = unifi_network.guest.id  # Changed from default
-  
+
   # Guest isolation
   is_guest          = true
   user_group_id     = unifi_user_group.guest.id
@@ -289,7 +289,7 @@ resource "unifi_wlan" "guest" {
 # User groups
 resource "unifi_user_group" "default" {
   name = "Default"
-  
+
   # Apply to all VLANs
   qos_rate_max_down = -1  # Unlimited
   qos_rate_max_up   = -1
@@ -297,7 +297,7 @@ resource "unifi_user_group" "default" {
 
 resource "unifi_user_group" "guest" {
   name = "Guest"
-  
+
   # Limit guest bandwidth
   qos_rate_max_down = 50000   # 50 Mbps
   qos_rate_max_up   = 10000   # 10 Mbps
@@ -345,7 +345,7 @@ terraform plan
 # Should show:
 # unifi_wlan.iot will be updated in-place
 #   ~ network_id = "xxxxx" -> "60b61fd5e9dc300487d92a0a" (IoT VLAN 20)
-# 
+#
 # unifi_wlan.guest will be updated in-place
 #   ~ network_id = "xxxxx" -> "62407436e9dc306717e3e48b" (Guest VLAN 10)
 ```
@@ -468,18 +468,18 @@ cat > ansible/playbooks/deploy-usg-config.yml << 'EOF'
 - name: Deploy config.gateway.json to USG
   hosts: localhost
   gather_facts: no
-  
+
   vars:
     usg_ip: 192.168.1.1
     usg_user: cuiv
     usg_password: "0bi4amAni"
     config_file: "../files/usg/config.gateway.json"
-  
+
   tasks:
     - name: Validate config.gateway.json syntax
       command: jq empty {{ config_file }}
       changed_when: false
-    
+
     - name: Backup current config from USG
       shell: |
         sshpass -p '{{ usg_password }}' ssh -o StrictHostKeyChecking=no \
@@ -487,13 +487,13 @@ cat > ansible/playbooks/deploy-usg-config.yml << 'EOF'
           'cat /usr/lib/unifi/data/sites/default/config.gateway.json' \
           > /tmp/config.gateway.json.backup.$(date +%Y%m%d-%H%M%S)
       ignore_errors: yes
-    
+
     - name: Copy config.gateway.json to Controller
       shell: |
         sshpass -p '{{ usg_password }}' scp -o StrictHostKeyChecking=no \
           {{ config_file }} \
           {{ usg_user }}@192.168.1.7:/usr/lib/unifi/data/sites/default/config.gateway.json
-    
+
     - name: Force provision USG
       uri:
         url: https://192.168.1.7:8443/api/s/default/cmd/devmgr
@@ -505,11 +505,11 @@ cat > ansible/playbooks/deploy-usg-config.yml << 'EOF'
         headers:
           Cookie: "{{ lookup('file', '/tmp/unifi-cookie.txt') }}"
         validate_certs: no
-      
+
     - name: Wait for USG to reprovision
       pause:
         seconds: 30
-    
+
     - name: Verify config applied
       shell: |
         sshpass -p '{{ usg_password }}' ssh -o StrictHostKeyChecking=no \

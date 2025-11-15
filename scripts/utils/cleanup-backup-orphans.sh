@@ -31,15 +31,15 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo ""
     echo "Running prune (this may take a while)..."
     ssh root@${CONTAINER_IP} "source /etc/restic/data.env && restic prune --verbose"
-    
+
     echo ""
     echo "Checking repository after prune..."
     ssh root@${CONTAINER_IP} "source /etc/restic/data.env && restic check"
-    
+
     echo ""
     echo "Final stats:"
     ssh root@${CONTAINER_IP} "source /etc/restic/data.env && restic stats"
-    
+
     echo ""
     echo "✅ Cleanup complete!"
     echo ""

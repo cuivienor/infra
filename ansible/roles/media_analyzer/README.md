@@ -60,10 +60,10 @@ None. However, typically used with:
 ```yaml
 - hosts: analyzer_containers
   become: yes
-  
+
   vars:
     media_analyzer_install_filebot: true  # Enable FileBot installation
-  
+
   roles:
     - role: common
     - role: media_analyzer

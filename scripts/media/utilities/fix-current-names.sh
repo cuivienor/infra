@@ -42,17 +42,17 @@ COSMOS_DIR="$STAGING_BASE/1-ripped/tv/Cosmos_A_Spacetime_Odyssey"
 
 if [ -d "$COSMOS_DIR" ]; then
     echo "1. Fixing Cosmos filenames..."
-    
+
     # Process each disc folder
     for disc_folder in "$COSMOS_DIR"/S01_Disc*; do
         if [ -d "$disc_folder" ]; then
             # Extract disc number from folder name (S01_Disc1_2024-11-10 → 1)
             disc_num=$(basename "$disc_folder" | grep -oP 'Disc\K[0-9]+')
-            
+
             echo "  → Disc ${disc_num}: $(basename "$disc_folder")"
-            
+
             cd "$disc_folder"
-            
+
             # Rename files to include disc identifier
             for file in *.mkv; do
                 if [ -f "$file" ]; then
@@ -64,7 +64,7 @@ if [ -d "$COSMOS_DIR" ]; then
                         if [[ "$file" =~ _t([0-9]+)\.mkv ]] || [[ "$file" =~ t([0-9]+)\.mkv ]]; then
                             track_num="${BASH_REMATCH[1]}"
                             new_name="Cosmos_A_Spacetime_Odyssey_Disc${disc_num}_t${track_num}.mkv"
-                            
+
                             if [ "$file" != "$new_name" ]; then
                                 mv "$file" "$new_name"
                                 echo "    ✓ $file → $new_name"
@@ -73,11 +73,11 @@ if [ -d "$COSMOS_DIR" ]; then
                     fi
                 fi
             done
-            
+
             cd - > /dev/null
         fi
     done
-    
+
     echo ""
 else
     echo "1. Cosmos folder not found at: $COSMOS_DIR"
@@ -92,17 +92,17 @@ AVATAR_DIR="$STAGING_BASE/1-ripped/tv/Avatar_The_Last_Airbender"
 
 if [ -d "$AVATAR_DIR" ]; then
     echo "2. Fixing Avatar filenames..."
-    
+
     # Process each disc folder
     for disc_folder in "$AVATAR_DIR"/S01_Disc*; do
         if [ -d "$disc_folder" ]; then
             # Extract disc number from folder name (S01_Disc1_2024-11-10 → 1)
             disc_num=$(basename "$disc_folder" | grep -oP 'Disc\K[0-9]+')
-            
+
             echo "  → Disc ${disc_num}: $(basename "$disc_folder")"
-            
+
             cd "$disc_folder"
-            
+
             # Rename files to include disc identifier
             for file in *.mkv; do
                 if [ -f "$file" ]; then
@@ -112,7 +112,7 @@ if [ -d "$AVATAR_DIR" ]; then
                     else
                         # Extract track number from various formats
                         track_num=""
-                        
+
                         # Format: Avatar_The_Last_Airbender_t00.mkv
                         if [[ "$file" =~ Avatar_The_Last_Airbender_t([0-9]+)\.mkv ]]; then
                             track_num="${BASH_REMATCH[1]}"
@@ -125,10 +125,10 @@ if [ -d "$AVATAR_DIR" ]; then
                         elif [[ "$file" =~ _t([0-9]+)\.mkv ]] || [[ "$file" =~ t([0-9]+)\.mkv ]]; then
                             track_num="${BASH_REMATCH[1]}"
                         fi
-                        
+
                         if [ -n "$track_num" ]; then
                             new_name="Avatar_The_Last_Airbender_Disc${disc_num}_t${track_num}.mkv"
-                            
+
                             if [ "$file" != "$new_name" ]; then
                                 mv "$file" "$new_name"
                                 echo "    ✓ $file → $new_name"
@@ -139,11 +139,11 @@ if [ -d "$AVATAR_DIR" ]; then
                     fi
                 fi
             done
-            
+
             cd - > /dev/null
         fi
     done
-    
+
     echo ""
 else
     echo "2. Avatar folder not found at: $AVATAR_DIR"

@@ -87,7 +87,7 @@
 - **Usage**: 4.1T / 35T (13%)
 - **Distribution**: ✅ Balanced (updated 2025-11-11)
 - **Policy**: `eppfrd` (automatic distribution to emptier disks)
-- **Disks**: 
+- **Disks**:
   - disk1: 48% (4.1T/9.1T) - Legacy data (new files avoid)
   - disk2: 1% (470M/9.1T) - Active (receiving new files)
   - disk3: 1% (24G/17T) - Active (receiving new files)

@@ -30,7 +30,7 @@ These scripts are actively used in the media pipeline workflow.
   ```bash
   # Movie
   ./rip-disc.sh movie "Movie Name"
-  
+
   # TV Show
   ./rip-disc.sh show "Show Name" "S01 Disc1"
   ```
@@ -78,10 +78,10 @@ These scripts are actively used in the media pipeline workflow.
   ```bash
   # Basic usage
   ./organize-and-remux-tv.sh "Show Name" 01
-  
+
   # Start at specific episode (e.g., E05)
   ./organize-and-remux-tv.sh "Show Name" 01 5
-  
+
   # Run in background with logging
   ~/scripts/run-bg.sh ~/scripts/organize-and-remux-tv.sh "Show Name" 01
   ```
@@ -108,14 +108,14 @@ These scripts are actively used in the media pipeline workflow.
   ```bash
   # Full path (works anywhere)
   ./transcode-queue.sh /mnt/staging/2-remuxed/tv/Show/Season_01 20 software
-  
+
   # Relative path (requires STAGING_BASE env var)
   export STAGING_BASE=/mnt/staging
   ./transcode-queue.sh 2-remuxed/movies/Movie 20 software
-  
+
   # Hardware encoding (Intel Arc GPU)
   ./transcode-queue.sh /mnt/staging/2-remuxed/movies/Movie 20 hardware
-  
+
   # Run in background with auto-confirm
   ~/scripts/run-bg.sh ~/scripts/transcode-queue.sh \
     /mnt/staging/2-remuxed/tv/Show/Season_01 20 hardware --auto
@@ -172,7 +172,7 @@ Helper and configuration scripts for one-time or occasional use.
   # Run any script in background
   ~/scripts/run-bg.sh ~/scripts/rip-disc.sh show "Show Name" "S01 Disc1"
   ~/scripts/run-bg.sh ~/scripts/organize-and-remux-tv.sh "Show Name" 01
-  
+
   # Monitor progress
   tail -f ~/logs/<script-name>_<timestamp>.log
   ```

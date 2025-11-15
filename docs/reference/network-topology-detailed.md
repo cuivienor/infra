@@ -8,7 +8,7 @@
 
 Your "Paniland" home network is a well-structured UniFi ecosystem with:
 - **1 USG (Security Gateway)** providing routing and firewall
-- **4 UniFi Switches** (1x USL16LP, 3x USMINI) 
+- **4 UniFi Switches** (1x USL16LP, 3x USMINI)
 - **2 Access Points** (UAL6 models)
 - **4 Wireless Networks** (Main, IoT, Guest, 2.4GHz)
 - **3 VLANs** (Private, IoT VLAN 20, Guest VLAN 10)
@@ -265,7 +265,7 @@ Your "Paniland" home network is a well-structured UniFi ecosystem with:
 
 3. **IPS Block on Homelab Server**
    - **Issue:** Traffic from 192.168.1.56 to 125.105.238.106 is blocked
-   - **Action:** 
+   - **Action:**
      - Check homelab server for compromise
      - Review IPS/IDS logs
      - Determine if 125.105.238.106 is malicious

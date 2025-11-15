@@ -133,7 +133,7 @@ mkdir -p "$STAGING_BASE/1-ripped/tv/Cosmos_A_Spacetime_Odyssey"
 for disc in 1 2 3 4; do
     DISC_DIR="$STAGING_BASE/1-ripped/tv/Cosmos_A_Spacetime_Odyssey/S01_Disc${disc}_${DATE_STAMP}"
     mkdir -p "$DISC_DIR"
-    
+
     echo "    → Disc ${disc}"
     # Move files matching this disc pattern
     find "$STAGING_BASE/Cosmos" -name "*Disc ${disc}_t*.mkv" -exec mv {} "$DISC_DIR/" \;

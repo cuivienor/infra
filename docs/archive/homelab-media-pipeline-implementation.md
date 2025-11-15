@@ -714,7 +714,7 @@ Time: 2-3 hours per movie
 
 **Symptoms**: Kernel panic, system reboot, containers stopped
 **Cause**: CPU overload, libx265 segfault
-**Solution**: 
+**Solution**:
 - Implement CPU units for resource control
 - Use lower priority for transcoder (512 units)
 - Consider hardware encoding for stability

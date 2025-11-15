@@ -678,16 +678,16 @@ Create `ansible/playbooks/storage.yml`:
       pause:
         prompt: |
           ⚠️  WARNING: This playbook will configure storage on Proxmox host.
-          
+
           This will:
           - Modify /etc/fstab
           - Install/configure mergerfs
           - Install/configure SnapRAID
           - Mount filesystems
           - Set up automated parity syncs
-          
+
           Existing data will NOT be affected, but configuration will be managed by Ansible.
-          
+
           Type 'yes' to continue
       register: confirm
 

@@ -12,7 +12,7 @@
    - Security risk (no more patches)
    - Limited IaC support (config.gateway.json workarounds)
    - Only 1 Gbps WAN (your ISP might upgrade)
-   
+
 2. **Cloud Key Gen1** - Resource constrained
    - Slow API responses
    - Limited RAM for Terraform operations
@@ -186,12 +186,12 @@ Total: ~$286 + tax
    ```bash
    # UniFi Controller backup
    # Settings → System → Backup → Download
-   
+
    # USG config backup
    sshpass -p '0bi4amAni' ssh cuiv@192.168.1.1 \
      'vbash -ic "show configuration commands"' \
      > backups/usg-config-$(date +%Y%m%d).txt
-   
+
    # Document current state
    cd ~/dev/homelab-notes
    git add -A
@@ -272,7 +272,7 @@ Total: ~$286 + tax
 2. **Connect Cloud Gateway Max to modem**:
    ```
    [Modem] ---- [Cloud Gateway Max WAN port]
-   
+
    [Cloud Gateway Max LAN port] ---- [Main Switch Port ???]
    ```
 

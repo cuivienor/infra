@@ -62,7 +62,7 @@ Your legacy media library has been analyzed for quality suitable for a home thea
 - The Princess Diaries (2001) - 870MB, compressed audio
 - Archer S06E06-07 - Animated, lower priority
 
-**Action**: 
+**Action**:
 - Keep if you value the content and don't plan to purchase physical media
 - Good candidates for replacement if you find 4K/Blu-ray versions on sale
 - Acceptable quality for casual viewing, but not ideal for home theater
@@ -97,7 +97,7 @@ Your legacy media library has been analyzed for quality suitable for a home thea
 6. **Place2Use.net.Intro.mp4** (2 copies) - Junk files
    - Action: Delete immediately
 
-**Action**: 
+**Action**:
 - Delete the junk files (Place2Use intros, Se7en duplicate)
 - Consider purchasing Blu-rays for The Sound of Music and The Parent Trap if you value them
 - Saves ~17GB of space

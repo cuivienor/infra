@@ -427,11 +427,11 @@ ssh root@192.168.1.58 "journalctl -u restic-backup-data.service --since today"
 - [ ] Set up Backrest web UI (http://192.168.1.58:9898)
   - Provides visual interface for browsing/restoring backups
   - Installation: https://github.com/garethgeorge/backrest
-  
+
 - [ ] Test automated restore from snapshot
   - Verify full restore process works
   - Document recovery time objectives (RTO)
-  
+
 - [ ] Set up backup completion notifications
   - Email/webhook on backup success/failure
   - Consider using healthchecks.io or similar
@@ -446,11 +446,11 @@ ssh root@192.168.1.58 "journalctl -u restic-backup-data.service --since today"
   - Prometheus exporter for restic metrics?
   - Alert on backup failures
   - Track backup size trends
-  
+
 - [ ] Optimize backup schedule
   - Consider incremental-only during weekdays
   - Full backup + prune on weekends
-  
+
 - [ ] Add backup verification
   - Randomly restore and verify files
   - Automated integrity testing
@@ -459,11 +459,11 @@ ssh root@192.168.1.58 "journalctl -u restic-backup-data.service --since today"
 - [ ] Multiple backup destinations
   - Add second B2 bucket in different region
   - Consider local backup to NAS
-  
+
 - [ ] Backup other containers' configs
   - Add other containers to backup scope
   - LXC container configs, Docker volumes, etc.
-  
+
 - [ ] Performance optimization
   - Experiment with compression levels
   - Tune upload parallelization
@@ -486,11 +486,11 @@ ssh root@192.168.1.58 "journalctl -u restic-backup-data.service --since today"
   - Terraform: `terraform/ct300-backup.tf`
   - Ansible Playbook: `ansible/playbooks/ct300-backup.yml`
   - Ansible Role: `ansible/roles/restic_backup/`
-  
+
 - **Guides**:
   - [Backup Setup Guide](../guides/backup-setup.md)
   - [CT300 Deployment Guide](../guides/ct300-backup-deployment.md)
-  
+
 - **Reference**:
   - [Backup Quick Reference](../reference/backup-quick-reference.md)
   - [Restic Documentation](https://restic.readthedocs.io/)

@@ -48,15 +48,15 @@ Active planning documents for homelab infrastructure improvements.
 ```
 1. Fix VLAN Isolation (Manual)     [NOW - 20 minutes]
    └─> Test for a few days
-   
+
 2. Order Hardware                   [When budgeted - $310]
    └─> While waiting: backup configs
-   
+
 3. Hardware Upgrade                 [Weekend 1 - 4 hours]
    └─> Migrate to Cloud Gateway Max
    └─> Replace switches (Weekend 2 - 2 hours)
    └─> Test for 1 week
-   
+
 4. Network IaC Implementation       [Ongoing - 4 weeks]
    └─> Phase 1: Terraform testing
    └─> Phase 2: Import existing config

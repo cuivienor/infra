@@ -134,38 +134,38 @@ resource "proxmox_virtual_environment_container" "test" {
   description = "Test container for IaC workflow"
   node_name   = "homelab"
   vm_id       = 199
-  
+
   started     = true
-  
+
   operating_system {
     template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
     type             = "debian"
   }
-  
+
   cpu {
     cores = 2
   }
-  
+
   memory {
     dedicated = 2048
     swap      = 512
   }
-  
+
   disk {
     datastore_id = "local-lvm"
     size         = 8
   }
-  
+
   network_interface {
     name   = "eth0"
     bridge = "vmbr0"
   }
-  
+
   mount_point {
     path   = "/mnt/storage"
     volume = "/mnt/storage"
   }
-  
+
   initialization {
     hostname = "test-iac"
     dns {
@@ -178,7 +178,7 @@ resource "proxmox_virtual_environment_container" "test" {
       }
     }
   }
-  
+
   features {
     nesting = true
   }

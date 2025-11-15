@@ -23,7 +23,7 @@ terraform/
    ```
 
 2. **Proxmox API access**: Ensure you have credentials
-   
+
 3. **Debian 12 template**: Available on Proxmox host
    ```bash
    # On Proxmox host, verify template exists

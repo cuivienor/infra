@@ -112,13 +112,13 @@ mkdir -p "$LOG_DIR"
 # Initialize queue if it doesn't exist
 if [ ! -f "$QUEUE_FILE" ]; then
     echo "Building queue..."
-    
+
     # Find all MKV files including in extras/ subfolders
     # Store as: input_path|output_path
     while IFS= read -r -d '' file; do
         # Calculate relative path from input folder
         rel_path="${file#$FOLDER/}"
-        
+
         # Safety check: if rel_path starts with /, the strip failed (path mismatch)
         if [[ "$rel_path" == /* ]]; then
             echo "ERROR: Path mismatch detected!"
@@ -130,7 +130,7 @@ if [ ! -f "$QUEUE_FILE" ]; then
             rm -f "$QUEUE_FILE"
             exit 1
         fi
-        
+
         # Determine output path
         if [ $NEW_STRUCTURE -eq 1 ]; then
             # New structure: mirror to 3-transcoded
@@ -139,11 +139,11 @@ if [ ! -f "$QUEUE_FILE" ]; then
             # Legacy: add _transcoded suffix
             output_file="${file%.*}_transcoded.mkv"
         fi
-        
+
         # Store mapping
         echo "$file|$output_file" >> "$QUEUE_FILE"
     done < <(find "$FOLDER" -name "*.mkv" ! -name "*_transcoded.mkv" -type f -print0 | sort -z)
-    
+
     total=$(wc -l < "$QUEUE_FILE")
     echo "Added $total file(s) to queue"
     echo ""
@@ -206,45 +206,45 @@ while IFS='|' read -r input_file output_file; do
     if grep -Fxq "$input_file" "$FAILED_FILE" 2>/dev/null; then
         continue
     fi
-    
+
     current=$((current + 1))
     filename=$(basename "$input_file")
-    
+
     # Create output directory if needed (for new structure)
     output_dir=$(dirname "$output_file")
     mkdir -p "$output_dir"
-    
+
     log_file="$LOG_DIR/$(date +%Y%m%d_%H%M%S)_${filename}.log"
-    
+
     echo "=================================================="
     echo "[$current/$remaining] Processing: $filename"
     echo "=================================================="
     echo "Started: $(date)"
     echo "Log: $log_file"
     echo ""
-    
+
     # Start time
     start_time=$(date +%s)
-    
+
     # Build ffmpeg command based on mode
     if [ "$MODE" = "hardware" ]; then
         ffmpeg_cmd="ffmpeg -nostdin -hwaccel qsv -hwaccel_output_format qsv -i \"$input_file\" -c:v hevc_qsv -preset medium -global_quality $CRF -c:a copy -c:s copy -y \"$output_file\""
     else
         ffmpeg_cmd="ffmpeg -nostdin -i \"$input_file\" -map 0:v:0 -map 0:a -map 0:s? -c:v libx265 -preset slow -crf $CRF -c:a copy -c:s copy -y \"$output_file\""
     fi
-    
+
     # Execute in background so we can track PID
     eval $ffmpeg_cmd > "$log_file" 2>&1 &
     CURRENT_FFMPEG_PID=$!
     wait "$CURRENT_FFMPEG_PID"
     exit_code=$?
     CURRENT_FFMPEG_PID=""
-    
+
     # Calculate elapsed time
     end_time=$(date +%s)
     elapsed=$((end_time - start_time))
     elapsed_min=$((elapsed / 60))
-    
+
     if [ $exit_code -eq 0 ] && [ -f "$output_file" ]; then
         # Get sizes
         input_size=$(du -h "$input_file" | cut -f1)
@@ -253,28 +253,28 @@ while IFS='|' read -r input_file output_file; do
         output_bytes=$(stat -c%s "$output_file" 2>/dev/null || stat -f%z "$output_file")
         saved_gb=$(awk "BEGIN {printf \"%.2f\", ($input_bytes - $output_bytes)/1024/1024/1024}")
         percent=$(awk "BEGIN {printf \"%.1f\", 100 - ($output_bytes * 100 / $input_bytes)}")
-        
+
         echo "✓ Success!"
         echo "  Input:  $input_size → Output: $output_size"
         echo "  Saved:  ${saved_gb}GB (${percent}% reduction)"
         echo "  Time:   ${elapsed_min} minutes"
         echo "  Output: $output_file"
         echo ""
-        
+
         # Mark as completed
         echo "$input_file" >> "$COMPLETED_FILE"
     else
         echo "✗ Failed! (exit code: $exit_code)"
         echo "  Check log: $log_file"
         echo ""
-        
+
         # Mark as failed
         echo "$input_file" >> "$FAILED_FILE"
-        
+
         # Clean up partial output
         rm -f "$output_file"
     fi
-    
+
     echo "Finished: $(date)"
     echo ""
 done < "$QUEUE_FILE"

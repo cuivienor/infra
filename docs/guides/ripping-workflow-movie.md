@@ -183,17 +183,17 @@ Some movies span **multiple discs** (e.g., extended editions, director's cuts wi
 3. **Merge the ripped files** into a single directory:
    ```bash
    ssh ct303  # Switch to analyzer container
-   
+
    # List the ripped directories
    ls /mnt/staging/1-ripped/movies/ | grep -i "dragon"
-   
+
    # Create a merged directory
    mkdir -p /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_merged
-   
+
    # Move all MKV files from both discs into merged folder
    mv /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_Disc_1_2024-11-13/*.mkv \
       /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_merged/
-   
+
    mv /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_Disc_2_2024-11-13/*.mkv \
       /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_merged/
    ```
@@ -230,7 +230,7 @@ If you prefer manual control:
    # Example: Move Disc 2 extras to main movie folder
    mv /mnt/library/movies/Movie\ Name\ \(Year\)\ Disc\ 2/* \
       /mnt/library/movies/Movie\ Name\ \(Year\)/extras/
-   
+
    # Delete the Disc 2 movie entry
    rm -rf /mnt/library/movies/Movie\ Name\ \(Year\)\ Disc\ 2
    ```

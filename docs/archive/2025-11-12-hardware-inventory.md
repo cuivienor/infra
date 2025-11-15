@@ -450,7 +450,7 @@ Based on ASRock Z370/OEM motherboard (typical configuration):
 
 ### Potential Upgrades
 
-**Memory**: 
+**Memory**:
 - Add 2x 16GB DDR4 modules → 64GB total
 - Cost: ~$60-80 per 16GB module
 

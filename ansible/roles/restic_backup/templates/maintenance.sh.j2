@@ -20,7 +20,7 @@ echo "========================================="
 run_for_policies() {
     local cmd=$1
     local policies=()
-    
+
     if [ "$POLICY" = "all" ]; then
         {% for policy in backup_policies %}
         {% if policy.enabled | default(false) %}
@@ -30,14 +30,14 @@ run_for_policies() {
     else
         policies=("$POLICY")
     fi
-    
+
     for policy in "${policies[@]}"; do
         echo "----------------------------------------"
         echo "Processing policy: $policy"
         echo "----------------------------------------"
-        
+
         source {{ restic_config_dir }}/${policy}.env
-        
+
         eval "$cmd" || {
             echo "ERROR: Command failed for policy $policy"
             continue
@@ -50,27 +50,27 @@ case "$ACTION" in
         echo "Running repository integrity check..."
         run_for_policies "{{ restic_bin_path }} check --read-data-subset=5%"
         ;;
-        
+
     stats)
         echo "Gathering repository statistics..."
         run_for_policies "{{ restic_bin_path }} stats --mode=restore-size"
         ;;
-        
+
     snapshots)
         echo "Listing snapshots..."
         run_for_policies "{{ restic_bin_path }} snapshots"
         ;;
-        
+
     unlock)
         echo "Unlocking repositories (removes stale locks)..."
         run_for_policies "{{ restic_bin_path }} unlock"
         ;;
-        
+
     prune)
         echo "Pruning old data (manual trigger)..."
         run_for_policies "{{ restic_bin_path }} prune"
         ;;
-        
+
     *)
         echo "Usage: $0 {check|stats|snapshots|unlock|prune} [policy_name|all]"
         echo ""
