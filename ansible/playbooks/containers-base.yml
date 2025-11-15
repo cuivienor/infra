@@ -1,0 +1,28 @@
+---
+# Apply base configuration to all LXC containers
+# This ensures consistent locale, timezone, packages, and SSH keys
+
+- name: Configure all containers with common base settings
+  hosts:
+    - backup_containers
+    - samba_containers
+    - ripper_containers
+    - analyzer_containers
+    - transcoder_containers
+    - jellyfin_containers
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - role: common
+      tags: ['common', 'base']
+
+  post_tasks:
+    - name: Verify container configuration
+      debug:
+        msg: |
+          Container: {{ inventory_hostname }}
+          IP: {{ ansible_default_ipv4.address }}
+          Hostname: {{ ansible_hostname }}
+          Timezone: {{ ansible_date_time.tz }}
+      tags: ['verify']
