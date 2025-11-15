@@ -2,13 +2,13 @@
 # Samba installation and configuration tasks
 
 - name: Update apt cache
-  apt:
-    update_cache: yes
+  ansible.builtin.apt:
+    update_cache: true
     cache_valid_time: 3600
   tags: [samba, install]
 
 - name: Install Samba packages
-  apt:
+  ansible.builtin.apt:
     name:
       - samba
       - samba-common-bin
@@ -17,26 +17,26 @@
   tags: [samba, install]
 
 - name: Ensure media group exists
-  group:
+  ansible.builtin.group:
     name: media
     gid: 1000
     state: present
   tags: [samba, users]
 
 - name: Ensure media user exists
-  user:
+  ansible.builtin.user:
     name: media
     uid: 1000
     group: media
     groups: []
     shell: /bin/bash
-    create_home: yes
+    create_home: true
     home: /home/media
     state: present
   tags: [samba, users]
 
 - name: Ensure /mnt/storage exists and has correct permissions
-  file:
+  ansible.builtin.file:
     path: /mnt/storage
     state: directory
     owner: media
@@ -45,39 +45,39 @@
   tags: [samba, permissions]
 
 - name: Deploy Samba configuration
-  template:
+  ansible.builtin.template:
     src: smb.conf.j2
     dest: /etc/samba/smb.conf
     owner: root
     group: root
     mode: '0644'
     validate: 'testparm -s %s'
-  notify: restart samba
+  notify: Restart samba
   tags: [samba, config]
 
 - name: Check if media user exists in Samba
-  shell: pdbedit -L | grep -q '^media:'
+  ansible.builtin.shell: pdbedit -L | grep -q '^media:'
   register: samba_user_exists
   changed_when: false
   failed_when: false
   tags: [samba, users]
 
 - name: Set Samba password for media user
-  shell: |
+  ansible.builtin.shell: |
     (echo "{{ samba_media_password }}"; echo "{{ samba_media_password }}") | smbpasswd -a -s media
   when: samba_user_exists.rc != 0
   no_log: true  # Don't log password
   tags: [samba, users]
 
 - name: Enable media user in Samba
-  shell: smbpasswd -e media
+  ansible.builtin.shell: smbpasswd -e media
   changed_when: false
   tags: [samba, users]
 
 - name: Ensure Samba services are enabled and started
-  systemd:
+  ansible.builtin.systemd:
     name: "{{ item }}"
-    enabled: yes
+    enabled: true
     state: started
   loop:
     - smbd
@@ -85,7 +85,7 @@
   tags: [samba, service]
 
 - name: Create Samba log directory
-  file:
+  ansible.builtin.file:
     path: /var/log/samba
     state: directory
     owner: root

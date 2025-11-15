@@ -2,7 +2,7 @@
 # Install mergerfs and snapraid packages
 
 - name: Check if mergerfs is installed
-  command: dpkg -l mergerfs
+  ansible.builtin.command: dpkg -l mergerfs
   register: mergerfs_check
   failed_when: false
   changed_when: false
@@ -10,24 +10,24 @@
 - name: Install mergerfs from GitHub releases
   block:
     - name: Download mergerfs .deb
-      get_url:
+      ansible.builtin.get_url:
         url: "https://github.com/trapexit/mergerfs/releases/download/{{ mergerfs_version }}/mergerfs_{{ mergerfs_version }}.debian-bookworm_amd64.deb"
         dest: "/tmp/mergerfs_{{ mergerfs_version }}.deb"
         mode: '0644'
 
     - name: Install mergerfs package
-      apt:
+      ansible.builtin.apt:
         deb: "/tmp/mergerfs_{{ mergerfs_version }}.deb"
         state: present
 
     - name: Clean up downloaded package
-      file:
+      ansible.builtin.file:
         path: "/tmp/mergerfs_{{ mergerfs_version }}.deb"
         state: absent
   when: mergerfs_check.rc != 0
 
 - name: Check if snapraid is installed
-  command: which snapraid
+  ansible.builtin.command: which snapraid
   register: snapraid_check
   failed_when: false
   changed_when: false
@@ -35,44 +35,44 @@
 - name: Install snapraid from GitHub
   block:
     - name: Install build dependencies
-      apt:
+      ansible.builtin.apt:
         name:
           - gcc
           - make
         state: present
 
     - name: Download snapraid source
-      get_url:
+      ansible.builtin.get_url:
         url: "https://github.com/amadvance/snapraid/releases/download/v{{ snapraid_version }}/snapraid-{{ snapraid_version }}.tar.gz"
         dest: "/tmp/snapraid-{{ snapraid_version }}.tar.gz"
         mode: '0644'
 
     - name: Extract snapraid source
-      unarchive:
+      ansible.builtin.unarchive:
         src: "/tmp/snapraid-{{ snapraid_version }}.tar.gz"
         dest: /tmp/
-        remote_src: yes
+        remote_src: true
 
     - name: Configure snapraid
-      command: ./configure
+      ansible.builtin.command: ./configure
       args:
         chdir: "/tmp/snapraid-{{ snapraid_version }}"
         creates: "/tmp/snapraid-{{ snapraid_version }}/Makefile"
 
     - name: Build snapraid
-      command: make
+      ansible.builtin.command: make
       args:
         chdir: "/tmp/snapraid-{{ snapraid_version }}"
         creates: "/tmp/snapraid-{{ snapraid_version }}/snapraid"
 
     - name: Install snapraid
-      command: make install
+      ansible.builtin.command: make install
       args:
         chdir: "/tmp/snapraid-{{ snapraid_version }}"
         creates: /usr/local/bin/snapraid
 
     - name: Clean up build files
-      file:
+      ansible.builtin.file:
         path: "{{ item }}"
         state: absent
       loop:

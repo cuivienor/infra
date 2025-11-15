@@ -2,7 +2,7 @@
 # Tasks for configuring Proxmox host networking
 
 - name: Display network configuration to be applied
-  debug:
+  ansible.builtin.debug:
     msg: |
       Configuring Proxmox host network:
       - IP: {{ proxmox_host_ip }}/{{ proxmox_host_netmask }}
@@ -11,47 +11,47 @@
       - DNS: {{ proxmox_host_dns_servers | join(', ') }}
 
 - name: Backup current network configuration
-  copy:
+  ansible.builtin.copy:
     src: /etc/network/interfaces
     dest: /etc/network/interfaces.backup.{{ ansible_date_time.epoch }}
-    remote_src: yes
+    remote_src: true
   register: backup_result
 
 - name: Display backup location
-  debug:
+  ansible.builtin.debug:
     msg: "Current config backed up to: {{ backup_result.dest }}"
 
 - name: Check if IP change is needed
-  set_fact:
+  ansible.builtin.set_fact:
     ip_changing: "{{ ansible_default_ipv4.address != proxmox_host_ip.split('/')[0] }}"
 
 - name: Warning - IP address will change
-  debug:
+  ansible.builtin.debug:
     msg: |
       ⚠️  WARNING: IP address will change!
       Current: {{ ansible_default_ipv4.address }}
       New: {{ proxmox_host_ip }}
-      
+
       SSH connection will be lost. Reconnect at new IP after applying.
   when: ip_changing
 
 - name: Deploy network configuration
-  template:
+  ansible.builtin.template:
     src: interfaces.j2
     dest: /etc/network/interfaces
     owner: root
     group: root
     mode: '0644'
-    backup: yes
-  notify: reload network interfaces
+    backup: true
+  notify: Reload network interfaces
 
 - name: Verify configuration syntax
-  command: ifup --no-act {{ proxmox_bridge_name }}
+  ansible.builtin.command: ifup --no-act {{ proxmox_bridge_name }}
   register: syntax_check
   failed_when: false
   changed_when: false
 
 - name: Display syntax check result
-  debug:
+  ansible.builtin.debug:
     msg: "Configuration syntax: {{ 'OK' if syntax_check.rc == 0 else 'ERROR - ' + syntax_check.stderr }}"
   failed_when: syntax_check.rc != 0

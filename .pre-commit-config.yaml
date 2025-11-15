@@ -1,0 +1,45 @@
+# Pre-commit hooks for homelab-notes repository
+# Install with: pre-commit install
+# Run manually with: pre-commit run --all-files
+
+repos:
+  # General file quality
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+        exclude: ^ansible/vars/.*secrets.*\.yml$
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: detect-private-key
+      - id: check-merge-conflict
+      - id: check-case-conflict
+
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        args: [--severity=warning]
+
+  # Terraform formatting
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.86.0
+    hooks:
+      - id: terraform_fmt
+
+  # YAML linting (lighter than ansible-lint for commit hooks)
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        args: [-c, .yamllint.yaml]
+        exclude: ^ansible/vars/.*secrets.*\.yml$
+
+# Note: ansible-lint is intentionally NOT included in pre-commit
+# because it's slow and requires vault password. Run it manually:
+#   cd ansible && ansible-lint playbooks/

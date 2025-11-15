@@ -1,11 +1,11 @@
 ---
 - name: Configure Proxmox storage (MergerFS + SnapRAID)
   hosts: proxmox_hosts
-  become: yes
+  become: true
 
   pre_tasks:
     - name: Verify required variables
-      assert:
+      ansible.builtin.assert:
         that:
           - storage_disks is defined
           - storage_parity_disk is defined
@@ -13,21 +13,21 @@
         fail_msg: "Required storage variables are not defined"
 
     - name: Display what will be configured
-      debug:
+      ansible.builtin.debug:
         msg: |
           This playbook will configure storage on {{ inventory_hostname }}:
-          
+
           Storage Disks:
           {% for disk in storage_disks %}
             - {{ disk.name }}: {{ disk.device }} -> {{ disk.mount }}
           {% endfor %}
-          
+
           Parity Disk:
             - {{ storage_parity_disk.device }} -> {{ storage_parity_disk.mount }}
-          
+
           MergerFS Pool: {{ mergerfs_pool_path }}
           SnapRAID: {{ 'Enabled' if snapraid_sync_enabled else 'Disabled' }}
-          
+
           Data will NOT be affected. Configuration will be managed by Ansible.
 
   roles:
@@ -35,49 +35,49 @@
 
   post_tasks:
     - name: Verify mounts
-      shell: mount | grep -E 'mergerfs|/mnt/disk|/mnt/parity'
+      ansible.builtin.shell: mount | grep -E 'mergerfs|/mnt/disk|/mnt/parity'
       register: mounts
       changed_when: false
 
     - name: Display mount status
-      debug:
+      ansible.builtin.debug:
         var: mounts.stdout_lines
 
     - name: Check SnapRAID status
-      command: /usr/local/bin/snapraid status
+      ansible.builtin.command: /usr/local/bin/snapraid status
       register: snapraid_status
       changed_when: false
       failed_when: false
 
     - name: Display SnapRAID status
-      debug:
+      ansible.builtin.debug:
         var: snapraid_status.stdout_lines
       when: snapraid_status.rc == 0
 
     - name: List enabled timers
-      command: systemctl list-timers snapraid-*
+      ansible.builtin.command: systemctl list-timers snapraid-*
       register: timers
       changed_when: false
       failed_when: false
 
     - name: Display timer status
-      debug:
+      ansible.builtin.debug:
         var: timers.stdout_lines
       when: timers.rc == 0
 
     - name: Summary
-      debug:
+      ansible.builtin.debug:
         msg: |
           ===== Storage Configuration Complete =====
-          
+
           ✓ Disks mounted
           ✓ MergerFS pool configured
           ✓ SnapRAID installed and configured
           ✓ Automation timers enabled
-          
+
           Next steps:
           1. Review SnapRAID status: ssh homelab "snapraid status"
           2. Check timers: ssh homelab "systemctl list-timers snapraid-*"
           3. View logs: ssh homelab "ls -lh /var/log/snapraid/"
-          
+
           ==========================================

@@ -2,21 +2,21 @@
 # Main task orchestration for proxmox_storage role
 
 - name: Install storage packages
-  include_tasks: install.yml
+  ansible.builtin.include_tasks: install.yml
   tags: [install, storage]
 
 - name: Configure data disks
-  include_tasks: disks.yml
+  ansible.builtin.include_tasks: disks.yml
   tags: [disks, storage]
 
 - name: Configure MergerFS
-  include_tasks: mergerfs.yml
+  ansible.builtin.include_tasks: mergerfs.yml
   tags: [mergerfs, storage]
 
 - name: Configure SnapRAID
-  include_tasks: snapraid.yml
+  ansible.builtin.include_tasks: snapraid.yml
   tags: [snapraid, storage]
 
 - name: Set permissions
-  include_tasks: permissions.yml
+  ansible.builtin.include_tasks: permissions.yml
   tags: [permissions, storage]

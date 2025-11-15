@@ -3,73 +3,73 @@
 # This role must run on the Proxmox host (delegate_to: homelab)
 
 - name: Verify container_id is defined
-  assert:
+  ansible.builtin.assert:
     that:
       - container_id is defined
       - container_id is number
     fail_msg: "container_id must be defined and numeric"
 
 - name: Check if optical drive exists on host
-  stat:
+  ansible.builtin.stat:
     path: "{{ optical_drive_block_device }}"
   register: optical_drive_stat
   delegate_to: homelab
 
 - name: Fail if optical drive not found
-  fail:
+  ansible.builtin.fail:
     msg: "Optical drive {{ optical_drive_block_device }} not found on host"
   when: not optical_drive_stat.stat.exists
 
 - name: Get current LXC configuration
-  slurp:
+  ansible.builtin.slurp:
     path: "/etc/pve/lxc/{{ container_id }}.conf"
   register: lxc_config_current
   delegate_to: homelab
 
 - name: Parse current configuration
-  set_fact:
+  ansible.builtin.set_fact:
     lxc_config_content: "{{ lxc_config_current.content | b64decode }}"
 
 - name: Check if optical drive passthrough already configured
-  set_fact:
+  ansible.builtin.set_fact:
     optical_passthrough_configured: "{{ 'lxc.cgroup2.devices.allow: c 11:0 rwm' in lxc_config_content }}"
 
 - name: Add cgroup device permissions for block device (sr0)
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "/etc/pve/lxc/{{ container_id }}.conf"
     line: "lxc.cgroup2.devices.allow: c {{ optical_drive_block_major }}:{{ optical_drive_block_minor }} rwm"
     state: present
   when: not optical_passthrough_configured
   delegate_to: homelab
-  notify: restart container
+  notify: Restart container
 
 - name: Add cgroup device permissions for SCSI generic device (sg4)
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "/etc/pve/lxc/{{ container_id }}.conf"
     line: "lxc.cgroup2.devices.allow: c {{ optical_drive_scsi_major }}:{{ optical_drive_scsi_minor }} rwm"
     state: present
   when: not optical_passthrough_configured
   delegate_to: homelab
-  notify: restart container
+  notify: Restart container
 
 - name: Add mount entry for block device
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "/etc/pve/lxc/{{ container_id }}.conf"
     line: "lxc.mount.entry: {{ optical_drive_block_device }} dev/sr0 none bind,optional,create=file"
     state: present
   when: not optical_passthrough_configured
   delegate_to: homelab
-  notify: restart container
+  notify: Restart container
 
 - name: Add mount entry for SCSI generic device
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "/etc/pve/lxc/{{ container_id }}.conf"
     line: "lxc.mount.entry: {{ optical_drive_scsi_device }} dev/sg4 none bind,optional,create=file"
     state: present
   when: not optical_passthrough_configured
   delegate_to: homelab
-  notify: restart container
+  notify: Restart container
 
 - name: Display configuration status
-  debug:
+  ansible.builtin.debug:
     msg: "Optical drive passthrough {{ 'already configured' if optical_passthrough_configured else 'configured (container restart required)' }}"

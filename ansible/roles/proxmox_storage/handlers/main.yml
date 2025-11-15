@@ -1,14 +1,14 @@
 ---
 # Handlers for proxmox_storage role
 
-- name: mount all disks
-  command: mount -a
-  listen: mount all disks
+- name: Mount all disks
+  ansible.builtin.command: mount -a
+  listen: Mount all disks
 
-- name: reload systemd
-  systemd:
-    daemon_reload: yes
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
 
-- name: snapraid config changed
-  debug:
+- name: Snapraid config changed
+  ansible.builtin.debug:
     msg: "SnapRAID configuration has been updated"

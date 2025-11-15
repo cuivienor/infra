@@ -28,21 +28,21 @@ backup_policies:
       # Large media directories (expensive to backup, can be re-ripped/re-downloaded)
       # Note: media/ includes movies, tv, audiobooks, e-books, staging, legacy-media
       - "/mnt/storage/media/**"
-      
+
       # Private content (adult content, not backed up)
       - "/mnt/storage/private/**"
-      
+
       # Google Takeout (Google Photos archive - 598GB, not backing up)
       - "/mnt/storage/google-takeout/**"
-      
+
       # Old Photos directory (pending deletion after consolidation verified)
       - "/mnt/storage/Photos-OLD-DELETE-AFTER-REVIEW/**"
-      
+
       # Temporary/cache directories
       - "/mnt/storage/temp/**"
       - "/mnt/storage/lost+found/**"
       - "/mnt/storage/.snapraid.*"
-      
+
       # Common patterns to skip
       - "**/.Trash-*/**"
       - "**/Thumbs.db"

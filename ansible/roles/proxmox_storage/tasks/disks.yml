@@ -2,21 +2,21 @@
 # Configure data disk mounts
 
 - name: Create mount point directories
-  file:
+  ansible.builtin.file:
     path: "{{ item.mount }}"
     state: directory
     mode: '0755'
   loop: "{{ storage_disks + [storage_parity_disk] }}"
 
 - name: Check if disks are in fstab
-  command: grep -F "{{ item.device }}" /etc/fstab
+  ansible.builtin.command: grep -F "{{ item.device }}" /etc/fstab
   register: fstab_check
   loop: "{{ storage_disks + [storage_parity_disk] }}"
   failed_when: false
   changed_when: false
 
 - name: Add disk mounts to fstab
-  mount:
+  ansible.posix.mount:
     path: "{{ item.item.mount }}"
     src: "{{ item.item.device }}"
     fstype: "{{ item.item.fstype }}"
@@ -24,10 +24,10 @@
     state: present
   loop: "{{ fstab_check.results }}"
   when: item.rc != 0
-  notify: mount all disks
+  notify: Mount all disks
 
 - name: Ensure all disks are mounted
-  mount:
+  ansible.posix.mount:
     path: "{{ item.mount }}"
     src: "{{ item.device }}"
     fstype: "{{ item.fstype }}"

@@ -12,7 +12,7 @@ resource "proxmox_virtual_environment_container" "backup" {
 
   initialization {
     hostname = "backup"
-    
+
     ip_config {
       ipv4 {
         address = "192.168.1.120/24"
@@ -40,7 +40,7 @@ resource "proxmox_virtual_environment_container" "backup" {
   # Operating system
   operating_system {
     template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
-    type            = "debian"
+    type             = "debian"
   }
 
   # Resource allocation
@@ -49,13 +49,13 @@ resource "proxmox_virtual_environment_container" "backup" {
   }
 
   memory {
-    dedicated = 2048  # 2GB RAM (Backrest + restic operations)
+    dedicated = 2048 # 2GB RAM (Backrest + restic operations)
   }
 
   # Disk configuration
   disk {
     datastore_id = "local-lvm"
-    size         = 20  # 20GB for Backrest data, restic cache, logs
+    size         = 20 # 20GB for Backrest data, restic cache, logs
   }
 
   # Mount /mnt/storage from host (read-only for safety)
@@ -67,7 +67,7 @@ resource "proxmox_virtual_environment_container" "backup" {
 
   # Features
   features {
-    nesting = false  # Not needed for backup operations
+    nesting = false # Not needed for backup operations
   }
 
   # Tags

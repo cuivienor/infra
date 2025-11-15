@@ -1,7 +1,7 @@
 ---
 # Handlers for Jellyfin role
 
-- name: restart jellyfin
-  systemd:
+- name: Restart jellyfin
+  ansible.builtin.systemd:
     name: jellyfin
     state: restarted

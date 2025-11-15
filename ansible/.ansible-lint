@@ -1,0 +1,38 @@
+# ansible-lint configuration for homelab-notes
+
+# Run from ansible/ directory to find roles and inventory
+# cd ansible && ansible-lint playbooks/
+
+# Skip these rules (too strict for homelab use case)
+skip_list:
+  - role-name  # Allow underscores in role names
+  - no-changed-when  # Not all commands need changed_when
+  - risky-shell-pipe  # Allow shell pipes in scripts
+  - var-naming[no-role-prefix]  # Role variable prefixing is overkill for homelab
+  - command-instead-of-shell  # Allow shell for convenience
+  - command-instead-of-module  # Sometimes command is clearer
+  - key-order  # Task key ordering is preference
+  - partial-become  # We know what we're doing with become
+  - risky-file-permissions  # Accept explicit permissions
+  - ignore-errors  # We use ignore_errors intentionally
+  - no-relative-paths  # Relative paths are fine in vars_files
+
+# Warn but don't fail on these
+warn_list:
+  - experimental
+  - no-handler  # Some tasks legitimately don't need handlers
+
+# Exclude files that aren't actual Ansible
+exclude_paths:
+  - .git/
+  - ansible/vars/*secrets*.yml  # Encrypted files cause issues
+  - ansible/files/
+
+# Use project-local roles
+offline: false
+
+# Enable progressive mode - only check modified files
+# progressive: true
+
+# Parseable output for CI/CD
+# parseable: true

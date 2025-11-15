@@ -1,4 +1,4 @@
 ---
-- name: restart container
-  shell: "pct stop {{ container_id }} && pct start {{ container_id }}"
+- name: Restart container
+  ansible.builtin.shell: "pct stop {{ container_id }} && pct start {{ container_id }}"
   delegate_to: homelab

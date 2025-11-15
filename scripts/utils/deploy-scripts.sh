@@ -18,6 +18,7 @@ ssh root@homelab "pct exec 201 -- mkdir -p /home/media/scripts"
 
 for script in migrate-to-1-ripped.sh analyze-media.sh organize-and-remux-movie.sh organize-and-remux-tv.sh transcode-queue.sh promote-to-ready.sh filebot-process.sh; do
   echo "  - $script"
+  # shellcheck disable=SC2029  # Variable expansion on client side is intentional
   ssh root@homelab "pct push 201 /tmp/$script /home/media/scripts/$script && pct exec 201 -- chown media:media /home/media/scripts/$script && pct exec 201 -- chmod +x /home/media/scripts/$script"
 done
 

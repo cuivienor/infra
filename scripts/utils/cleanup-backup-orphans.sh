@@ -9,10 +9,9 @@ echo "Restic Repository Cleanup Script"
 echo "================================================="
 echo ""
 
-CONTAINER="ct300-backup"
 CONTAINER_IP="192.168.1.58"
 
-echo "Checking backup status..."
+echo "Checking backup status on ct300-backup..."
 ssh root@${CONTAINER_IP} "systemctl is-active restic-backup-data.service" || {
     echo "✅ No backup currently running"
 }

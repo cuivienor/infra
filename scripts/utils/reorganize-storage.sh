@@ -25,7 +25,7 @@ echo "  - You can reorganize photos properly later"
 echo "  - No data will be deleted"
 echo ""
 echo "Press Ctrl+C to cancel, or Enter to continue..."
-read
+read -r
 
 # Phase 1: Private directory
 echo ""
@@ -123,7 +123,9 @@ echo "Reorganization complete!"
 echo "========================================="
 echo ""
 echo "Final structure:"
-ls -lh "$STORAGE" | grep "^d"
+for dir in "$STORAGE"/*/; do
+    [ -d "$dir" ] && ls -lhd "$dir"
+done
 echo ""
 echo "Verification:"
 echo "  Photos preserved at: $STORAGE/photos/consolidated/"

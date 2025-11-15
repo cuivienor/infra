@@ -9,13 +9,13 @@ resource "proxmox_virtual_environment_container" "analyzer" {
 
   # Container initialization
   started = true
-  
+
   # IMPORTANT: Privileged container for storage access consistency
   unprivileged = false
 
   initialization {
     hostname = "analyzer"
-    
+
     ip_config {
       ipv4 {
         address = "192.168.1.133/24"
@@ -43,24 +43,24 @@ resource "proxmox_virtual_environment_container" "analyzer" {
   # Operating system
   operating_system {
     template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
-    type            = "debian"
+    type             = "debian"
   }
 
   # Resource allocation
   cpu {
     cores = 2
-    units = 1024  # Medium priority (same as ripper)
+    units = 1024 # Medium priority (same as ripper)
   }
 
   memory {
-    dedicated = 4096  # 4GB RAM (analysis and remuxing operations)
-    swap      = 2048  # 2GB swap
+    dedicated = 4096 # 4GB RAM (analysis and remuxing operations)
+    swap      = 2048 # 2GB swap
   }
 
   # Disk configuration
   disk {
     datastore_id = "local-lvm"
-    size         = 12  # 12GB for OS, tools, and temporary files
+    size         = 12 # 12GB for OS, tools, and temporary files
   }
 
   # Mount complete media directory from host (for analysis and organization)
@@ -86,7 +86,7 @@ resource "proxmox_virtual_environment_container" "analyzer" {
 
   # Features
   features {
-    nesting = true  # Enable nesting for potential nested operations
+    nesting = true # Enable nesting for potential nested operations
   }
 
   # Tags

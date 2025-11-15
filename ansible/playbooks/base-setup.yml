@@ -4,16 +4,16 @@
 
 - name: Configure Raspberry Pis
   hosts: raspberry_pis
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
   roles:
     - common
   tags: ['raspberry_pis', 'pis']
 
 - name: Configure Proxmox host
   hosts: proxmox_host
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
   roles:
     - common
   tags: ['proxmox']

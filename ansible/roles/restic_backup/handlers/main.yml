@@ -1,6 +1,6 @@
 ---
 # Handlers for restic_backup role
 
-- name: reload systemd
+- name: Reload systemd
   ansible.builtin.systemd:
     daemon_reload: true

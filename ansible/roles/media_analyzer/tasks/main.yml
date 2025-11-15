@@ -2,55 +2,55 @@
 # Main tasks for media_analyzer role
 
 - name: Update apt cache
-  apt:
-    update_cache: yes
+  ansible.builtin.apt:
+    update_cache: true
     cache_valid_time: 3600
 
 - name: Install media analyzer packages
-  apt:
+  ansible.builtin.apt:
     name: "{{ media_analyzer_packages }}"
     state: present
 
 - name: Install Java for FileBot (if enabled)
-  apt:
+  ansible.builtin.apt:
     name: openjdk-17-jre-headless
     state: present
   when: media_analyzer_install_filebot | bool
 
 - name: Check if FileBot is already installed
-  command: filebot --version
+  ansible.builtin.command: filebot --version
   register: filebot_check
   changed_when: false
   failed_when: false
   when: media_analyzer_install_filebot | bool
 
 - name: Download FileBot package
-  get_url:
+  ansible.builtin.get_url:
     url: "https://get.filebot.net/filebot/FileBot_{{ filebot_version }}/FileBot_{{ filebot_version }}_amd64.deb"
     dest: "/tmp/FileBot_{{ filebot_version }}_amd64.deb"
     mode: '0644'
-  when: 
+  when:
     - media_analyzer_install_filebot | bool
     - filebot_check.rc != 0
 
 - name: Install FileBot
-  apt:
+  ansible.builtin.apt:
     deb: "/tmp/FileBot_{{ filebot_version }}_amd64.deb"
     state: present
-  when: 
+  when:
     - media_analyzer_install_filebot | bool
     - filebot_check.rc != 0
 
 - name: Remove FileBot package file
-  file:
+  ansible.builtin.file:
     path: "/tmp/FileBot_{{ filebot_version }}_amd64.deb"
     state: absent
-  when: 
+  when:
     - media_analyzer_install_filebot | bool
     - filebot_check.rc != 0
 
 - name: Deploy FileBot license
-  copy:
+  ansible.builtin.copy:
     src: "{{ playbook_dir }}/../files/filebot_license.psm"
     dest: "/home/media/FileBot_License.psm"
     owner: media
@@ -59,14 +59,14 @@
   when: media_analyzer_install_filebot | bool
 
 - name: Install FileBot license
-  shell: su - media -c "filebot --license /home/media/FileBot_License.psm"
+  ansible.builtin.shell: su - media -c "filebot --license /home/media/FileBot_License.psm"
   register: filebot_license_install
   changed_when: "'has been activated successfully' in filebot_license_install.stdout"
   failed_when: false
   when: media_analyzer_install_filebot | bool
 
 - name: Create scripts directory for media user
-  file:
+  ansible.builtin.file:
     path: /home/media/scripts
     state: directory
     owner: media
@@ -74,7 +74,7 @@
     mode: '0755'
 
 - name: Deploy media analyzer scripts
-  copy:
+  ansible.builtin.copy:
     src: "{{ playbook_dir }}/../../{{ item.src }}"
     dest: "/home/media/scripts/{{ item.dest }}"
     owner: media
@@ -83,33 +83,33 @@
   loop: "{{ media_analyzer_scripts }}"
 
 - name: Configure staging path environment variable
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /home/media/.bashrc
     line: 'export STAGING_BASE="{{ staging_base_path }}"'
     state: present
     owner: media
     group: media
-    create: yes
+    create: true
 
 - name: Add hostname to /etc/hosts for FileBot
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/hosts
     line: "127.0.0.1 {{ ansible_hostname }}"
     state: present
   when: media_analyzer_install_filebot | bool
 
 - name: Verify mkvtoolnix installation
-  command: mkvmerge --version
+  ansible.builtin.command: mkvmerge --version
   register: mkvmerge_version
   changed_when: false
 
 - name: Verify mediainfo installation
-  command: mediainfo --version
+  ansible.builtin.command: mediainfo --version
   register: mediainfo_version
   changed_when: false
 
 - name: Display installed tool versions
-  debug:
+  ansible.builtin.debug:
     msg:
       - "mkvtoolnix: {{ mkvmerge_version.stdout_lines[0] }}"
       - "mediainfo: {{ mediainfo_version.stdout_lines[0] }}"

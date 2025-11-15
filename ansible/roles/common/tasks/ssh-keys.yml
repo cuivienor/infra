@@ -35,7 +35,7 @@
   loop: "{{ ssh_authorized_keys_users }}"
 
 - name: Deploy SSH authorized keys for each user
-  ansible.builtin.authorized_key:
+  ansible.posix.authorized_key:
     user: "{{ item.0 }}"
     key: "{{ lookup('file', item.1.path) }}"
     state: present

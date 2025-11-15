@@ -40,4 +40,4 @@
     line: "Protocol 2"
     state: present
   notify: Restart sshd
-  ignore_errors: yes  # Protocol directive removed in newer SSH versions
+  ignore_errors: true  # Protocol directive removed in newer SSH versions

@@ -5,10 +5,10 @@
 - name: Configure restic backups on Proxmox host
   hosts: proxmox_host
   become: true
-  
+
   vars_files:
     - ../vars/backup_secrets.yml
-  
+
   roles:
     - role: restic_backup
       tags: ['backup', 'restic']
@@ -22,11 +22,7 @@
           - "========================================="
           - ""
           - "Enabled backup policies:"
-          {% for policy in backup_policies %}
-          {% if policy.enabled | default(false) %}
-          - "  - {{ policy.name }}: {{ policy.schedule }} backups to {{ policy.b2_bucket }}"
-          {% endif %}
-          {% endfor %}
+          - "{{ backup_policies | selectattr('enabled', 'defined') | selectattr('enabled') | map(attribute='name') | list | join(', ') }}"
           - ""
           - "Manual commands:"
           - "  Run backup now:    systemctl start restic-backup-<policy>.service"

@@ -3,14 +3,14 @@
 # This role must run on the Proxmox host (delegate_to: homelab)
 
 - name: Verify container_id is defined
-  assert:
+  ansible.builtin.assert:
     that:
       - container_id is defined
       - container_id is number
     fail_msg: "container_id must be defined and numeric"
 
 - name: Check if GPU devices exist on host
-  stat:
+  ansible.builtin.stat:
     path: "{{ item }}"
   loop:
     - "{{ intel_gpu_card_device }}"
@@ -19,52 +19,52 @@
   delegate_to: homelab
 
 - name: Fail if GPU devices not found
-  fail:
+  ansible.builtin.fail:
     msg: "GPU device {{ item.item }} not found on host"
   when: not item.stat.exists
   loop: "{{ gpu_devices_stat.results }}"
 
 - name: Get current LXC configuration
-  slurp:
+  ansible.builtin.slurp:
     path: "/etc/pve/lxc/{{ container_id }}.conf"
   register: lxc_config_current
   delegate_to: homelab
 
 - name: Parse current configuration
-  set_fact:
+  ansible.builtin.set_fact:
     lxc_config_content: "{{ lxc_config_current.content | b64decode }}"
 
 - name: Check if GPU passthrough already configured
-  set_fact:
+  ansible.builtin.set_fact:
     gpu_passthrough_configured: "{{ 'lxc.cgroup2.devices.allow: c 226:1 rwm' in lxc_config_content }}"
 
 - name: Add cgroup device permissions for card1
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "/etc/pve/lxc/{{ container_id }}.conf"
     line: "lxc.cgroup2.devices.allow: c {{ intel_gpu_major }}:{{ intel_gpu_card_minor }} rwm"
     state: present
   when: not gpu_passthrough_configured
   delegate_to: homelab
-  notify: restart container
+  notify: Restart container
 
 - name: Add cgroup device permissions for renderD128
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "/etc/pve/lxc/{{ container_id }}.conf"
     line: "lxc.cgroup2.devices.allow: c {{ intel_gpu_major }}:{{ intel_gpu_render_minor }} rwm"
     state: present
   when: not gpu_passthrough_configured
   delegate_to: homelab
-  notify: restart container
+  notify: Restart container
 
 - name: Add mount entry for /dev/dri directory
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "/etc/pve/lxc/{{ container_id }}.conf"
     line: "lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir"
     state: present
   when: not gpu_passthrough_configured
   delegate_to: homelab
-  notify: restart container
+  notify: Restart container
 
 - name: Display configuration status
-  debug:
+  ansible.builtin.debug:
     msg: "Intel GPU passthrough {{ 'already configured' if gpu_passthrough_configured else 'configured (container restart required)' }}"

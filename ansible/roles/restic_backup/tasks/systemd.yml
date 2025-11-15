@@ -10,7 +10,7 @@
     group: root
   loop: "{{ backup_policies }}"
   when: item.enabled | default(false)
-  notify: reload systemd
+  notify: Reload systemd
 
 - name: Create systemd timer files for each backup policy
   ansible.builtin.template:
@@ -21,7 +21,7 @@
     group: root
   loop: "{{ backup_policies }}"
   when: item.enabled | default(false)
-  notify: reload systemd
+  notify: Reload systemd
 
 - name: Create systemd service for backup checks
   ansible.builtin.template:
@@ -31,7 +31,7 @@
     owner: root
     group: root
   when: backup_check_enabled
-  notify: reload systemd
+  notify: Reload systemd
 
 - name: Create systemd timer for backup checks
   ansible.builtin.template:
@@ -41,7 +41,7 @@
     owner: root
     group: root
   when: backup_check_enabled
-  notify: reload systemd
+  notify: Reload systemd
 
 - name: Force systemd reload
   ansible.builtin.meta: flush_handlers

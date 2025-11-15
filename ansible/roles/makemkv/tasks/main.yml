@@ -2,7 +2,7 @@
 # MakeMKV installation and configuration tasks
 
 - name: Install MakeMKV build dependencies
-  apt:
+  ansible.builtin.apt:
     name:
       - build-essential
       - pkg-config
@@ -14,113 +14,113 @@
       - qtbase5-dev
       - zlib1g-dev
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Create build directory
-  file:
+  ansible.builtin.file:
     path: "{{ makemkv_build_dir }}"
     state: directory
     mode: '0755'
 
 - name: Check if MakeMKV is already installed
-  command: which makemkvcon
+  ansible.builtin.command: which makemkvcon
   register: makemkv_installed
   failed_when: false
   changed_when: false
 
 - name: Get installed MakeMKV version
-  shell: "makemkvcon info 2>&1 | head -1 | grep -oP 'v\\K[0-9.]+'"
+  ansible.builtin.shell: "makemkvcon info 2>&1 | head -1 | grep -oP 'v\\K[0-9.]+'"
   register: makemkv_current_version
   when: makemkv_installed.rc == 0
   failed_when: false
   changed_when: false
 
 - name: Set installation needed flag
-  set_fact:
+  ansible.builtin.set_fact:
     makemkv_needs_install: "{{ makemkv_installed.rc != 0 or makemkv_current_version.stdout != makemkv_version }}"
 
 - name: Display installation status
-  debug:
+  ansible.builtin.debug:
     msg: "MakeMKV {{ makemkv_version }} installation {{ 'needed' if makemkv_needs_install else 'not needed (already installed)' }}"
 
 # MakeMKV OSS (Open Source) installation
 - name: Download MakeMKV OSS
-  get_url:
+  ansible.builtin.get_url:
     url: "{{ makemkv_oss_url }}"
     dest: "{{ makemkv_build_dir }}/makemkv-oss-{{ makemkv_version }}.tar.gz"
     mode: '0644'
   when: makemkv_needs_install
 
 - name: Extract MakeMKV OSS
-  unarchive:
+  ansible.builtin.unarchive:
     src: "{{ makemkv_build_dir }}/makemkv-oss-{{ makemkv_version }}.tar.gz"
     dest: "{{ makemkv_build_dir }}"
-    remote_src: yes
+    remote_src: true
   when: makemkv_needs_install
 
 - name: Configure MakeMKV OSS
-  command: ./configure
+  ansible.builtin.command: ./configure
   args:
     chdir: "{{ makemkv_build_dir }}/makemkv-oss-{{ makemkv_version }}"
   when: makemkv_needs_install
 
 - name: Build MakeMKV OSS
-  command: make -j{{ ansible_processor_vcpus }}
+  ansible.builtin.command: make -j{{ ansible_processor_vcpus }}
   args:
     chdir: "{{ makemkv_build_dir }}/makemkv-oss-{{ makemkv_version }}"
   when: makemkv_needs_install
 
 - name: Install MakeMKV OSS
-  command: make install
+  ansible.builtin.command: make install
   args:
     chdir: "{{ makemkv_build_dir }}/makemkv-oss-{{ makemkv_version }}"
   when: makemkv_needs_install
-  become: yes
+  become: true
 
 # MakeMKV BIN (Binary/Proprietary) installation
 - name: Download MakeMKV BIN
-  get_url:
+  ansible.builtin.get_url:
     url: "{{ makemkv_bin_url }}"
     dest: "{{ makemkv_build_dir }}/makemkv-bin-{{ makemkv_version }}.tar.gz"
     mode: '0644'
   when: makemkv_needs_install
 
 - name: Extract MakeMKV BIN
-  unarchive:
+  ansible.builtin.unarchive:
     src: "{{ makemkv_build_dir }}/makemkv-bin-{{ makemkv_version }}.tar.gz"
     dest: "{{ makemkv_build_dir }}"
-    remote_src: yes
+    remote_src: true
   when: makemkv_needs_install
 
 - name: Create tmp directory for MakeMKV BIN EULA
-  file:
+  ansible.builtin.file:
     path: "{{ makemkv_build_dir }}/makemkv-bin-{{ makemkv_version }}/tmp"
     state: directory
     mode: '0755'
   when: makemkv_needs_install
 
 - name: Accept MakeMKV BIN EULA
-  copy:
+  ansible.builtin.copy:
     content: "accepted"
     dest: "{{ makemkv_build_dir }}/makemkv-bin-{{ makemkv_version }}/tmp/eula_accepted"
   when: makemkv_needs_install
 
 - name: Build MakeMKV BIN
-  command: make
+  ansible.builtin.command: make
   args:
     chdir: "{{ makemkv_build_dir }}/makemkv-bin-{{ makemkv_version }}"
   when: makemkv_needs_install
 
 - name: Install MakeMKV BIN
-  command: make install
+  ansible.builtin.command: make install
   args:
     chdir: "{{ makemkv_build_dir }}/makemkv-bin-{{ makemkv_version }}"
   when: makemkv_needs_install
-  become: yes
+  become: true
 
 # Configuration
 - name: Create MakeMKV config directory for media user
-  file:
+  ansible.builtin.file:
     path: "/home/{{ makemkv_user }}/.MakeMKV"
     state: directory
     owner: "{{ makemkv_user }}"
@@ -128,7 +128,7 @@
     mode: '0755'
 
 - name: Deploy MakeMKV settings configuration
-  template:
+  ansible.builtin.template:
     src: settings.conf.j2
     dest: "/home/{{ makemkv_user }}/.MakeMKV/settings.conf"
     owner: "{{ makemkv_user }}"
@@ -137,17 +137,17 @@
 
 # Cleanup
 - name: Clean up build directory
-  file:
+  ansible.builtin.file:
     path: "{{ makemkv_build_dir }}"
     state: absent
   when: makemkv_needs_install
 
 - name: Verify MakeMKV installation
-  command: makemkvcon info
+  ansible.builtin.command: makemkvcon info
   register: makemkv_verify
   failed_when: makemkv_verify.rc not in [0, 1, 2]  # RC 1 = no disc, RC 2 = no device (acceptable)
   changed_when: false
 
 - name: Display MakeMKV version
-  debug:
+  ansible.builtin.debug:
     msg: "{{ makemkv_verify.stdout_lines[0] }}"
