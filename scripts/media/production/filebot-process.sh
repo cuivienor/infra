@@ -231,24 +231,21 @@ if [ $filebot_exit -eq 0 ]; then
         
         # Try to detect the output path from FileBot output
         # Look for lines like: [MOVE] from [...] to [...]
-        # Extract the show/movie name and season (for TV)
+        # Extract the actual destination path from FileBot's output
         
-        # For TV shows, we need to find the Season folder that was created
-        if [ "$TYPE" = "tv" ]; then
-            # Extract show name and season from input path
-            show_folder=$(basename "$(dirname "$INPUT_DIR")")
-            season_folder=$(basename "$INPUT_DIR")
-            
-            # Try to find the created directory in library
-            # FileBot renames, so we need to search for it
-            target_base=$(find "$OUTPUT_DIR" -type d -maxdepth 1 2>/dev/null | head -1)
-            if [ -n "$target_base" ]; then
-                # Find the season directory
-                target_extras=$(find "$OUTPUT_DIR" -type d -name "Season*" 2>/dev/null | grep -i "$(echo $season_folder | sed 's/[^0-9]*//g')" | head -1)
-            fi
+        # Parse FileBot output to find the destination path
+        # Example: [MOVE] from [...] to [/mnt/library/movies/How to Train Your Dragon 2 (2014)/How to Train Your Dragon 2 (2014).mkv]
+        target_file=$(echo "$filebot_output" | grep -oP '\[MOVE\] from .* to \[\K[^\]]+' | head -1)
+        
+        if [ -n "$target_file" ]; then
+            # Extract directory from the file path
+            target_extras=$(dirname "$target_file")
         else
-            # For movies, find the movie directory
-            target_extras=$(find "$OUTPUT_DIR" -type d -maxdepth 1 2>/dev/null | tail -1)
+            # Fallback: try to parse TEST output if MOVE parsing failed
+            target_file=$(echo "$filebot_test_output" | grep -oP '\[TEST\] from .* to \[\K[^\]]+' | head -1)
+            if [ -n "$target_file" ]; then
+                target_extras=$(dirname "$target_file")
+            fi
         fi
         
         # If we couldn't auto-detect, ask user
