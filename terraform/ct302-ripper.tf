@@ -23,6 +23,10 @@ resource "proxmox_virtual_environment_container" "ripper" {
       }
     }
 
+    dns {
+      servers = ["1.1.1.1", "8.8.8.8"]
+    }
+
     user_account {
       # SSH keys automatically loaded from ansible/files/ssh-keys/
       keys = local.ssh_public_keys
