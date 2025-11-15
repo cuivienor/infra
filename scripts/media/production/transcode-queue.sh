@@ -70,6 +70,21 @@ if [[ ! "$MODE" =~ ^(software|hardware)$ ]]; then
     exit 1
 fi
 
+# Track current ffmpeg PID for cleanup on interrupt
+CURRENT_FFMPEG_PID=""
+
+cleanup() {
+    if [ -n "$CURRENT_FFMPEG_PID" ] && kill -0 "$CURRENT_FFMPEG_PID" 2>/dev/null; then
+        echo ""
+        echo "Interrupted! Stopping ffmpeg (PID: $CURRENT_FFMPEG_PID)..."
+        kill "$CURRENT_FFMPEG_PID" 2>/dev/null
+        wait "$CURRENT_FFMPEG_PID" 2>/dev/null
+    fi
+    exit 130
+}
+
+trap cleanup INT TERM
+
 # Detect if using new structure (2-remuxed -> 3-transcoded)
 if [[ "$FOLDER" =~ /2-remuxed/ ]]; then
     NEW_STRUCTURE=1
@@ -218,9 +233,12 @@ while IFS='|' read -r input_file output_file; do
         ffmpeg_cmd="ffmpeg -nostdin -i \"$input_file\" -map 0:v:0 -map 0:a -map 0:s? -c:v libx265 -preset slow -crf $CRF -c:a copy -c:s copy -y \"$output_file\""
     fi
     
-    # Execute
-    eval $ffmpeg_cmd > "$log_file" 2>&1
+    # Execute in background so we can track PID
+    eval $ffmpeg_cmd > "$log_file" 2>&1 &
+    CURRENT_FFMPEG_PID=$!
+    wait "$CURRENT_FFMPEG_PID"
     exit_code=$?
+    CURRENT_FFMPEG_PID=""
     
     # Calculate elapsed time
     end_time=$(date +%s)
