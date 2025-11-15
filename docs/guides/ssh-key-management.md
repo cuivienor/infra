@@ -48,7 +48,7 @@ ansible-playbook playbooks/sync-ssh-keys.yml
 ```bash
 cd ansible
 ansible-playbook playbooks/sync-ssh-keys.yml --limit homelab
-ansible-playbook playbooks/sync-ssh-keys.yml --limit ct300-backup
+ansible-playbook playbooks/sync-ssh-keys.yml --limit backup
 ```
 
 ---
@@ -78,7 +78,7 @@ homelab-notes/
 └── terraform/
     ├── ssh_keys.tf             # Reads from ansible/files/ssh-keys/
     └── containers/
-        └── ct300-backup.tf     # Uses local.ssh_public_keys
+        └── backup.tf     # Uses local.ssh_public_keys
 ```
 
 ### How It Works

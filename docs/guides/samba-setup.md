@@ -1,4 +1,4 @@
-# CT301 Samba Container - Setup Guide
+# Samba Container - Setup Guide
 
 **Created**: 2025-11-11  
 **Status**: ✅ Deployed and configured
@@ -7,7 +7,7 @@
 
 ## Overview
 
-CT301 is a Samba file server providing SMB access to `/mnt/storage` for all LAN clients. Optimized for large file streaming (movie playback).
+This is a Samba file server providing SMB access to `/mnt/storage` for all LAN clients. Optimized for large file streaming (movie playback).
 
 ### Container Details
 
@@ -51,7 +51,7 @@ ansible-vault edit vars/secrets.yml --vault-password-file=../.vault_pass
 
 When running playbooks:
 ```bash
-ansible-playbook playbooks/ct301-samba.yml --vault-password-file=../.vault_pass
+ansible-playbook playbooks/samba.yml --vault-password-file=../.vault_pass
 ```
 
 ---
@@ -169,7 +169,7 @@ ssh root@192.168.1.82 "systemctl restart smbd nmbd"
 2. Run the playbook:
    ```bash
    cd /home/cuiv/dev/homelab-notes/ansible
-   ansible-playbook playbooks/ct301-samba.yml --tags config
+   ansible-playbook playbooks/samba.yml --tags config
    ```
 
 ### Change Password
@@ -184,7 +184,7 @@ ssh root@192.168.1.82 "systemctl restart smbd nmbd"
 2. Update `samba_media_password`
 3. Run playbook:
    ```bash
-   ansible-playbook playbooks/ct301-samba.yml --tags users
+   ansible-playbook playbooks/samba.yml --tags users
    ```
 
 ---
@@ -236,7 +236,7 @@ ssh root@192.168.1.82 "testparm -s | grep socket"
 
 ### Terraform
 
-- `terraform/ct301-samba.tf` - Container definition
+- `terraform/samba.tf` - Container definition
 
 ### Ansible
 
@@ -244,9 +244,9 @@ ssh root@192.168.1.82 "testparm -s | grep socket"
 - `ansible/roles/samba/templates/smb.conf.j2` - Samba config template
 - `ansible/roles/samba/handlers/main.yml` - Service handlers
 - `ansible/roles/samba/defaults/main.yml` - Default variables
-- `ansible/playbooks/ct301-samba.yml` - Main playbook
+- `ansible/playbooks/samba.yml` - Main playbook
 - `ansible/vars/secrets.yml` - Samba password (⚠️ encrypt this!)
-- `ansible/inventory/hosts.yml` - Updated with ct301_samba
+- `ansible/inventory/hosts.yml` - Updated with samba
 
 ---
 
@@ -296,7 +296,7 @@ All criteria met ✅:
 
 - **Implementation Plan**: `docs/plans/samba-container-implementation-plan.md`
 - **IaC Strategy**: `docs/reference/homelab-iac-strategy.md`
-- **Backup Container**: `terraform/ct300-backup.tf` (similar pattern)
+- **Backup Container**: `terraform/backup.tf` (similar pattern)
 
 ---
 

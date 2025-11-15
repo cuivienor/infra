@@ -35,41 +35,6 @@ Real-time monitoring of Jellyfin streaming activity.
 
 ---
 
-## Infrastructure Management
-
-### `deploy-scripts.sh`
-
-Deploy media pipeline scripts to containers.
-
-**Usage:**
-```bash
-./deploy-scripts.sh
-```
-
-Syncs scripts from repository to:
-- CT302 (ripper): `/home/media/scripts/`
-- CT303 (analyzer): `/home/media/scripts/`
-- CT304 (transcoder): `/home/media/scripts/`
-
-### `cleanup-backup-orphans.sh`
-
-Clean up orphaned backup files from old container migrations.
-
-**Usage:**
-```bash
-./cleanup-backup-orphans.sh
-```
-
-Removes backup files left behind after container cleanup.
-
-### `reorganize-storage.sh`
-
-One-time storage reorganization script (completed).
-
-**Status**: Historical reference - storage already reorganized
-
----
-
 ## Quick Reference
 
 **Monitor Jellyfin streams:**
@@ -78,14 +43,7 @@ cd /home/cuiv/dev/homelab-notes/scripts/utils
 ./monitor-jellyfin.sh
 ```
 
-**Deploy updated scripts:**
-```bash
-cd /home/cuiv/dev/homelab-notes/scripts/utils
-./deploy-scripts.sh
-```
-
 **Check script status:**
 ```bash
-# All utils scripts are executable
 ls -la /home/cuiv/dev/homelab-notes/scripts/utils/*.sh
 ```

@@ -1,5 +1,5 @@
 ---
-# Jellyfin Media Server Playbook (CT305)
+# Jellyfin Media Server Playbook
 # High-priority media streaming with dual GPU hardware transcoding
 
 - name: Configure Jellyfin container

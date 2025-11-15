@@ -377,12 +377,12 @@ pct exec 302 -- makemkvcon info disc:0
 **Provider**: BPG Proxmox (`~> 0.50.0`)
 
 **Container Definitions**:
-- `ct300-backup.tf` - Backup container
-- `ct301-samba.tf` - Samba file server
-- `ct302-ripper.tf` - Ripper with optical drive
-- `ct303-analyzer.tf` - Media analyzer
-- `ct304-transcoder.tf` - Transcoder with GPU
-- `ct305-jellyfin.tf` - Jellyfin with dual GPU
+- `backup.tf` - Backup container
+- `samba.tf` - Samba file server
+- `ripper.tf` - Ripper with optical drive
+- `analyzer.tf` - Media analyzer
+- `transcoder.tf` - Transcoder with GPU
+- `jellyfin.tf` - Jellyfin with dual GPU
 
 **Status**: ✅ All containers managed by Terraform
 
@@ -405,12 +405,12 @@ pct exec 302 -- makemkvcon info disc:0
 
 **Playbooks**:
 - `site.yml` - Main playbook for all containers
-- `ct300-backup.yml` - Backup container
-- `ct301-samba.yml` - Samba container
-- `ct302-ripper.yml` - Ripper container
-- `ct303-analyzer.yml` - Analyzer container
-- `ct304-transcoder.yml` - Transcoder container
-- `ct305-jellyfin.yml` - Jellyfin container
+- `backup.yml` - Backup container
+- `samba.yml` - Samba container
+- `ripper.yml` - Ripper container
+- `analyzer.yml` - Analyzer container
+- `transcoder.yml` - Transcoder container
+- `jellyfin.yml` - Jellyfin container
 
 **Status**: ✅ All containers configured via Ansible
 

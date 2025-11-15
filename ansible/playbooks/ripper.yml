@@ -1,9 +1,9 @@
 ---
-# CT302 Ripper Container Configuration
+# Ripper Ripper Container Configuration
 # MakeMKV Blu-ray/DVD ripper with optical drive passthrough
 
 - name: Configure ripper container
-  hosts: ct302
+  hosts: ripper
   become: true
 
   vars:
@@ -65,7 +65,7 @@
 
 # Verification tasks (run after container restart)
 - name: Verify ripper container configuration
-  hosts: ct302
+  hosts: ripper
   become: true
 
   tasks:

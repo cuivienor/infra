@@ -1,8 +1,8 @@
 ---
-# Playbook for configuring CT301 (Samba file server)
+# Playbook for configuring Samba (Samba file server)
 
-- name: Configure Samba container (CT301)
-  hosts: ct301_samba
+- name: Configure Samba container (Samba)
+  hosts: samba
   become: true
   gather_facts: true
 

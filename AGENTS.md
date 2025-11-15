@@ -24,7 +24,7 @@ ansible-playbook <playbook>.yml --syntax-check
 - **Terraform**: HCL format (2 spaces), descriptive resource names, use variables for reusable values
 - **Ansible**: YAML (2 spaces), handlers in `handlers/`, idempotent tasks, use `--check` mode for testing
 - **Bash**: Include shebang `#!/bin/bash`, set -e for error handling, quote variables "$VAR", descriptive comments
-- **Naming**: Snake_case for files/vars, descriptive (e.g., `ct300-backup.tf`, `ripper-new.yml`)
+- **Naming**: Snake_case for files/vars, descriptive (e.g., `backup.tf`, `ripper.yml`)
 - **Paths**: Absolute paths in scripts, relative to repo root in docs (`ansible/roles/...`)
 - **Security**: Encrypt secrets with Ansible Vault, never commit `.vault_pass`, `terraform.tfvars`, `*.tfstate`
 - **Git commits**: Format `<type>: <description>` (types: feat, fix, docs, refactor, chore)
@@ -33,5 +33,5 @@ ansible-playbook <playbook>.yml --syntax-check
 
 - Scripts run as `media` user (UID 1000)
 - Remote execution: `ssh root@homelab "command"` (commands run on client, not Proxmox host)
-- Test first: Use CTID 199 for testing before touching production containers (CT300-305)
+- Test first: Use CTID 199 for testing before touching production containers (backup/samba/ripper/analyzer/transcoder/jellyfin)
 - Documentation: Guides in `docs/guides/`, reference in `docs/reference/`, plans in `docs/plans/`
