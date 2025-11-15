@@ -490,7 +490,7 @@ ssh root@homelab "journalctl -u snapraid-sync.service -n 50"
 
 ## Related Documentation
 
-- **IaC Management**: `docs/reference/homelab-iac-strategy.md`
+- **IaC Management**: `docs/reference/current-state.md`
 - **Storage Overview**: `docs/reference/current-state.md`
 - **Disk Upgrade Plan**: `docs/plans/ideas/disk-upgrade-recovery-simulation.md`
 - **Ansible Role**: `ansible/roles/proxmox_storage/`

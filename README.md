@@ -30,7 +30,7 @@ cd terraform && terraform plan
 cd ansible && ansible-playbook site.yml
 ```
 
-See **[IaC Strategy](docs/reference/homelab-iac-strategy.md)** for complete details.
+See **[Current State](docs/reference/current-state.md)** for complete details.
 
 ### Media Pipeline
 
@@ -48,7 +48,7 @@ sudo -u media scripts/media/production/organize-and-remux-movie.sh
 sudo -u media scripts/media/production/organize-and-remux-tv.sh
 ```
 
-See **[Media Pipeline Guide](docs/guides/media-pipeline-v2.md)** for workflow details.
+See workflow guides in `docs/guides/ripping-workflow-*.md` for details.
 
 ## Container Inventory
 
@@ -74,9 +74,9 @@ For IPs and container IDs, see [Current State](docs/reference/current-state.md).
 - **[Media Pipeline Quick Reference](docs/reference/media-pipeline-quick-reference.md)** - Common commands
 
 ### How-To Guides
-- [Media Pipeline v2 Workflow](docs/guides/media-pipeline-v2.md)
+- [Movie Ripping Workflow](docs/guides/ripping-workflow-movie.md)
+- [TV Show Ripping Workflow](docs/guides/ripping-workflow-tv.md)
 - [Jellyfin Setup](docs/guides/jellyfin-setup.md)
-- [Transcoding Container Setup](docs/guides/transcoding-container-setup.md)
 - [Backup Setup](docs/guides/backup-setup.md)
 
 ## Planning Workflow

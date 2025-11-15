@@ -324,7 +324,6 @@ sshpass -p '0bi4amAni' ssh cuiv@192.168.1.1 \
 
 **Related:**
 - [IP Allocation Strategy](../reference/ip-allocation-strategy.md) - What IPs to use for what
-- [Network Topology](../reference/network-topology-detailed.md) - Current network state
 - [Fix VLAN Isolation](fix-vlan-isolation-manual.md) - Critical security fix
 
 ---

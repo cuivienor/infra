@@ -180,13 +180,13 @@ ansible-playbook ansible/playbooks/site.yml --tags jellyfin --check
 
 **Guides** (how-to):
 - `docs/guides/jellyfin-setup.md` - Jellyfin configuration
-- `docs/guides/ripper-deployment.md` - Ripper setup
+- `docs/guides/ripping-workflow-movie.md` - Movie ripping workflow
+- `docs/guides/ripping-workflow-tv.md` - TV show ripping workflow
 - `docs/guides/backup-setup.md` - Backup configuration
-- `docs/guides/media-pipeline-v2.md` - Pipeline workflow
 
 **Planning**:
 - `docs/plans/storage-iac-plan.md` - Storage IaC strategy
-- `docs/reference/homelab-iac-strategy.md` - Overall IaC approach
+- `docs/plans/network-iac-implementation-plan.md` - Network IaC plan
 
 ---
 

@@ -295,7 +295,7 @@ All criteria met ✅:
 ## References
 
 - **Implementation Plan**: `docs/plans/samba-container-implementation-plan.md`
-- **IaC Strategy**: `docs/reference/homelab-iac-strategy.md`
+- **IaC Strategy**: `docs/reference/current-state.md`
 - **Backup Container**: `terraform/backup.tf` (similar pattern)
 
 ---
