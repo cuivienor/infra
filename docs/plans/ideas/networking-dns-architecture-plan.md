@@ -11,7 +11,7 @@
 ### What You Have Now
 
 **Network**: UniFi/Ubiquiti router (VLAN-capable)
-**Proxmox Host**: 192.168.1.56/24
+**Proxmox Host**: 192.168.1.100/24
 **DNS**: None (using router or ISP defaults)
 **Remote Access**: None
 **Reverse Proxy**: None
@@ -19,14 +19,14 @@
 
 ### Active Containers
 
-| CTID | Name | IP | Purpose |
-|------|------|-----|---------|
-| 300 | backup | 192.168.1.58 | Backups (Restic) |
-| 301 | samba | 192.168.1.82 | File shares |
-| 302 | ripper | 192.168.1.70 | Blu-ray ripping |
-| 303 | analyzer | 192.168.1.73 | Media analysis |
-| 304 | transcoder | 192.168.1.77 | FFmpeg transcoding |
-| 305 | jellyfin | 192.168.1.85 | Media server |
+| CTID | Hostname | IP | Purpose |
+|------|----------|-----|---------|
+| 300 | backup | 192.168.1.120 | Backups (Restic) |
+| 301 | samba | 192.168.1.121 | File shares |
+| 302 | ripper | 192.168.1.131 | Blu-ray ripping |
+| 303 | analyzer | 192.168.1.133 | Media analysis |
+| 304 | transcoder | 192.168.1.132 | FFmpeg transcoding |
+| 305 | jellyfin | 192.168.1.130 | Media server |
 
 ### Available Infrastructure
 
@@ -119,7 +119,7 @@ UniFi Router
 DNS Flow:
   Local Client → AdGuard (Pi) → Unbound → Root DNS
                       ↓
-              jellyfin.paniland.com = 192.168.1.85
+              jellyfin.paniland.com = 192.168.1.130
 
   Tailscale Client → AdGuard (via Tailscale) → Unbound
                       ↓
@@ -141,8 +141,8 @@ DNS Flow:
 
 **DNS Records Example** (LAN):
 ```
-jellyfin.paniland.com  → 192.168.1.85
-samba.paniland.com     → 192.168.1.82
+jellyfin.paniland.com  → 192.168.1.130
+samba.paniland.com     → 192.168.1.121
 ```
 
 **DNS Records Example** (Tailscale):
@@ -161,11 +161,11 @@ samba.paniland.com     → 100.64.0.82
 }
 
 jellyfin.paniland.com {
-    reverse_proxy 192.168.1.85:8096
+    reverse_proxy 192.168.1.130:8096
 }
 
 samba.paniland.com {
-    reverse_proxy 192.168.1.82:80
+    reverse_proxy 192.168.1.121:80
 }
 
 homeassistant.paniland.com {
