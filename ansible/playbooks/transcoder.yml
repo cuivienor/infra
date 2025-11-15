@@ -1,9 +1,9 @@
 ---
-# CT304 Transcoder Container Configuration
+# Transcoder Transcoder Container Configuration
 # FFmpeg with Intel Arc A380 GPU hardware acceleration
 
 - name: Configure transcoder container
-  hosts: ct304
+  hosts: transcoder
   become: true
 
   vars:
@@ -97,7 +97,7 @@
 
 # Verification tasks (run after container restart)
 - name: Verify transcoder container configuration
-  hosts: ct304
+  hosts: transcoder
   become: true
 
   tasks:

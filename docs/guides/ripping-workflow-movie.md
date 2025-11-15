@@ -5,14 +5,14 @@ This guide walks you through the complete workflow for ripping, transcoding, and
 ## Prerequisites
 
 - Movie disc inserted in optical drive
-- SSH access to homelab containers (ct302, ct303, ct304)
-- Containers running (ripper, analyzer, transcoder)
+- SSH access to homelab containers (ripper, analyzer, transcoder)
+- Containers running
 
 ## Workflow Overview
 
 ```
-1. Rip (CT302)  →  2. Remux (CT303)  →  3. Transcode (CT304)  →  4. FileBot (CT303)
-   1-ripped/           2-remuxed/           3-transcoded/           library/movies/
+1. Rip (ripper)  →  2. Remux (analyzer)  →  3. Transcode (transcoder)  →  4. FileBot (analyzer)
+   1-ripped/           2-remuxed/              3-transcoded/                 library/movies/
 ```
 
 **For multi-disc movies**: Rip all discs first → Merge into single folder → Continue workflow
@@ -21,12 +21,12 @@ See [Multi-Disc Movies](#multi-disc-movies) section below for detailed instructi
 
 ---
 
-## Step 1: Rip the Disc (CT302 - ripper)
+## Step 1: Rip the Disc (ripper)
 
 **Insert the Blu-ray/DVD disc**, then:
 
 ```bash
-ssh ct302
+ssh ripper
 cd ~/scripts
 
 ./run-bg.sh ./rip-disc.sh movie "Movie Title Here"
@@ -46,12 +46,12 @@ tail -f ~/logs/rip-disc_*.log
 
 ---
 
-## Step 2: Analyze & Remux (CT303 - analyzer)
+## Step 2: Analyze & Remux (analyzer)
 
 > **💡 Tip**: Your extras will have generic names (`title_t01.mkv`) for now. This is fine! You can organize and rename them properly in Jellyfin after FileBot completes. See [Extras Labeling Workflow](extras-labeling-workflow.md) for details.
 
 ```bash
-ssh ct303
+ssh analyzer
 cd ~/scripts
 
 # Find the exact folder name (with date stamp)
@@ -75,10 +75,10 @@ tail -f ~/logs/organize-and-remux-movie_*.log
 
 ---
 
-## Step 3: Transcode (CT304 - transcoder)
+## Step 3: Transcode (transcoder)
 
 ```bash
-ssh ct304
+ssh transcoder
 cd ~/scripts
 
 # Note: folder name has NO date stamp now
@@ -99,10 +99,10 @@ tail -f ~/logs/transcode-queue_*.log
 
 ---
 
-## Step 4: Organize with FileBot (CT303 - analyzer)
+## Step 4: Organize with FileBot (analyzer)
 
 ```bash
-ssh ct303
+ssh analyzer
 cd ~/scripts
 
 ./filebot-process.sh /mnt/staging/3-transcoded/movies/Movie_Title_Here/
@@ -169,7 +169,7 @@ Some movies span **multiple discs** (e.g., extended editions, director's cuts wi
 
 1. **Rip Disc 1** with a descriptive name:
    ```bash
-   ssh ct302
+   ssh ripper
    cd ~/scripts
    ./run-bg.sh ./rip-disc.sh movie "How to Train Your Dragon 3 Disc 1"
    ```
@@ -182,7 +182,7 @@ Some movies span **multiple discs** (e.g., extended editions, director's cuts wi
 
 3. **Merge the ripped files** into a single directory:
    ```bash
-   ssh ct303  # Switch to analyzer container
+   ssh analyzer  # Switch to analyzer container
 
    # List the ripped directories
    ls /mnt/staging/1-ripped/movies/ | grep -i "dragon"

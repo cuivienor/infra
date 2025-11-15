@@ -8,10 +8,9 @@ This repository contains Infrastructure as Code, automation scripts, and documen
 ├── terraform/          # Infrastructure as Code (Proxmox containers)
 ├── ansible/           # Configuration management (playbooks & roles)
 ├── scripts/           # Operational scripts
-│   ├── media/        # Media pipeline automation (production/archive/migration/utilities)
+│   ├── media/        # Media pipeline automation (production/utilities)
 │   └── utils/        # General utilities
 ├── docs/             # Formal documentation
-│   ├── containers/   # Container operational docs
 │   ├── guides/       # How-to guides
 │   ├── reference/    # Quick references and strategy docs
 │   ├── plans/        # Planning workflow (ideas → active → archive)
@@ -55,14 +54,16 @@ See **[Media Pipeline Guide](docs/guides/media-pipeline-v2.md)** for workflow de
 
 All containers use Terraform for provisioning and Ansible for configuration:
 
-| CTID | Name | IP (DHCP) | Purpose | Docs |
-|------|------|-----------|---------|------|
-| 300 | backup | 192.168.1.58 | Restic backup server | [ct300-backup.md](docs/containers/ct300-backup.md) |
-| 301 | samba | 192.168.1.82 | Samba file server | [ct301-samba.md](docs/containers/ct301-samba.md) |
-| 302 | ripper | 192.168.1.70 | MakeMKV Blu-ray ripper | [ct302-ripper.md](docs/containers/ct302-ripper.md) |
-| 303 | analyzer | 192.168.1.73 | Media analyzer | [ct303-analyzer.md](docs/containers/ct303-analyzer.md) |
-| 304 | transcoder | DHCP | FFmpeg transcoder (Intel GPU) | [ct304-transcoder.md](docs/containers/ct304-transcoder.md) |
-| 305 | jellyfin | 192.168.1.85 | Media server (dual GPU) | [ct305-jellyfin.md](docs/containers/ct305-jellyfin.md) |
+| Hostname | Purpose | Playbook |
+|----------|---------|----------|
+| backup | Restic backup + Backrest UI | `ansible/playbooks/backup.yml` |
+| samba | Samba file server | `ansible/playbooks/samba.yml` |
+| ripper | MakeMKV Blu-ray ripper | `ansible/playbooks/ripper.yml` |
+| analyzer | Media analysis & FileBot | `ansible/playbooks/analyzer.yml` |
+| transcoder | FFmpeg transcoder (Intel GPU) | `ansible/playbooks/transcoder.yml` |
+| jellyfin | Media server (dual GPU) | `ansible/playbooks/jellyfin.yml` |
+
+For IPs and container IDs, see [Current State](docs/reference/current-state.md).
 
 ## Key Documentation
 
@@ -101,11 +102,12 @@ See [docs/plans/README.md](docs/plans/README.md) for details on the planning pro
 ```
 /mnt/storage/media/
 ├── staging/          # Media pipeline staging
-│   ├── 0-raw/       # Raw MakeMKV output
-│   ├── 1-ripped/    # Transcoded files
-│   └── 2-ready/     # Organized, ready to move
-├── movies/          # Movie library
-├── tv/              # TV show library
+│   ├── 1-ripped/    # Raw MakeMKV output
+│   ├── 2-remuxed/   # Remuxed files
+│   └── 3-transcoded/ # Transcoded files
+├── library/          # Final organized media
+│   ├── movies/
+│   └── tv/
 ├── audiobooks/
 └── e-books/
 ```
@@ -114,13 +116,16 @@ See [docs/plans/README.md](docs/plans/README.md) for details on the planning pro
 
 ```bash
 # Proxmox host
-ssh homelab        # 192.168.1.56
+ssh homelab
 
-# Container access (from host)
+# Direct container SSH (via hostname)
+ssh ripper
+ssh analyzer
+ssh transcoder
+ssh jellyfin
+
+# Container access (from Proxmox host)
 pct enter <CTID>
-
-# Direct SSH (if enabled)
-ssh root@<container-ip>
 ```
 
 ## Git Workflow

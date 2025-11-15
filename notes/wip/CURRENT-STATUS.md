@@ -22,10 +22,10 @@
 ### 1. Test Production Workflows ⏳
 
 **Need to verify**:
-- [ ] CT305 (Jellyfin) - Add media libraries and test playback
-- [ ] CT302 (Ripper) - Rip a test disc end-to-end
-- [ ] CT304 (Transcoder) - Verify GPU transcoding working
-- [ ] CT303 (Analyzer) - Test FileBot organization
+- [ ] jellyfin - Add media libraries and test playback
+- [ ] ripper - Rip a test disc end-to-end
+- [ ] transcoder - Verify GPU transcoding working
+- [ ] analyzer - Test FileBot organization
 - [ ] End-to-end pipeline: Rip → Transcode → Organize → Serve
 
 **Status**: Infrastructure ready, workflows not yet tested
@@ -180,7 +180,7 @@ ansible-playbook ansible/playbooks/site.yml --tags jellyfin --check
 
 **Guides** (how-to):
 - `docs/guides/jellyfin-setup.md` - Jellyfin configuration
-- `docs/guides/ct302-ripper-deployment.md` - Ripper setup
+- `docs/guides/ripper-deployment.md` - Ripper setup
 - `docs/guides/backup-setup.md` - Backup configuration
 - `docs/guides/media-pipeline-v2.md` - Pipeline workflow
 

@@ -101,7 +101,7 @@ Visit https://www.blu-ray.com/ and search for your movie to see what extras are 
 
 **Alternative**: Preview via SSH
 ```bash
-ssh root@192.168.1.73  # ct303 analyzer
+ssh analyzer
 cd /mnt/storage/media/library/movies/Movie\ Name\ \(Year\)/extras/
 
 # Quick preview
@@ -113,7 +113,7 @@ mpv --start=0 --length=30 title_t01.mkv
 Once you know what each extra is, organize them:
 
 ```bash
-ssh root@192.168.1.73  # ct303 analyzer
+ssh analyzer
 cd /mnt/storage/media/library/movies/Movie\ Name\ \(Year\)/
 
 # Create Jellyfin standard folders (note the spaces!)
@@ -186,8 +186,8 @@ If you prefer to rename extras **before transcoding** to have meaningful names t
 ### Quick Pre-Transcode Workflow
 
 ```bash
-# After ripping on ct302
-ssh ct303  # Switch to analyzer
+# After ripping on ripper
+ssh analyzer
 cd /mnt/staging/1-ripped/movies/Movie_Name_*/
 
 # Preview each extra

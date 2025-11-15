@@ -5,26 +5,26 @@ This guide walks you through the complete workflow for ripping, transcoding, and
 ## Prerequisites
 
 - TV show disc inserted in optical drive
-- SSH access to homelab containers (ct302, ct303, ct304)
-- Containers running (ripper, analyzer, transcoder)
+- SSH access to homelab containers (ripper, analyzer, transcoder)
+- Containers running
 
 ## Workflow Overview
 
 ```
-1. Rip (CT302)  →  2. Remux (CT303)  →  3. Transcode (CT304)  →  4. FileBot (CT303)
-   1-ripped/           2-remuxed/           3-transcoded/           library/tv/
+1. Rip (ripper)  →  2. Remux (analyzer)  →  3. Transcode (transcoder)  →  4. FileBot (analyzer)
+   1-ripped/           2-remuxed/              3-transcoded/                 library/tv/
 ```
 
 **Important:** TV shows require processing ALL discs of a season before transcoding/FileBot steps.
 
 ---
 
-## Step 1: Rip All Discs (CT302 - ripper)
+## Step 1: Rip All Discs (ripper)
 
 **For each disc in the season:**
 
 ```bash
-ssh ct302
+ssh ripper
 cd ~/scripts
 
 # Replace with actual show name and disc info
@@ -50,12 +50,12 @@ tail -f ~/logs/rip-disc_*.log
 
 ---
 
-## Step 2: Organize & Remux Each Disc (CT303 - analyzer)
+## Step 2: Organize & Remux Each Disc (analyzer)
 
 **For each ripped disc:**
 
 ```bash
-ssh ct303
+ssh analyzer
 cd ~/scripts
 
 # Find ripped folders for your show
@@ -79,12 +79,12 @@ tail -f ~/logs/organize-and-remux-tv_*.log
 
 ---
 
-## Step 3: Transcode Entire Season (CT304 - transcoder)
+## Step 3: Transcode Entire Season (transcoder)
 
 **After ALL discs are remuxed:**
 
 ```bash
-ssh ct304
+ssh transcoder
 cd ~/scripts
 
 # Transcode the entire season folder
@@ -105,10 +105,10 @@ tail -f ~/logs/transcode-queue_*.log
 
 ---
 
-## Step 4: Organize with FileBot (CT303 - analyzer)
+## Step 4: Organize with FileBot (analyzer)
 
 ```bash
-ssh ct303
+ssh analyzer
 cd ~/scripts
 
 ./filebot-process.sh /mnt/staging/3-transcoded/tv/Show_Name/Season_01/
@@ -145,7 +145,7 @@ cd ~/scripts
 
 ### Rip all discs first:
 ```bash
-ssh ct302
+ssh ripper
 cd ~/scripts
 ./run-bg.sh ./rip-disc.sh show "Avatar The Last Airbender" "S02 Disc1"
 # Wait for completion, swap disc
@@ -156,7 +156,7 @@ cd ~/scripts
 
 ### Remux all discs:
 ```bash
-ssh ct303
+ssh analyzer
 cd ~/scripts
 ./run-bg.sh ./organize-and-remux-tv.sh /mnt/staging/1-ripped/tv/Avatar_The_Last_Airbender/S02_Disc1_2025-11-13/
 ./run-bg.sh ./organize-and-remux-tv.sh /mnt/staging/1-ripped/tv/Avatar_The_Last_Airbender/S02_Disc2_2025-11-13/
@@ -167,14 +167,14 @@ All episodes now in: `/mnt/staging/2-remuxed/tv/Avatar_The_Last_Airbender/Season
 
 ### Transcode once for entire season:
 ```bash
-ssh ct304
+ssh transcoder
 cd ~/scripts
 ./run-bg.sh ./transcode-queue.sh /mnt/staging/2-remuxed/tv/Avatar_The_Last_Airbender/Season_02/ 20 software --auto
 ```
 
 ### FileBot once for entire season:
 ```bash
-ssh ct303
+ssh analyzer
 cd ~/scripts
 ./filebot-process.sh /mnt/staging/3-transcoded/tv/Avatar_The_Last_Airbender/Season_02/
 ```

@@ -1,9 +1,9 @@
 ---
-# CT303 Analyzer Container Configuration
+# Analyzer Analyzer Container Configuration
 # Media analysis, remuxing, and organization tools
 
 - name: Configure analyzer container
-  hosts: ct303
+  hosts: analyzer
   become: true
 
   vars:
@@ -30,7 +30,7 @@
 
 # Verification tasks
 - name: Verify analyzer container configuration
-  hosts: ct303
+  hosts: analyzer
   become: true
 
   tasks:
@@ -103,7 +103,7 @@
       ansible.builtin.debug:
         msg:
           - "==================================="
-          - "CT303 Analyzer Verification Summary"
+          - "Analyzer Analyzer Verification Summary"
           - "==================================="
           - "Staging mount: {{ 'OK' if staging_mount.stat.exists else 'FAIL' }}"
           - "Scripts deployed: {{ script_checks.results | selectattr('stat.exists') | list | length }}/6"
