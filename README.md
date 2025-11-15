@@ -69,7 +69,6 @@ For IPs and container IDs, see [Current State](docs/reference/current-state.md).
 
 ### Essential Reads
 - **[AGENTS.md](AGENTS.md)** - AI context and conventions for working with this repo
-- **[Hardware Inventory](docs/reference/hardware-inventory.md)** - Complete system specs
 - **[Current State](docs/reference/current-state.md)** - System configuration details
 - **[Media Pipeline Quick Reference](docs/reference/media-pipeline-quick-reference.md)** - Common commands
 

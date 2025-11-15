@@ -40,6 +40,13 @@ repos:
         args: [-c, .yamllint.yaml]
         exclude: ^ansible/vars/.*secrets.*\.yml$
 
+  # Markdown link checker
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: v3.14.1
+    hooks:
+      - id: markdown-link-check
+        args: [--quiet, --config, .markdown-link-check.json]
+
 # Note: ansible-lint is intentionally NOT included in pre-commit
 # because it's slow and requires vault password. Run it manually:
 #   cd ansible && ansible-lint playbooks/

@@ -6,7 +6,6 @@ Active planning documents for homelab infrastructure improvements.
 
 ### 🔴 Critical - Do Now
 
-1. **[Fix VLAN Isolation (Manual)](../guides/fix-vlan-isolation-manual.md)**
    - **Issue:** IoT and Guest WiFi on wrong VLANs
    - **Impact:** No network isolation, security risk
    - **Time:** 20 minutes
@@ -81,5 +80,4 @@ Active planning documents for homelab infrastructure improvements.
 
 ## Related Documentation
 
-- [Current Network State](../reference/network-topology-detailed.md)
 - [Hardware Versions](../reference/unifi-hardware-versions.md)
