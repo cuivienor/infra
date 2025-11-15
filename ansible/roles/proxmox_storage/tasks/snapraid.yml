@@ -19,8 +19,8 @@
     group: root
 
 - name: Create SnapRAID runner script
-  ansible.builtin.copy:
-    src: snapraid-runner.sh
+  ansible.builtin.template:
+    src: snapraid-runner.sh.j2
     dest: /usr/local/bin/snapraid-runner.sh
     mode: '0755'
     owner: root

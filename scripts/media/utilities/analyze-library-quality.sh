@@ -1,5 +1,6 @@
 #!/bin/bash
 #
+# shellcheck disable=SC2155,SC2034
 # analyze-library-quality.sh
 # Analyzes video quality of media files to help determine what to keep vs re-rip
 #
@@ -62,50 +63,50 @@ file_count=0
 find "$MEDIA_DIR" -type f \( -name "*.mkv" -o -name "*.mp4" -o -name "*.avi" -o -name "*.m4v" \) | grep -vi "sample" | sort | while read -r file; do
     file_count=$((file_count + 1))
     echo -e "${BLUE}[$file_count] Analyzing:${NC} $(basename "$file")"
-    
+
     # Get file size in GB
     size_bytes=$(stat -c%s "$file" 2>/dev/null || echo "0")
     size_gb=$(echo "scale=2; $size_bytes / 1073741824" | bc)
-    
+
     # Use mediainfo to extract information
     video_codec=$(mediainfo --Output="Video;%Format%" "$file" | head -1)
     width=$(mediainfo --Output="Video;%Width%" "$file" | head -1)
     height=$(mediainfo --Output="Video;%Height%" "$file" | head -1)
     video_bitrate=$(mediainfo --Output="Video;%BitRate%" "$file" | head -1)
-    
+
     audio_codec=$(mediainfo --Output="Audio;%Format%" "$file" | head -1)
     audio_channels=$(mediainfo --Output="Audio;%Channels%" "$file" | head -1)
     audio_bitrate=$(mediainfo --Output="Audio;%BitRate%" "$file" | head -1)
-    
+
     duration_sec=$(mediainfo --Output="General;%Duration%" "$file" | head -1)
-    
+
     # Calculate duration in minutes
     if [ -n "$duration_sec" ] && [ "$duration_sec" != "" ]; then
         duration_min=$(echo "scale=1; $duration_sec / 60000" | bc)
     else
         duration_min="N/A"
     fi
-    
+
     # Convert bitrates to kbps
     if [ -n "$video_bitrate" ] && [ "$video_bitrate" != "" ]; then
         video_bitrate_kbps=$(echo "scale=0; $video_bitrate / 1000" | bc)
     else
         video_bitrate_kbps="N/A"
     fi
-    
+
     if [ -n "$audio_bitrate" ] && [ "$audio_bitrate" != "" ]; then
         audio_bitrate_kbps=$(echo "scale=0; $audio_bitrate / 1000" | bc)
     else
         audio_bitrate_kbps="N/A"
     fi
-    
+
     # Determine resolution
     resolution="${width}x${height}"
-    
+
     # Quality scoring and recommendations
     quality_score=0
     notes=""
-    
+
     # Check video codec (modern codecs score higher)
     case "$video_codec" in
         HEVC|"AVC")
@@ -126,7 +127,7 @@ find "$MEDIA_DIR" -type f \( -name "*.mkv" -o -name "*.mp4" -o -name "*.avi" -o 
             notes="${notes}⚠ Unknown/old codec ($video_codec). "
             ;;
     esac
-    
+
     # Check resolution
     if [ -n "$height" ] && [ "$height" != "" ]; then
         if [ "$height" -ge 2160 ]; then
@@ -145,7 +146,7 @@ find "$MEDIA_DIR" -type f \( -name "*.mkv" -o -name "*.mp4" -o -name "*.avi" -o 
             notes="${notes}⚠⚠ Very low resolution. "
         fi
     fi
-    
+
     # Check video bitrate quality (most important for home theater!)
     if [ "$video_bitrate_kbps" != "N/A" ]; then
         if [ "$height" -ge 1080 ]; then
@@ -176,7 +177,7 @@ find "$MEDIA_DIR" -type f \( -name "*.mkv" -o -name "*.mp4" -o -name "*.avi" -o 
             fi
         fi
     fi
-    
+
     # Check audio quality (important for home theater!)
     case "$audio_codec" in
         DTS|"DTS-HD"|TrueHD|"FLAC"|"PCM")
@@ -199,7 +200,7 @@ find "$MEDIA_DIR" -type f \( -name "*.mkv" -o -name "*.mp4" -o -name "*.avi" -o 
             notes="${notes}Unknown audio ($audio_codec). "
             ;;
     esac
-    
+
     # Bonus for surround sound
     if [ -n "$audio_channels" ] && [ "$audio_channels" != "" ]; then
         if [ "$audio_channels" -ge 6 ]; then
@@ -209,7 +210,7 @@ find "$MEDIA_DIR" -type f \( -name "*.mkv" -o -name "*.mp4" -o -name "*.avi" -o 
             notes="${notes}${audio_channels}ch audio. "
         fi
     fi
-    
+
     # Final recommendation based on score
     if [ $quality_score -ge 75 ]; then
         recommendation="KEEP"
@@ -224,10 +225,10 @@ find "$MEDIA_DIR" -type f \( -name "*.mkv" -o -name "*.mp4" -o -name "*.avi" -o 
         recommendation="RE-RIP"
         notes="${notes}✗ RE-RIP - Buy and rip from Blu-ray"
     fi
-    
+
     # Write to CSV
     echo "\"$file\",$size_gb,$duration_min,$video_codec,$resolution,$video_bitrate_kbps,$audio_codec,$audio_channels,$audio_bitrate_kbps,$quality_score,$recommendation,\"$notes\"" >> "$OUTPUT_FILE"
-    
+
     # Print summary
     echo "  Size: ${size_gb}GB | Res: $resolution | Video: $video_codec @ ${video_bitrate_kbps}kbps"
     echo "  Audio: $audio_codec ${audio_channels}ch @ ${audio_bitrate_kbps}kbps"

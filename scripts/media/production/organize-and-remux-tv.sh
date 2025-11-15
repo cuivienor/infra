@@ -1,5 +1,6 @@
 #!/bin/bash
 # organize-and-remux-tv.sh - Process TV shows from 1-ripped to 2-remuxed
+# shellcheck disable=SC2155,SC2034
 #
 # Usage: ./organize-and-remux-tv.sh "Show Name" 01 [starting_episode]
 #
@@ -75,7 +76,9 @@ if [ ${#disc_folders[@]} -eq 0 ]; then
     echo ""
     echo "Looking for pattern: $DISC_PATTERN"
     echo "Available folders:"
-    ls -1 "$BASE_DIR" | grep "^S" || echo "  (none)"
+    for dir in "$BASE_DIR"/S*/; do
+        [ -d "$dir" ] && basename "$dir"
+    done || echo "  (none)"
     exit 1
 fi
 
@@ -120,47 +123,47 @@ remux_filter_tracks() {
     local input_file="$1"
     local output_file="$2"
     local temp_file="${output_file%.*}_temp.mkv"
-    
+
     # Get JSON data
     local json_data=$(mkvmerge -J "$input_file" 2>/dev/null)
     if [ $? -ne 0 ] || [ -z "$json_data" ]; then
         echo "  ✗ Error reading file"
         return 1
     fi
-    
+
     # Get track IDs for English and Bulgarian
     local audio_tracks=$(echo "$json_data" | jq -r '
-        [.tracks[] | 
-         select(.type == "audio" and (.properties.language == "eng" or .properties.language == "bul")) | 
+        [.tracks[] |
+         select(.type == "audio" and (.properties.language == "eng" or .properties.language == "bul")) |
          .id] | join(",")')
-    
+
     local subtitle_tracks=$(echo "$json_data" | jq -r '
-        [.tracks[] | 
-         select(.type == "subtitles" and (.properties.language == "eng" or .properties.language == "bul")) | 
+        [.tracks[] |
+         select(.type == "subtitles" and (.properties.language == "eng" or .properties.language == "bul")) |
          .id] | join(",")')
-    
+
     # Build mkvmerge command
     local cmd="mkvmerge -o \"$temp_file\""
-    
+
     if [ -n "$audio_tracks" ] && [ "$audio_tracks" != "" ]; then
         cmd="$cmd --audio-tracks $audio_tracks"
     else
         cmd="$cmd --no-audio"
     fi
-    
+
     if [ -n "$subtitle_tracks" ] && [ "$subtitle_tracks" != "" ]; then
         cmd="$cmd --subtitle-tracks $subtitle_tracks"
     else
         cmd="$cmd --no-subtitles"
     fi
-    
+
     cmd="$cmd \"$input_file\""
-    
+
     # Execute (capture output for debugging)
     local mkvmerge_output
     mkvmerge_output=$(eval $cmd 2>&1)
     local mkvmerge_exit=$?
-    
+
     if [ $mkvmerge_exit -eq 0 ] && [ -f "$temp_file" ]; then
         mv "$temp_file" "$output_file"
         return 0
@@ -184,12 +187,12 @@ declare -a extra_files
 # Scan each disc for episodes (root level) and extras (extras/ subdirectory)
 for disc_dir in "${disc_folders[@]}"; do
     disc_name=$(basename "$disc_dir")
-    
+
     # Find episodes in disc root (sorted naturally by filename)
     while IFS= read -r -d '' file; do
         episode_files+=("$file")
     done < <(find "$disc_dir" -maxdepth 1 -name "*.mkv" -type f -print0 | sort -z)
-    
+
     # Find extras in extras/ subdirectory (if it exists)
     if [ -d "$disc_dir/extras" ]; then
         while IFS= read -r -d '' file; do
@@ -229,7 +232,7 @@ for file in "${episode_files[@]}"; do
     size=$(get_size_gb "$file")
     filename=$(basename "$file")
     disc_name=$(basename "$(dirname "$file")")
-    
+
     printf "S%02dE%02d ← %-40s (%dm, %.2fG) [%s]\n" \
         "$SEASON_NUM" "$ep_num" "$filename" "$duration" "$size" "$disc_name"
     ep_num=$((ep_num + 1))
@@ -243,7 +246,7 @@ if [ $total_extras -gt 0 ]; then
         size=$(get_size_gb "$file")
         filename=$(basename "$file")
         disc_name=$(basename "$(dirname "$(dirname "$file")")")
-        
+
         printf "  %-40s (%dm, %.2fG) [%s]\n" \
             "$filename" "$duration" "$size" "$disc_name"
     done
@@ -290,7 +293,7 @@ ep_num=$START_EPISODE
 for input_file in "${episode_files[@]}"; do
     output_file=$(printf "$OUTPUT_DIR/S%02dE%02d.mkv" "$SEASON_NUM" "$ep_num")
     echo "[$((processed+failed+1))/$total_files] S${SEASON_NUM}E$(printf '%02d' $ep_num) ← $(basename "$input_file")"
-    
+
     if remux_filter_tracks "$input_file" "$output_file"; then
         processed=$((processed + 1))
     else
@@ -304,12 +307,12 @@ done
 if [ $total_extras -gt 0 ]; then
     echo ""
     echo "Processing extras..."
-    
+
     for input_file in "${extra_files[@]}"; do
         filename=$(basename "$input_file")
         output_file="$OUTPUT_DIR/extras/$filename"
         echo "[$((processed+failed+1))/$total_files] Extra ← $filename"
-        
+
         if remux_filter_tracks "$input_file" "$output_file"; then
             processed=$((processed + 1))
         else

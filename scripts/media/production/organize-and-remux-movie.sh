@@ -1,5 +1,6 @@
 #!/bin/bash
 # organize-and-remux-movie.sh - Process movies from 1-ripped to 2-remuxed
+# shellcheck disable=SC2155,SC2034
 #
 # Usage: ./organize-and-remux-movie.sh /path/to/1-ripped/movies/Movie_Name_2024-11-10/
 #
@@ -83,57 +84,57 @@ remux_filter_tracks() {
     local input_file="$1"
     local output_file="$2"
     local temp_file="${output_file%.*}_temp.mkv"
-    
+
     # Get JSON data
     local json_data=$(mkvmerge -J "$input_file" 2>/dev/null)
     if [ $? -ne 0 ] || [ -z "$json_data" ]; then
         echo "  ✗ Error: Could not read file with mkvmerge"
         return 1
     fi
-    
+
     # Get all track IDs for English and Bulgarian
     local audio_tracks=$(echo "$json_data" | jq -r '
-        [.tracks[] | 
-         select(.type == "audio" and (.properties.language == "eng" or .properties.language == "bul")) | 
+        [.tracks[] |
+         select(.type == "audio" and (.properties.language == "eng" or .properties.language == "bul")) |
          .id] | join(",")')
-    
+
     local subtitle_tracks=$(echo "$json_data" | jq -r '
-        [.tracks[] | 
-         select(.type == "subtitles" and (.properties.language == "eng" or .properties.language == "bul")) | 
+        [.tracks[] |
+         select(.type == "subtitles" and (.properties.language == "eng" or .properties.language == "bul")) |
          .id] | join(",")')
-    
+
     # Build mkvmerge command
     local cmd="mkvmerge -o \"$temp_file\""
-    
+
     # Add audio tracks
     if [ -n "$audio_tracks" ] && [ "$audio_tracks" != "" ]; then
         cmd="$cmd --audio-tracks $audio_tracks"
     else
         cmd="$cmd --no-audio"
     fi
-    
+
     # Add subtitle tracks
     if [ -n "$subtitle_tracks" ] && [ "$subtitle_tracks" != "" ]; then
         cmd="$cmd --subtitle-tracks $subtitle_tracks"
     else
         cmd="$cmd --no-subtitles"
     fi
-    
+
     cmd="$cmd \"$input_file\""
-    
+
     # Execute
     eval $cmd > /dev/null 2>&1
-    
+
     if [ $? -eq 0 ] && [ -f "$temp_file" ]; then
         # Get sizes
         local orig_size=$(stat -c%s "$input_file" 2>/dev/null || stat -f%z "$input_file" 2>/dev/null || echo "0")
         local new_size=$(stat -c%s "$temp_file" 2>/dev/null || stat -f%z "$temp_file" 2>/dev/null || echo "0")
-        
+
         if [ "$orig_size" -gt 0 ] && [ "$new_size" -gt 0 ]; then
             local saved=$((orig_size - new_size))
             local saved_mb=$((saved / 1024 / 1024))
             local percent=$((100 - (new_size * 100 / orig_size)))
-            
+
             mv "$temp_file" "$output_file"
             echo "  ✓ Saved ${saved_mb}MB (${percent}% reduction)"
             return 0
@@ -160,7 +161,7 @@ while IFS= read -r -d '' file; do
     filename=$(basename "$file")
     duration=$(get_duration "$file")
     size=$(get_size_gb "$file")
-    
+
     # Categorize: main feature = >30min AND >5GB
     if (( duration > 30 )) && (( $(echo "$size > 5" | bc -l) )); then
         main_features["$file"]="${duration}min, ${size}GB"
