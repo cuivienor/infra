@@ -24,7 +24,7 @@ LOG_FILE="$HOME/logs/${SCRIPT_NAME}_${TIMESTAMP}.log"
 # Set STAGING_BASE if not already set
 export STAGING_BASE="${STAGING_BASE:-/mnt/staging}"
 
-echo "Starting: $SCRIPT $@"
+echo "Starting: $SCRIPT $*"
 echo "Log file: $LOG_FILE"
 echo ""
 echo "To monitor progress:"

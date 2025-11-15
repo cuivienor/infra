@@ -1,5 +1,6 @@
 #!/bin/bash
 #
+# shellcheck disable=SC2155,SC2034
 # migrate-top-tier-to-library.sh
 # Migrates top-tier legacy media to library for FileBot processing
 #
@@ -35,7 +36,7 @@ migrate_file() {
     local type="$2"  # movies or tv
     local basename=$(basename "$src")
     local dest="$STAGING_DIR/$type/$basename"
-    
+
     if [ -f "$src" ]; then
         echo "  Copying: $basename"
         cp "$src" "$dest"
@@ -134,10 +135,10 @@ echo ""
 if [ -d "$LEGACY_DIR/old-downloads/Game Of Thrones S01" ]; then
     echo "  Copying Game of Thrones Season 1..."
     find "$LEGACY_DIR/old-downloads/Game Of Thrones S01" -name "*.mkv" -type f | while read -r episode; do
-        local basename=$(basename "$episode")
-        echo "    - $basename"
+        ep_basename=$(basename "$episode")
+        echo "    - $ep_basename"
         cp "$episode" "$STAGING_DIR/tv/"
-        chown media:media "$STAGING_DIR/tv/$basename"
+        chown media:media "$STAGING_DIR/tv/$ep_basename"
     done
 else
     echo "  WARNING: Game of Thrones S01 directory not found"
