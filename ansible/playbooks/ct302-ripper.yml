@@ -4,18 +4,18 @@
 
 - name: Configure ripper container
   hosts: ct302
-  become: yes
-  
+  become: true
+
   vars:
     # Enable media user creation
     media_user_enabled: true
     media_user_groups: ['cdrom']  # Add to cdrom group for optical drive access
-    
+
     # SSH key deployment
     ssh_authorized_keys_users:
       - root
       - media  # Allow direct SSH as media user
-    
+
     # Container ID for device passthrough
     container_id: 302
 
@@ -25,13 +25,13 @@
   roles:
     - role: common
       tags: ['common']
-    
+
     - role: makemkv
       tags: ['makemkv']
 
   tasks:
     - name: Deploy media scripts
-      copy:
+      ansible.builtin.copy:
         src: "{{ item.src }}"
         dest: "/home/media/scripts/{{ item.dest }}"
         owner: media
@@ -43,7 +43,7 @@
       tags: ['scripts']
 
     - name: Configure staging path environment variable
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /home/media/.bashrc
         line: 'export STAGING_BASE="/mnt/staging"'
         state: present
@@ -54,11 +54,11 @@
 # Optical drive passthrough must run on the Proxmox host
 - name: Configure optical drive passthrough
   hosts: homelab
-  become: yes
-  
+  become: true
+
   vars:
     container_id: 302
-  
+
   roles:
     - role: optical_drive_passthrough
       tags: ['optical', 'passthrough']
@@ -66,16 +66,16 @@
 # Verification tasks (run after container restart)
 - name: Verify ripper container configuration
   hosts: ct302
-  become: yes
-  
+  become: true
+
   tasks:
     - name: Wait for container to be ready after restart
-      wait_for_connection:
+      ansible.builtin.wait_for_connection:
         timeout: 60
       tags: ['verify']
 
     - name: Verify optical drive devices exist
-      stat:
+      ansible.builtin.stat:
         path: "{{ item }}"
       loop:
         - /dev/sr0
@@ -84,13 +84,13 @@
       tags: ['verify']
 
     - name: Display optical drive status
-      debug:
+      ansible.builtin.debug:
         msg: "{{ item.item }} {{ 'exists' if item.stat.exists else 'MISSING' }}"
       loop: "{{ optical_devices.results }}"
       tags: ['verify']
 
     - name: Verify MakeMKV can access optical drive
-      command: makemkvcon info disc:0
+      ansible.builtin.command: makemkvcon info disc:0
       register: makemkv_test
       failed_when: false
       changed_when: false
@@ -98,29 +98,29 @@
       tags: ['verify']
 
     - name: Display MakeMKV test result
-      debug:
+      ansible.builtin.debug:
         msg: "{{ makemkv_test.stdout_lines[0:3] }}"
       when: makemkv_test.stdout_lines is defined and makemkv_test.stdout_lines | length > 0
       tags: ['verify']
 
     - name: Verify scripts deployed
-      stat:
+      ansible.builtin.stat:
         path: /home/media/scripts/rip-disc.sh
       register: script_check
       tags: ['verify']
 
     - name: Display script deployment status
-      debug:
+      ansible.builtin.debug:
         msg: "rip-disc.sh {{ 'deployed successfully' if script_check.stat.exists else 'MISSING' }}"
       tags: ['verify']
 
     - name: Verify staging mount exists
-      stat:
+      ansible.builtin.stat:
         path: /mnt/staging/1-ripped
       register: staging_mount
       tags: ['verify']
 
     - name: Display staging mount status
-      debug:
+      ansible.builtin.debug:
         msg: "Staging directory {{ 'mounted correctly' if staging_mount.stat.exists else 'MISSING - check mount configuration' }}"
       tags: ['verify']

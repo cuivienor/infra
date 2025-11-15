@@ -9,16 +9,16 @@ resource "proxmox_virtual_environment_container" "transcoder" {
 
   # Container initialization
   started = true
-  
+
   # IMPORTANT: Privileged container required for GPU device passthrough
   unprivileged = false
 
   initialization {
     hostname = "transcoder"
-    
+
     ip_config {
       ipv4 {
-        address = "192.168.1.132/24"  # Keep existing IP from CT201
+        address = "192.168.1.132/24" # Keep existing IP from CT201
         gateway = "192.168.1.1"
       }
     }
@@ -43,7 +43,7 @@ resource "proxmox_virtual_environment_container" "transcoder" {
   # Operating system
   operating_system {
     template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
-    type            = "debian"
+    type             = "debian"
   }
 
   # Resource allocation
@@ -53,14 +53,14 @@ resource "proxmox_virtual_environment_container" "transcoder" {
   }
 
   memory {
-    dedicated = 8192  # 8GB RAM for FFmpeg operations
-    swap      = 2048  # 2GB swap
+    dedicated = 8192 # 8GB RAM for FFmpeg operations
+    swap      = 2048 # 2GB swap
   }
 
   # Disk configuration
   disk {
     datastore_id = "local-lvm"
-    size         = 20  # 20GB for OS, FFmpeg, and temp files
+    size         = 20 # 20GB for OS, FFmpeg, and temp files
   }
 
   # Mount staging directory from host (least privilege approach)
@@ -74,7 +74,7 @@ resource "proxmox_virtual_environment_container" "transcoder" {
 
   # Features
   features {
-    nesting = true  # Enable nesting for potential nested operations
+    nesting = true # Enable nesting for potential nested operations
   }
 
   # Tags

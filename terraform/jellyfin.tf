@@ -9,13 +9,13 @@ resource "proxmox_virtual_environment_container" "jellyfin" {
 
   # Container initialization
   started = true
-  
+
   # IMPORTANT: Privileged container for GPU passthrough
   unprivileged = false
 
   initialization {
     hostname = "jellyfin"
-    
+
     ip_config {
       ipv4 {
         address = "192.168.1.130/24"
@@ -43,25 +43,25 @@ resource "proxmox_virtual_environment_container" "jellyfin" {
   # Operating system
   operating_system {
     template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
-    type            = "debian"
+    type             = "debian"
   }
 
   # Resource allocation - HIGHEST PRIORITY
   # Jellyfin is the primary user-facing service
   cpu {
-    cores = 4  # Match transcoder, highest among all containers
+    cores = 4 # Match transcoder, highest among all containers
   }
 
   memory {
-    dedicated = 8192  # 8GB RAM for multiple streams + transcoding + metadata
-    swap      = 4096  # 4GB swap for burst capacity
+    dedicated = 8192 # 8GB RAM for multiple streams + transcoding + metadata
+    swap      = 4096 # 4GB swap for burst capacity
   }
 
   # Disk configuration
   # Old CT101 was 100% full at 8GB - need space for metadata, cache, thumbnails
   disk {
     datastore_id = "local-lvm"
-    size         = 32  # 32GB for Jellyfin data, metadata cache, transcoding cache
+    size         = 32 # 32GB for Jellyfin data, metadata cache, transcoding cache
   }
 
   # Mount new organized library structure (read-only recommended for safety)
@@ -80,7 +80,7 @@ resource "proxmox_virtual_environment_container" "jellyfin" {
 
   # Features
   features {
-    nesting = true  # May be needed for certain Jellyfin features
+    nesting = true # May be needed for certain Jellyfin features
   }
 
   # Tags

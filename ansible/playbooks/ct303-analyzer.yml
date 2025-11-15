@@ -4,19 +4,19 @@
 
 - name: Configure analyzer container
   hosts: ct303
-  become: yes
-  
+  become: true
+
   vars:
     # Enable media user creation
     media_user_enabled: true
     # No special groups needed for analyzer (no hardware passthrough)
     media_user_groups: []
-    
+
     # SSH key deployment
     ssh_authorized_keys_users:
       - root
       - media  # Allow direct SSH as media user
-    
+
     # Optional: Enable FileBot installation
     # Set to true if you want automated FileBot organization
     media_analyzer_install_filebot: true
@@ -24,34 +24,34 @@
   roles:
     - role: common
       tags: ['common']
-    
+
     - role: media_analyzer
       tags: ['analyzer', 'media']
 
 # Verification tasks
 - name: Verify analyzer container configuration
   hosts: ct303
-  become: yes
-  
+  become: true
+
   tasks:
     - name: Wait for container to be ready
-      wait_for_connection:
+      ansible.builtin.wait_for_connection:
         timeout: 30
       tags: ['verify']
 
     - name: Verify staging mount exists
-      stat:
+      ansible.builtin.stat:
         path: /mnt/staging/1-ripped
       register: staging_mount
       tags: ['verify']
 
     - name: Display staging mount status
-      debug:
+      ansible.builtin.debug:
         msg: "Staging directory {{ 'mounted correctly' if staging_mount.stat.exists else 'MISSING - check mount configuration' }}"
       tags: ['verify']
 
     - name: Verify scripts are deployed
-      stat:
+      ansible.builtin.stat:
         path: "/home/media/scripts/{{ item }}"
       loop:
         - analyze-media.sh
@@ -64,13 +64,13 @@
       tags: ['verify']
 
     - name: Display script deployment status
-      debug:
+      ansible.builtin.debug:
         msg: "{{ item.item }}: {{ 'OK' if item.stat.exists else 'MISSING' }}"
       loop: "{{ script_checks.results }}"
       tags: ['verify']
 
     - name: Test analyze-media.sh script
-      command: /home/media/scripts/analyze-media.sh
+      ansible.builtin.command: /home/media/scripts/analyze-media.sh
       register: script_test
       failed_when: false
       changed_when: false
@@ -78,12 +78,12 @@
       tags: ['verify']
 
     - name: Display script test result
-      debug:
+      ansible.builtin.debug:
         msg: "analyze-media.sh {{ 'works correctly' if script_test.rc == 1 else 'has issues' }}"
       tags: ['verify']
 
     - name: Verify tools are installed
-      command: "{{ item.cmd }}"
+      ansible.builtin.command: "{{ item.cmd }}"
       loop:
         - { cmd: "mkvmerge --version", name: "mkvtoolnix" }
         - { cmd: "mediainfo --version", name: "mediainfo" }
@@ -94,13 +94,13 @@
       tags: ['verify']
 
     - name: Display tool installation status
-      debug:
+      ansible.builtin.debug:
         msg: "{{ item.item.name }}: {{ 'INSTALLED' if item.rc == 0 else 'MISSING' }}"
       loop: "{{ tool_checks.results }}"
       tags: ['verify']
 
     - name: Summary of verification
-      debug:
+      ansible.builtin.debug:
         msg:
           - "==================================="
           - "CT303 Analyzer Verification Summary"

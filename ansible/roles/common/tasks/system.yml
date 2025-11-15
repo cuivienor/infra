@@ -2,11 +2,11 @@
 # System configuration tasks
 
 - name: Set timezone
-  ansible.builtin.timezone:
+  community.general.timezone:
     name: "{{ timezone }}"
 
 - name: Generate locale
-  ansible.builtin.locale_gen:
+  community.general.locale_gen:
     name: "{{ locale }}"
     state: present
   when: locale is defined
@@ -34,7 +34,7 @@
     name: "{{ inventory_hostname }}"
   when: configure_hostname | bool
   register: hostname_result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Set hostname via /etc/hostname (fallback for containers)
   ansible.builtin.copy:
@@ -53,7 +53,7 @@
     src: hosts.j2
     dest: /etc/hosts
     mode: '0644'
-    backup: yes
+    backup: true
   when: configure_hosts_file | bool
 
 # Sudo configuration
@@ -67,7 +67,7 @@
   ansible.builtin.lineinfile:
     path: /etc/sudoers.d/{{ item }}
     line: "{{ item }} ALL=(ALL) NOPASSWD: ALL"
-    create: yes
+    create: true
     mode: '0440'
     validate: 'visudo -cf %s'
   loop: "{{ sudo_users }}"
@@ -81,6 +81,6 @@
     mode: '0664'
     owner: root
     group: netdev
-    backup: yes
+    backup: true
   when: static_ip is defined
   notify: Restart dhcpcd

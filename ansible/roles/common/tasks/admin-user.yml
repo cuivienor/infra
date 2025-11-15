@@ -6,8 +6,8 @@
     name: "{{ admin_user }}"
     shell: /bin/bash
     groups: "{{ admin_user_groups }}"
-    append: yes
-    create_home: yes
+    append: true
+    create_home: true
     state: present
   when: admin_user is defined
 

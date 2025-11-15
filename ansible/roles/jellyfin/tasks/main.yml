@@ -2,7 +2,7 @@
 # Jellyfin installation and configuration
 
 - name: Install prerequisites
-  apt:
+  ansible.builtin.apt:
     name:
       - apt-transport-https
       - ca-certificates
@@ -12,57 +12,57 @@
       - intel-gpu-tools
       - vainfo
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Add Jellyfin GPG key
-  apt_key:
+  ansible.builtin.apt_key:
     url: "https://repo.jellyfin.org/{{ ansible_distribution | lower }}/jellyfin_team.gpg.key"
     state: present
     keyring: /etc/apt/keyrings/jellyfin.gpg
 
 - name: Add Jellyfin repository
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: "deb [signed-by=/etc/apt/keyrings/jellyfin.gpg] https://repo.jellyfin.org/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
     state: present
     filename: jellyfin
 
 - name: Install Jellyfin and FFmpeg
-  apt:
+  ansible.builtin.apt:
     name:
       - jellyfin-server
       - jellyfin-web
       - jellyfin-ffmpeg7
     state: "{{ 'latest' if jellyfin_version == 'latest' else 'present' }}"
-    update_cache: yes
+    update_cache: true
 
 - name: Ensure media group exists
-  group:
+  ansible.builtin.group:
     name: "{{ media_user }}"
     gid: "{{ media_gid }}"
     state: present
 
 - name: Ensure media user exists with correct groups
-  user:
+  ansible.builtin.user:
     name: "{{ media_user }}"
     uid: "{{ media_uid }}"
     group: "{{ media_user }}"
     groups:
       - video
       - render
-    append: yes
+    append: true
     shell: /bin/bash
-    create_home: yes
+    create_home: true
 
 - name: Add jellyfin user to video and render groups
-  user:
+  ansible.builtin.user:
     name: jellyfin
     groups:
       - video
       - render
-    append: yes
+    append: true
 
 - name: Create Jellyfin directories
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     owner: jellyfin
@@ -74,23 +74,23 @@
     - "{{ jellyfin_cache_dir }}"
 
 - name: Deploy hardware acceleration configuration
-  template:
+  ansible.builtin.template:
     src: encoding.xml.j2
     dest: "{{ jellyfin_config_dir }}/encoding.xml"
     owner: jellyfin
     group: jellyfin
     mode: '0644'
-  notify: restart jellyfin
+  notify: Restart jellyfin
   when: enable_hardware_acceleration
 
 - name: Enable and start Jellyfin service
-  systemd:
+  ansible.builtin.systemd:
     name: jellyfin
-    enabled: yes
+    enabled: true
     state: started
 
 - name: Display Jellyfin access information
-  debug:
+  ansible.builtin.debug:
     msg:
       - "Jellyfin is now running!"
       - "Web UI: http://{{ ansible_default_ipv4.address }}:{{ jellyfin_http_port }}"

@@ -42,5 +42,5 @@ while true; do
     echo ""
     
     echo "Refreshing every ${INTERVAL} seconds... (Dashboard: http://${JELLYFIN_IP}:8096)"
-    sleep ${INTERVAL}
+    sleep "${INTERVAL}"
 done

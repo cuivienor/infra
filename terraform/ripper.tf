@@ -9,13 +9,13 @@ resource "proxmox_virtual_environment_container" "ripper" {
 
   # Container initialization
   started = true
-  
+
   # IMPORTANT: Privileged container required for device passthrough
   unprivileged = false
 
   initialization {
     hostname = "ripper"
-    
+
     ip_config {
       ipv4 {
         address = "192.168.1.131/24"
@@ -43,7 +43,7 @@ resource "proxmox_virtual_environment_container" "ripper" {
   # Operating system
   operating_system {
     template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
-    type            = "debian"
+    type             = "debian"
   }
 
   # Resource allocation
@@ -52,14 +52,14 @@ resource "proxmox_virtual_environment_container" "ripper" {
   }
 
   memory {
-    dedicated = 4096  # 4GB RAM (MakeMKV ripping operations)
-    swap      = 2048  # 2GB swap
+    dedicated = 4096 # 4GB RAM (MakeMKV ripping operations)
+    swap      = 2048 # 2GB swap
   }
 
   # Disk configuration
   disk {
     datastore_id = "local-lvm"
-    size         = 8  # 8GB for OS and MakeMKV binaries
+    size         = 8 # 8GB for OS and MakeMKV binaries
   }
 
   # Mount only staging directory from host (least privilege)
@@ -72,7 +72,7 @@ resource "proxmox_virtual_environment_container" "ripper" {
 
   # Features
   features {
-    nesting = true  # Enable nesting for potential nested operations
+    nesting = true # Enable nesting for potential nested operations
   }
 
   # Tags

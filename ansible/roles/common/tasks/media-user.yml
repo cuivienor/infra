@@ -2,24 +2,24 @@
 # Media user configuration tasks
 
 - name: Create media group
-  group:
+  ansible.builtin.group:
     name: "{{ media_user_name }}"
     gid: "{{ media_user_gid }}"
     state: present
 
 - name: Create media user
-  user:
+  ansible.builtin.user:
     name: "{{ media_user_name }}"
     uid: "{{ media_user_uid }}"
     group: "{{ media_user_name }}"
     groups: "{{ media_user_groups }}"
     home: "{{ media_user_home }}"
     shell: "{{ media_user_shell }}"
-    create_home: yes
+    create_home: true
     state: present
 
 - name: Ensure media user home directory ownership
-  file:
+  ansible.builtin.file:
     path: "{{ media_user_home }}"
     state: directory
     owner: "{{ media_user_name }}"
@@ -27,7 +27,7 @@
     mode: '0755'
 
 - name: Create scripts directory for media user
-  file:
+  ansible.builtin.file:
     path: "{{ media_user_home }}/scripts"
     state: directory
     owner: "{{ media_user_name }}"

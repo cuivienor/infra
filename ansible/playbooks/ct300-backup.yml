@@ -5,28 +5,28 @@
 - name: Configure CT300 backup container
   hosts: ct300-backup
   become: true
-  
+
   vars_files:
     - ../vars/backup_secrets.yml
-  
+
   vars:
     # Override backup user to root (simpler for container)
     backup_user: "root"
     backup_group: "root"
-  
+
   pre_tasks:
     - name: Wait for container to be ready
       ansible.builtin.wait_for_connection:
         timeout: 60
-    
+
     - name: Gather facts
       ansible.builtin.setup:
-    
+
     - name: Update apt cache
       ansible.builtin.apt:
-        update_cache: yes
+        update_cache: true
         cache_valid_time: 3600
-    
+
     - name: Install required packages
       ansible.builtin.apt:
         name:
@@ -36,11 +36,11 @@
           - bzip2
           - jq
         state: present
-  
+
   roles:
     - role: restic_backup
       tags: ['backup', 'restic']
-  
+
   post_tasks:
     - name: Display backup container summary
       ansible.builtin.debug:

@@ -18,7 +18,7 @@ echo "  5. Remove old users (pi, media)"
 echo ""
 echo "⚠️  WARNING: This is destructive!"
 echo ""
-read -p "Continue? (yes/no): " confirm
+read -rp "Continue? (yes/no): " confirm
 if [ "$confirm" != "yes" ]; then
     echo "Aborted."
     exit 1
@@ -75,7 +75,7 @@ deploy_ssh_key "$PI4_IP" "$PI4_USER"
 echo ""
 echo "✅ SSH keys deployed to both Pis"
 echo ""
-read -p "Press Enter to continue to cleanup phase..."
+read -rp "Press Enter to continue to cleanup phase..."
 
 echo ""
 echo "=========================================="
@@ -90,7 +90,7 @@ cleanup_pi() {
     echo ""
     echo "→ Cleaning up $name ($ip)"
     
-    ssh cuiv@$ip << 'ENDSSH'
+    ssh cuiv@"$ip" << 'ENDSSH'
 set -e
 
 echo "  Stopping services..."
@@ -128,7 +128,7 @@ cleanup_pi "$PI4_IP" "Pi 4"
 echo ""
 echo "✅ Cleanup complete on both Pis"
 echo ""
-read -p "Press Enter to continue to OS upgrade..."
+read -rp "Press Enter to continue to OS upgrade..."
 
 echo ""
 echo "=========================================="
@@ -144,7 +144,7 @@ upgrade_pi() {
     echo "→ Upgrading $name ($ip) to Debian 12"
     echo "  This will take 15-30 minutes..."
     
-    ssh cuiv@$ip << 'ENDSSH'
+    ssh cuiv@"$ip" << 'ENDSSH'
 set -e
 
 echo "  Updating Bullseye packages..."
@@ -169,14 +169,14 @@ echo "  ✅ Upgrade complete, reboot required"
 ENDSSH
 
     echo "  Rebooting $name..."
-    ssh cuiv@$ip "sudo reboot" || true
+    ssh cuiv@"$ip" "sudo reboot" || true
     
     echo "  Waiting for reboot..."
     sleep 30
     
     # Wait for Pi to come back
     for i in {1..30}; do
-        if ssh -o ConnectTimeout=5 cuiv@$ip "echo ok" &>/dev/null; then
+        if ssh -o ConnectTimeout=5 cuiv@"$ip" "echo ok" &>/dev/null; then
             echo "  ✅ $name is back online"
             break
         fi
@@ -187,13 +187,13 @@ ENDSSH
 
 upgrade_pi "$PI_HOLE_IP" "Pi-hole (Pi 3)"
 echo ""
-read -p "First Pi upgraded. Press Enter to upgrade second Pi..."
+read -rp "First Pi upgraded. Press Enter to upgrade second Pi..."
 upgrade_pi "$PI4_IP" "Pi 4"
 
 echo ""
 echo "✅ OS upgrades complete on both Pis"
 echo ""
-read -p "Press Enter to continue to final cleanup..."
+read -rp "Press Enter to continue to final cleanup..."
 
 echo ""
 echo "=========================================="
@@ -208,7 +208,7 @@ final_cleanup() {
     echo ""
     echo "→ Final cleanup on $name ($ip)"
     
-    ssh cuiv@$ip << 'ENDSSH'
+    ssh cuiv@"$ip" << 'ENDSSH'
 set -e
 
 echo "  Installing essential packages..."
@@ -247,7 +247,7 @@ verify_pi() {
     echo ""
     echo "→ Verifying $name ($ip)"
     
-    ssh cuiv@$ip << 'ENDSSH'
+    ssh cuiv@"$ip" << 'ENDSSH'
 echo "  OS Version: $(grep PRETTY_NAME /etc/os-release | cut -d'"' -f2)"
 echo "  Kernel: $(uname -r)"
 echo "  Current User: $(whoami)"

@@ -1,0 +1,42 @@
+# yamllint configuration for homelab-notes
+# Relaxed rules for infrastructure-as-code YAML
+
+extends: default
+
+rules:
+  # Allow longer lines for infrastructure configs
+  line-length:
+    max: 160
+    level: warning
+
+  # Allow both inline and block comments
+  comments:
+    min-spaces-from-content: 1
+
+  # Truthy values: allow standard YAML booleans only
+  truthy:
+    allowed-values: ['true', 'false']
+    check-keys: false
+
+  # Be lenient with document start markers
+  document-start: disable
+
+  # Allow empty values for Ansible defaults
+  empty-values:
+    forbid-in-block-mappings: false
+    forbid-in-flow-mappings: false
+
+  # Indentation rules (Ansible standard)
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Braces and brackets - be lenient
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1

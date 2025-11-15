@@ -3,15 +3,15 @@
 
 - name: Test Raspberry Pi connectivity
   hosts: raspberry_pis
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
 
   tasks:
     - name: Ping test
-      ping:
+      ansible.builtin.ping:
 
     - name: Display current OS information
-      debug:
+      ansible.builtin.debug:
         msg: |
           Hostname: {{ ansible_hostname }}
           OS: {{ ansible_distribution }} {{ ansible_distribution_version }} ({{ ansible_distribution_release }})
@@ -23,29 +23,29 @@
           Model: {{ pi_model }}
 
     - name: Check disk space
-      shell: df -h / | tail -1
+      ansible.builtin.shell: df -h / | tail -1
       register: disk_space
       changed_when: false
 
     - name: Display disk space
-      debug:
+      ansible.builtin.debug:
         var: disk_space.stdout
 
     - name: Check uptime
-      shell: uptime -p
+      ansible.builtin.shell: uptime -p
       register: uptime_output
       changed_when: false
 
     - name: Display uptime
-      debug:
+      ansible.builtin.debug:
         msg: "Uptime: {{ uptime_output.stdout }}"
 
     - name: Check temperature
-      shell: vcgencmd measure_temp
+      ansible.builtin.shell: vcgencmd measure_temp
       register: temp_output
       changed_when: false
       failed_when: false
 
     - name: Display temperature
-      debug:
+      ansible.builtin.debug:
         msg: "{{ temp_output.stdout if temp_output.rc == 0 else 'Temperature check not available' }}"

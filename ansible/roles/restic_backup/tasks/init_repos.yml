@@ -21,7 +21,7 @@
   args:
     executable: /bin/bash
   loop: "{{ repo_status.results }}"
-  when: 
+  when:
     - item.item is defined
     - item.item.enabled | default(false)
     - "'NOT_INITIALIZED' in item.stdout"

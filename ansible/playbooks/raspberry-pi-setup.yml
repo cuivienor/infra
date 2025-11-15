@@ -1,6 +1,6 @@
 ---
 # Raspberry Pi Base Setup
-# 
+#
 # This playbook configures a FRESH Raspberry Pi with standard settings.
 # Use this when:
 # - Setting up a brand new Pi
@@ -16,13 +16,13 @@
 
 - name: Configure Raspberry Pi Base System
   hosts: raspberry_pis
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
 
   vars:
     # Standard user configuration
     standard_user: cuiv
-    
+
     # Essential packages
     base_packages:
       - vim
@@ -38,15 +38,15 @@
       - openssh-server
       - python3
       - python3-pip
-    
+
     # Timezone
     system_timezone: America/Los_Angeles  # Adjust as needed
 
   tasks:
     # === System Information ===
-    
+
     - name: Display Pi information
-      debug:
+      ansible.builtin.debug:
         msg: |
           Configuring: {{ inventory_hostname }}
           Model: {{ pi_model }}
@@ -55,76 +55,76 @@
           IP: {{ ansible_default_ipv4.address }}
 
     # === System Updates ===
-    
+
     - name: Update apt cache
-      apt:
-        update_cache: yes
+      ansible.builtin.apt:
+        update_cache: true
         cache_valid_time: 3600
 
     - name: Upgrade all packages
-      apt:
+      ansible.builtin.apt:
         upgrade: full
-        autoremove: yes
-        autoclean: yes
+        autoremove: true
+        autoclean: true
       register: upgrade_result
       changed_when: upgrade_result.changed
 
     # === Essential Packages ===
-    
+
     - name: Install base packages
-      apt:
+      ansible.builtin.apt:
         name: "{{ base_packages }}"
         state: present
 
     # === User Configuration ===
-    
+
     - name: Ensure cuiv user exists
-      user:
+      ansible.builtin.user:
         name: "{{ standard_user }}"
         shell: /bin/bash
-        create_home: yes
+        create_home: true
         groups: sudo
-        append: yes
+        append: true
 
     - name: Ensure cuiv has passwordless sudo
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/sudoers.d/cuiv
         line: 'cuiv ALL=(ALL) NOPASSWD: ALL'
-        create: yes
+        create: true
         mode: '0440'
         validate: 'visudo -cf %s'
 
     - name: Deploy SSH key for cuiv
-      authorized_key:
+      ansible.posix.authorized_key:
         user: "{{ standard_user }}"
         state: present
-        key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_ed25519.pub') }}"
+        key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_ed25519.pub') }}"
 
     # === System Configuration ===
-    
+
     - name: Set timezone
       community.general.timezone:
         name: "{{ system_timezone }}"
 
     - name: Set hostname
-      hostname:
+      ansible.builtin.hostname:
         name: "{{ inventory_hostname }}"
 
     - name: Update /etc/hosts with hostname
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/hosts
         regexp: '^127\.0\.1\.1'
         line: "127.0.1.1       {{ inventory_hostname }}"
 
     # === Disable WiFi/Bluetooth ===
-    
+
     - name: Check if config.txt exists
-      stat:
+      ansible.builtin.stat:
         path: /boot/firmware/config.txt
       register: config_txt
 
     - name: Disable WiFi and Bluetooth
-      blockinfile:
+      ansible.builtin.blockinfile:
         path: /boot/firmware/config.txt
         block: |
           # Disable WiFi and Bluetooth (Ethernet only)
@@ -135,18 +135,18 @@
       notify: reboot required
 
     - name: Disable WiFi services
-      systemd:
+      ansible.builtin.systemd:
         name: "{{ item }}"
-        enabled: no
+        enabled: false
         state: stopped
       loop:
         - wpa_supplicant
       failed_when: false
 
     # === SSH Configuration ===
-    
+
     - name: Harden SSH configuration
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "{{ item.regexp }}"
         line: "{{ item.line }}"
@@ -154,32 +154,32 @@
         - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
         - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
         - { regexp: '^#?PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
-      notify: restart ssh
+      notify: Restart ssh
 
     # === Cleanup ===
-    
+
     - name: Remove unnecessary packages
-      apt:
-        autoremove: yes
-        autoclean: yes
-        purge: yes
+      ansible.builtin.apt:
+        autoremove: true
+        autoclean: true
+        purge: true
 
     - name: Clean old journal logs
-      shell: journalctl --vacuum-time=7d
+      ansible.builtin.shell: journalctl --vacuum-time=7d
       changed_when: false
 
     # === Verification ===
-    
+
     - name: Verify cuiv user
-      command: id cuiv
+      ansible.builtin.command: id cuiv
       register: user_check
       changed_when: false
 
     - name: Display setup summary
-      debug:
+      ansible.builtin.debug:
         msg: |
           ✅ {{ inventory_hostname }} configuration complete
-          
+
           User: {{ standard_user }}
           SSH: Key-based authentication only
           Sudo: Passwordless for cuiv
@@ -187,11 +187,11 @@
           Packages: {{ base_packages | length }} essential packages installed
 
   handlers:
-    - name: restart ssh
-      systemd:
+    - name: Restart ssh
+      ansible.builtin.systemd:
         name: ssh
         state: restarted
 
-    - name: reboot required
-      debug:
+    - name: Reboot required
+      ansible.builtin.debug:
         msg: "Reboot required for wireless disable to take effect"

@@ -56,5 +56,5 @@ variable "dns_servers" {
 variable "dns_domain" {
   description = "DNS search domain"
   type        = string
-  default     = " "  # Empty space to match Proxmox API behavior
+  default     = " " # Empty space to match Proxmox API behavior
 }

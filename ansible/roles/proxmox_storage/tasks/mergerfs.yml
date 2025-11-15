@@ -2,25 +2,25 @@
 # Configure MergerFS pool
 
 - name: Verify mergerfs is installed
-  command: which mergerfs
+  ansible.builtin.command: which mergerfs
   register: mergerfs_bin
   failed_when: mergerfs_bin.rc != 0
   changed_when: false
 
 - name: Create mergerfs mount point
-  file:
+  ansible.builtin.file:
     path: "{{ mergerfs_pool_path }}"
     state: directory
     mode: '0755'
 
 - name: Check if mergerfs is in fstab
-  command: grep -F "{{ mergerfs_pool_path }}" /etc/fstab
+  ansible.builtin.command: grep -F "{{ mergerfs_pool_path }}" /etc/fstab
   register: mergerfs_fstab_check
   failed_when: false
   changed_when: false
 
 - name: Add mergerfs entry to fstab
-  mount:
+  ansible.posix.mount:
     path: "{{ mergerfs_pool_path }}"
     src: "{{ mergerfs_source_dirs }}"
     fstype: fuse.mergerfs
@@ -29,7 +29,7 @@
   when: mergerfs_fstab_check.rc != 0
 
 - name: Ensure mergerfs is mounted
-  mount:
+  ansible.posix.mount:
     path: "{{ mergerfs_pool_path }}"
     src: "{{ mergerfs_source_dirs }}"
     fstype: fuse.mergerfs
@@ -37,7 +37,7 @@
     state: mounted
 
 - name: Verify mergerfs is mounted
-  command: mountpoint -q {{ mergerfs_pool_path }}
+  ansible.builtin.command: mountpoint -q {{ mergerfs_pool_path }}
   register: mergerfs_mounted
   failed_when: mergerfs_mounted.rc != 0
   changed_when: false

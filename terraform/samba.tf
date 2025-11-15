@@ -12,7 +12,7 @@ resource "proxmox_virtual_environment_container" "samba" {
 
   initialization {
     hostname = "samba"
-    
+
     ip_config {
       ipv4 {
         address = "192.168.1.121/24"
@@ -40,7 +40,7 @@ resource "proxmox_virtual_environment_container" "samba" {
   # Operating system
   operating_system {
     template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
-    type            = "debian"
+    type             = "debian"
   }
 
   # Privileged container (required for mount points)
@@ -52,14 +52,14 @@ resource "proxmox_virtual_environment_container" "samba" {
   }
 
   memory {
-    dedicated = 1024  # 1GB RAM
-    swap      = 512   # 512MB swap
+    dedicated = 1024 # 1GB RAM
+    swap      = 512  # 512MB swap
   }
 
   # Disk configuration
   disk {
     datastore_id = "local-lvm"
-    size         = 8  # 8GB system disk
+    size         = 8 # 8GB system disk
   }
 
   # Mount /mnt/storage from host (read-write for file sharing)
@@ -71,7 +71,7 @@ resource "proxmox_virtual_environment_container" "samba" {
 
   # Features
   features {
-    nesting = false  # Not needed for Samba
+    nesting = false # Not needed for Samba
   }
 
   # Tags

@@ -1,12 +1,12 @@
 ---
 - name: Configure Proxmox Host Network
   hosts: proxmox_hosts
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
 
   pre_tasks:
     - name: Display current network info
-      debug:
+      ansible.builtin.debug:
         msg: |
           Current Proxmox Host Network:
           - Hostname: {{ inventory_hostname }}
@@ -15,20 +15,20 @@
           - Gateway: {{ ansible_default_ipv4.gateway }}
 
     - name: Confirm IP change
-      pause:
+      ansible.builtin.pause:
         prompt: |
-          
+
           ⚠️  This will change the Proxmox host IP address!
-          
+
           Current IP: {{ ansible_default_ipv4.address }}
           New IP: {{ proxmox_host_ip | default('192.168.1.100') }}
-          
+
           After applying:
           1. SSH connection will be lost
           2. Update ansible/inventory/hosts.yml with new IP
           3. Reconnect: ssh root@{{ proxmox_host_ip | default('192.168.1.100') }}
           4. Remove DHCP reservation from UniFi
-          
+
           Press ENTER to continue or Ctrl+C to abort
       when: ansible_default_ipv4.address != (proxmox_host_ip | default('192.168.1.100')).split('/')[0]
 
@@ -37,25 +37,25 @@
 
   post_tasks:
     - name: Display new network configuration
-      debug:
+      ansible.builtin.debug:
         msg: |
           ===== Network Configuration Applied =====
-          
+
           New IP: {{ proxmox_host_ip }}
           Gateway: {{ proxmox_host_gateway }}
           Bridge: {{ proxmox_bridge_name }}
-          
+
           Next Steps:
           1. Update ansible/inventory/hosts.yml:
              ansible_host: {{ proxmox_host_ip.split('/')[0] }}
-          
+
           2. Remove DHCP reservation from UniFi Controller
-          
+
           3. Test connectivity:
              ssh root@{{ proxmox_host_ip.split('/')[0] }}
              ping {{ proxmox_host_ip.split('/')[0] }}
-          
+
           4. Verify containers can reach gateway:
              ssh root@{{ proxmox_host_ip.split('/')[0] }} "pct exec 300 -- ping -c 2 1.1.1.1"
-          
+
           =========================================

@@ -5,19 +5,19 @@
 - name: Configure all homelab infrastructure
   hosts: all
   become: true
-  
+
   pre_tasks:
     - name: Wait for connection
       ansible.builtin.wait_for_connection:
         timeout: 60
-    
+
     - name: Gather facts
       ansible.builtin.setup:
-  
+
   roles:
     - role: common
       tags: ['common', 'base']
-  
+
   post_tasks:
     - name: Display completion message
       ansible.builtin.debug:
@@ -35,7 +35,7 @@
 - name: Configure Proxmox host
   hosts: proxmox_host
   become: true
-  
+
   tasks:
     - name: Proxmox-specific tasks placeholder
       ansible.builtin.debug:
@@ -45,7 +45,7 @@
 - name: Configure backup containers
   hosts: backup_containers
   become: true
-  
+
   tasks:
     - name: Backup container placeholder
       ansible.builtin.debug:

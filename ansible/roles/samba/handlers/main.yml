@@ -1,11 +1,11 @@
 ---
 # Samba service handlers
 
-- name: restart samba
-  systemd:
+- name: Restart samba
+  ansible.builtin.systemd:
     name: "{{ item }}"
     state: restarted
   loop:
     - smbd
     - nmbd
-  listen: restart samba
+  listen: Restart samba

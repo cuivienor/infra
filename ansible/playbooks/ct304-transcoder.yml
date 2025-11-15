@@ -4,17 +4,17 @@
 
 - name: Configure transcoder container
   hosts: ct304
-  become: yes
-  
+  become: true
+
   vars:
     # Enable media user creation
     media_user_enabled: true
     media_user_groups: ['video', 'render']  # For GPU access
-    
+
     # SSH key deployment (only root initially, media added after user creation)
     ssh_authorized_keys_users:
       - root
-    
+
     # Container ID for device passthrough
     container_id: 304
 
@@ -24,25 +24,25 @@
 
   tasks:
     - name: Deploy SSH keys for media user
-      ansible.builtin.authorized_key:
+      ansible.posix.authorized_key:
         user: media
         key: "{{ lookup('file', '../files/ssh-keys/laptop.pub') }}"
         state: present
       tags: ['ssh-keys']
 
     - name: Install FFmpeg and VA-API packages
-      apt:
+      ansible.builtin.apt:
         name:
           - ffmpeg
           - vainfo
           - intel-media-va-driver
           - mesa-va-drivers
         state: present
-        update_cache: yes
+        update_cache: true
       tags: ['ffmpeg']
 
     - name: Create scripts directory for media user
-      file:
+      ansible.builtin.file:
         path: /home/media/scripts
         state: directory
         owner: media
@@ -51,7 +51,7 @@
       tags: ['scripts']
 
     - name: Deploy transcode scripts
-      copy:
+      ansible.builtin.copy:
         src: "{{ item.src }}"
         dest: "/home/media/scripts/{{ item.dest }}"
         owner: media
@@ -63,7 +63,7 @@
       tags: ['scripts']
 
     - name: Configure staging path environment variable
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /home/media/.bashrc
         line: 'export STAGING_BASE="/mnt/staging"'
         state: present
@@ -72,7 +72,7 @@
       tags: ['scripts']
 
     - name: Add Intel GPU environment variables for VA-API
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /home/media/.bashrc
         line: "{{ item }}"
         state: present
@@ -86,11 +86,11 @@
 # GPU passthrough must run on the Proxmox host
 - name: Configure Intel GPU passthrough
   hosts: homelab
-  become: yes
-  
+  become: true
+
   vars:
     container_id: 304
-  
+
   roles:
     - role: intel_gpu_passthrough
       tags: ['gpu', 'passthrough']
@@ -98,16 +98,16 @@
 # Verification tasks (run after container restart)
 - name: Verify transcoder container configuration
   hosts: ct304
-  become: yes
-  
+  become: true
+
   tasks:
     - name: Wait for container to be ready after restart
-      wait_for_connection:
+      ansible.builtin.wait_for_connection:
         timeout: 60
       tags: ['verify']
 
     - name: Verify GPU devices exist
-      stat:
+      ansible.builtin.stat:
         path: "{{ item }}"
       loop:
         - /dev/dri/card1
@@ -116,24 +116,24 @@
       tags: ['verify']
 
     - name: Display GPU device status
-      debug:
+      ansible.builtin.debug:
         msg: "{{ item.item }} {{ 'exists' if item.stat.exists else 'MISSING' }}"
       loop: "{{ gpu_devices.results }}"
       tags: ['verify']
 
     - name: Check media user GPU group membership
-      command: groups media
+      ansible.builtin.command: groups media
       register: media_groups
       changed_when: false
       tags: ['verify']
 
     - name: Display media user groups
-      debug:
+      ansible.builtin.debug:
         msg: "{{ media_groups.stdout }}"
       tags: ['verify']
 
     - name: Test VA-API access
-      command: vainfo --display drm --device /dev/dri/renderD128
+      ansible.builtin.command: vainfo --display drm --device /dev/dri/renderD128
       register: vainfo_test
       failed_when: false
       changed_when: false
@@ -141,13 +141,13 @@
       tags: ['verify']
 
     - name: Display VA-API test result
-      debug:
+      ansible.builtin.debug:
         msg: "{{ vainfo_test.stdout_lines[0:10] }}"
       when: vainfo_test.stdout_lines is defined and vainfo_test.stdout_lines | length > 0
       tags: ['verify']
 
     - name: Verify FFmpeg can detect hardware encoders
-      shell: ffmpeg -hide_banner -encoders 2>&1 | grep -E "(h264_vaapi|hevc_vaapi)"
+      ansible.builtin.shell: ffmpeg -hide_banner -encoders 2>&1 | grep -E "(h264_vaapi|hevc_vaapi)"
       register: ffmpeg_encoders
       failed_when: false
       changed_when: false
@@ -155,29 +155,29 @@
       tags: ['verify']
 
     - name: Display FFmpeg hardware encoder status
-      debug:
+      ansible.builtin.debug:
         msg: "{{ ffmpeg_encoders.stdout_lines }}"
       when: ffmpeg_encoders.stdout_lines is defined and ffmpeg_encoders.stdout_lines | length > 0
       tags: ['verify']
 
     - name: Verify scripts deployed
-      stat:
+      ansible.builtin.stat:
         path: /home/media/scripts/transcode-queue.sh
       register: script_check
       tags: ['verify']
 
     - name: Display script deployment status
-      debug:
+      ansible.builtin.debug:
         msg: "transcode-queue.sh {{ 'deployed successfully' if script_check.stat.exists else 'MISSING' }}"
       tags: ['verify']
 
     - name: Verify staging mount exists
-      stat:
+      ansible.builtin.stat:
         path: /mnt/staging/2-remuxed
       register: staging_mount
       tags: ['verify']
 
     - name: Display staging mount status
-      debug:
+      ansible.builtin.debug:
         msg: "Staging directory {{ 'mounted correctly' if staging_mount.stat.exists else 'MISSING - check mount configuration' }}"
       tags: ['verify']
