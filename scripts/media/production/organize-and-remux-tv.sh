@@ -23,7 +23,6 @@ set -e
 SHOW_NAME="$1"
 SEASON_NUM="$2"
 START_EPISODE="${3:-1}"  # Optional starting episode number
-LANGUAGES="eng,bul"  # English and Bulgarian only
 
 if [ -z "$SHOW_NAME" ] || [ -z "$SEASON_NUM" ]; then
     echo "Usage: $0 \"Show Name\" <season-number> [starting-episode]"
