@@ -18,7 +18,7 @@ resource "proxmox_virtual_environment_container" "jellyfin" {
     
     ip_config {
       ipv4 {
-        address = "192.168.1.85/24"
+        address = "192.168.1.130/24"
         gateway = "192.168.1.1"
       }
     }

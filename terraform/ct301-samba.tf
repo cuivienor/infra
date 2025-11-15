@@ -15,7 +15,7 @@ resource "proxmox_virtual_environment_container" "samba" {
     
     ip_config {
       ipv4 {
-        address = "192.168.1.82/24"
+        address = "192.168.1.121/24"
         gateway = "192.168.1.1"
       }
     }
