@@ -27,6 +27,9 @@
     tailscale_advertise_exit_node: true
     tailscale_tags:
       - "tag:subnet-router"
+    # Pi4 IS the DNS server, so it must not use Tailscale DNS
+    # (avoids circular dependency when MagicDNS is disabled)
+    tailscale_accept_dns: false
 
   pre_tasks:
     - name: Display configuration
