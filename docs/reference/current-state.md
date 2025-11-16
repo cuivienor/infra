@@ -1,6 +1,6 @@
 # Homelab Current State
 
-**Last Updated**: 2025-11-15  
+**Last Updated**: 2025-11-16  
 **Status**: ✅ Full Infrastructure as Code - All containers managed by Terraform + Ansible  
 **Remote Access**: ✅ Tailscale subnet routing with redundant routers
 
@@ -349,9 +349,12 @@ Services: Jellyfin, Proxmox, etc.
 ### DNS Configuration
 
 **Global DNS**: Pi4 AdGuard (192.168.1.102)  
+**MagicDNS**: Disabled (tailnet-wide)  
 **Split DNS Routes**:
 - `*.paniland.com` → 192.168.1.102
 - `*.home.arpa` → 192.168.1.102
+
+**Important**: Pi4 router has `--accept-dns=false` to prevent circular DNS dependency. Since Pi4 IS the DNS server, it cannot use Tailscale's DNS resolver (100.100.100.100) which would point back to itself.
 
 **Result**: Same URLs work locally and remotely:
 - `https://jellyfin.paniland.com` → Caddy proxy → Jellyfin
@@ -690,7 +693,7 @@ ansible-playbook playbooks/site.yml --tags <tag> --check  # dry-run
 
 ---
 
-**Document Status**: ✅ Current as of 2025-11-15  
+**Document Status**: ✅ Current as of 2025-11-16  
 **IaC Status**: ✅ 100% Infrastructure as Code  
 **Remote Access**: ✅ Tailscale subnet routing operational  
 **Maintenance**: Update when infrastructure changes occur
