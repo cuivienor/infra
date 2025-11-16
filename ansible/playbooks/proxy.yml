@@ -40,7 +40,7 @@
         upstream: "192.168.1.130:8096"
       - domain: "backrest.paniland.com"
         upstream: "192.168.1.120:9898"
-      - domain: "adguard.paniland.com"
+      - domain: "dns.paniland.com"
         upstream: "192.168.1.102:3000"
       - domain: "proxmox.paniland.com"
         upstream: "192.168.1.100:8006"
