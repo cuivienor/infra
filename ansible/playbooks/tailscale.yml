@@ -24,6 +24,7 @@
     tailscale_hostname: "pi4-router"
     tailscale_advertise_routes:
       - "192.168.1.0/24"
+    tailscale_advertise_exit_node: true
     tailscale_tags:
       - "tag:subnet-router"
 
@@ -31,10 +32,11 @@
     - name: Display configuration
       debug:
         msg: |
-          Configuring Pi4 as PRIMARY subnet router
+          Configuring Pi4 as PRIMARY subnet router + exit node
 
           Host: {{ inventory_hostname }} ({{ ansible_host }})
           Routes: {{ tailscale_advertise_routes | join(', ') }}
+          Exit Node: {{ tailscale_advertise_exit_node }}
           Tags: {{ tailscale_tags | join(', ') }}
 
           This will enable remote access to your entire homelab!
