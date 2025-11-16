@@ -1,7 +1,8 @@
 # Networking, DNS & Routing Architecture Plan
 
 **Created**: 2025-11-13
-**Status**: Planning
+**Updated**: 2025-11-15
+**Status**: Planning - Ready for Implementation
 **Purpose**: Build resilient DNS and networking infrastructure for seamless local and remote homelab access
 
 ---
@@ -11,26 +12,29 @@
 ### What You Have Now
 
 **Network**: UniFi/Ubiquiti router (VLAN-capable)
-**Proxmox Host**: 192.168.1.100/24
-**DNS**: None (using router or ISP defaults)
+**Proxmox Host**: 192.168.1.100/24 (Ansible-managed)
+**DNS**: None (using 1.1.1.1, 8.8.8.8 via Terraform defaults)
 **Remote Access**: None
 **Reverse Proxy**: None
 **Domain**: paniland.com (owned, not configured)
 
-### Active Containers
+### Active Containers (All IaC-Managed)
 
-| CTID | Hostname | IP | Purpose |
-|------|----------|-----|---------|
-| 300 | backup | 192.168.1.120 | Backups (Restic) |
-| 301 | samba | 192.168.1.121 | File shares |
-| 302 | ripper | 192.168.1.131 | Blu-ray ripping |
-| 303 | analyzer | 192.168.1.133 | Media analysis |
-| 304 | transcoder | 192.168.1.132 | FFmpeg transcoding |
-| 305 | jellyfin | 192.168.1.130 | Media server |
+| CTID | Hostname | IP | Cores | RAM | Purpose |
+|------|----------|-----|-------|-----|---------|
+| 300 | backup | 192.168.1.120 | 2 | 2 GB | Restic + Backrest |
+| 301 | samba | 192.168.1.121 | 1 | 1 GB | File shares |
+| 302 | ripper | 192.168.1.131 | 2 | 4 GB | MakeMKV ripping |
+| 303 | analyzer | 192.168.1.133 | 2 | 4 GB | FileBot + media tools |
+| 304 | transcoder | 192.168.1.132 | 4 | 8 GB | FFmpeg GPU encoding |
+| 305 | jellyfin | 192.168.1.130 | 4 | 8 GB | Media server (dual GPU) |
+
+**Note**: All containers use Terraform variable `var.dns_servers` (default: `["1.1.1.1", "8.8.8.8"]`)
 
 ### Available Infrastructure
 
-- **Raspberry Pi(s)**: Available for dedicated services
+- **Raspberry Pi 3B**: 192.168.1.101 (pi3)
+- **Raspberry Pi 4B**: 192.168.1.102 (pi4) - **Selected for primary DNS**
 - **UniFi Router**: Can handle VLANs and firewall rules
 - **Domain**: paniland.com ready to configure
 
@@ -99,17 +103,18 @@ Internet
    │
    ├─→ Tailscale (remote clients)
    │        ↓
-   │   Subnet Router (exposes 192.168.1.0/24)
+   │   Subnet Router (on Proxmox host, exposes 192.168.1.0/24)
    │        ↓
    ↓        ↓
-UniFi Router
+UniFi Router (192.168.1.1)
    │
    ├─→ VLAN 1: Management/Trusted (192.168.1.0/24)
-   │    ├─ Raspberry Pi: Primary DNS (AdGuard + Unbound)
-   │    ├─ Proxmox Host (192.168.1.56)
-   │    │  ├─ CT306: Backup DNS (AdGuard + Unbound + Tailscale)
-   │    │  ├─ CT307: Caddy Reverse Proxy
-   │    │  └─ CT300-305: Existing containers
+   │    ├─ Proxmox Host (192.168.1.100) - Tailscale subnet router
+   │    │  ├─ CT300-305: Media pipeline containers (.120-.133)
+   │    │  ├─ CT310: Backup DNS (AdGuard + Unbound)
+   │    │  └─ CT311: Caddy Reverse Proxy
+   │    ├─ Pi4 (192.168.1.102): Primary DNS (AdGuard + Unbound)
+   │    ├─ Pi3 (192.168.1.101): Available for other services
    │    └─ Workstations
    │
    ├─→ VLAN 10: Servers (192.168.10.0/24) [future]
@@ -117,13 +122,13 @@ UniFi Router
    └─→ VLAN 30: Guests (192.168.30.0/24) [future]
 
 DNS Flow:
-  Local Client → AdGuard (Pi) → Unbound → Root DNS
+  Local Client → AdGuard (Pi4 .102) → Unbound → Root DNS
                       ↓
               jellyfin.paniland.com = 192.168.1.130
 
   Tailscale Client → AdGuard (via Tailscale) → Unbound
                       ↓
-              jellyfin.paniland.com = 100.64.x.x
+              jellyfin.paniland.com = 100.64.x.x (Tailscale IP)
 ```
 
 ### Split-Horizon DNS Implementation
@@ -131,29 +136,35 @@ DNS Flow:
 **Concept**: Same DNS server returns different IPs based on query source
 
 **Method 1: Dual AdGuard Instances** (Recommended)
-- Primary AdGuard on Pi (port 53) → Returns LAN IPs for LAN clients
-- Secondary AdGuard on Pi (port 5353) → Returns Tailscale IPs for Tailscale clients
-- Tailscale restricted nameserver points to port 5353
+- Primary AdGuard on Pi4 (port 53) → Returns LAN IPs for LAN clients
+- Secondary AdGuard on Pi4 (port 5353) → Returns Tailscale IPs for Tailscale clients
+- Tailscale restricted nameserver points to Pi4's Tailscale IP:5353
 
 **Method 2: Single Instance with Conditional Rewrite**
 - AdGuard custom DNS rewrites based on source network
 - Requires more complex rule configuration
 
-**DNS Records Example** (LAN):
+**DNS Records Example** (LAN - port 53):
 ```
-jellyfin.paniland.com  → 192.168.1.130
-samba.paniland.com     → 192.168.1.121
+jellyfin.paniland.com   → 192.168.1.130
+samba.paniland.com      → 192.168.1.121
+backup.paniland.com     → 192.168.1.120
+ripper.paniland.com     → 192.168.1.131
+transcoder.paniland.com → 192.168.1.132
+analyzer.paniland.com   → 192.168.1.133
 ```
 
-**DNS Records Example** (Tailscale):
+**DNS Records Example** (Tailscale - port 5353):
 ```
-jellyfin.paniland.com  → 100.64.0.85
-samba.paniland.com     → 100.64.0.82
+jellyfin.paniland.com   → 100.64.0.x  (Tailscale IP of jellyfin, if Tailscale installed)
+samba.paniland.com      → 100.64.0.y  (or use subnet routing to LAN IP)
 ```
+
+**Note**: Since containers likely won't have Tailscale installed individually, remote clients will use Tailscale subnet routing to reach LAN IPs. The split DNS may not be necessary initially - can start simpler.
 
 ### Caddy Reverse Proxy Configuration
 
-**Caddyfile** (CT307):
+**Caddyfile** (CT311 at 192.168.1.111):
 ```caddyfile
 {
     email admin@paniland.com
@@ -164,23 +175,27 @@ jellyfin.paniland.com {
     reverse_proxy 192.168.1.130:8096
 }
 
-samba.paniland.com {
-    reverse_proxy 192.168.1.121:80
+backup.paniland.com {
+    reverse_proxy 192.168.1.120:9898  # Backrest UI
 }
 
-homeassistant.paniland.com {
-    reverse_proxy 192.168.1.X:8123
-}
+# Future services
+# homeassistant.paniland.com {
+#     reverse_proxy 192.168.1.170:8123
+# }
 ```
 
+**Note**: Samba (192.168.1.121) uses SMB protocol on ports 139/445, not HTTP. Access via `\\samba\share` or direct IP, not through Caddy.
+
 **Certificate Management**: Let's Encrypt DNS-01 challenge via Cloudflare
-- No services need public exposure
-- Valid certificates everywhere
-- Automatic renewal
+- No services need public exposure (no port forwarding required)
+- Valid certificates everywhere (internal services get real certs)
+- Automatic renewal (Caddy handles this)
+- Use staging environment first to avoid rate limits
 
 ### Tailscale Configuration
 
-**Subnet Router** (on Proxmox host or CT306):
+**Subnet Router** (on Proxmox host - 192.168.1.100):
 ```bash
 # Enable IP forwarding
 echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
@@ -190,9 +205,11 @@ sudo sysctl -p
 sudo tailscale up --advertise-routes=192.168.1.0/24
 ```
 
+**Rationale for Proxmox Host**: Always running, stable, central to all traffic. CT310 (backup DNS) is fallback only.
+
 **MagicDNS + Split DNS** (Tailscale admin console):
 1. Enable MagicDNS
-2. Add custom nameserver: AdGuard Pi Tailscale IP
+2. Add custom nameserver: AdGuard Pi4 Tailscale IP (100.64.x.x assigned to Pi4)
 3. Restrict to domain: `paniland.com`
 4. Enable "Override local DNS"
 
@@ -241,33 +258,46 @@ sudo tailscale up --advertise-routes=192.168.1.0/24
 
 #### Tasks
 
-**1.1 Raspberry Pi Primary DNS** (4 hours)
+**1.1 Raspberry Pi 4 Primary DNS** (4 hours)
+- Target: Pi4 at 192.168.1.102
+- **Option A**: Keep Pi4 at .102, add .110 as alias
+- **Option B**: Move Pi4 to .110 (cleaner, matches IP strategy)
+
 ```bash
-# Install AdGuard Home
+# Install AdGuard Home on Pi4
 curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh
 
-# Install Unbound
+# Install Unbound for recursive DNS
 sudo apt-get install unbound
 
 # Configure AdGuard upstream: 127.0.0.1:5335 (Unbound)
-# Add DNS records for paniland.com services
+# Add DNS records for paniland.com services:
+# - jellyfin.paniland.com → 192.168.1.130
+# - samba.paniland.com → 192.168.1.121
+# - backup.paniland.com → 192.168.1.120
 ```
 
-**1.2 CT306 Backup DNS** (3 hours)
-- Create container via Terraform: `terraform/ct306-dns.tf`
-- Deploy AdGuard + Unbound via Ansible: `ansible/playbooks/ct306-dns.yml`
-- Configure identical to Pi
+**1.2 CT310 Backup DNS** (3 hours)
+- Create container via Terraform: `terraform/dns.tf`
+- Deploy AdGuard + Unbound via Ansible: `ansible/playbooks/dns.yml`
+- Configure identical to Pi4
+- Uses IP 192.168.1.110 (per IP allocation strategy)
 
 **1.3 Client Configuration** (1 hour)
 - UniFi DHCP settings:
-  - Primary DNS: 192.168.1.53 (Pi)
-  - Secondary DNS: 192.168.1.54 (CT306)
+  - Primary DNS: 192.168.1.102 (Pi4) or .110 if migrated
+  - Secondary DNS: 192.168.1.110 (CT310)
+- Update Terraform `var.dns_servers`:
+  ```hcl
+  dns_servers = ["192.168.1.102", "192.168.1.110", "1.1.1.1"]
+  ```
+- Re-apply Terraform to update all containers
 - Test resolution and failover
 
 **Success Criteria**:
-- ✅ `nslookup jellyfin.paniland.com` returns correct IP
+- ✅ `nslookup jellyfin.paniland.com` returns 192.168.1.130
 - ✅ Ad-blocking works on all clients
-- ✅ DNS survives Pi shutdown (failover to CT306)
+- ✅ DNS survives Pi4 shutdown (failover to CT310)
 
 ---
 
@@ -278,24 +308,37 @@ sudo apt-get install unbound
 #### Tasks
 
 **2.1 Tailscale Setup** (2 hours)
-- Create Tailscale account
-- Install on Proxmox host or CT306
+- Create Tailscale account (free tier sufficient)
+- Install on Proxmox host (192.168.1.100) - the subnet router
 - Configure subnet router for 192.168.1.0/24
+- Install on Pi4 to give it Tailscale IP for split DNS
+
+```bash
+# On Proxmox host
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo sysctl -w net.ipv4.ip_forward=1
+sudo tailscale up --advertise-routes=192.168.1.0/24
+
+# On Pi4
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+# Note the Tailscale IP assigned (e.g., 100.64.x.x)
+```
 
 **2.2 Split DNS Configuration** (2 hours)
-- Set up secondary AdGuard instance on Pi (port 5353) with Tailscale IPs
-- Configure Tailscale restricted nameserver
+- Set up secondary AdGuard instance on Pi4 (port 5353) with Tailscale IPs
+- Configure Tailscale restricted nameserver pointing to Pi4's Tailscale IP
 - Test resolution from remote client
 
 **2.3 Client Testing** (2 hours)
 - Install Tailscale on laptop/phone
-- Verify remote access to containers
-- Test DNS split-horizon
+- Verify remote access to containers via subnet routing
+- Test DNS split-horizon (same hostname, different IP based on location)
 
 **Success Criteria**:
-- ✅ Can access `jellyfin.paniland.com` remotely
-- ✅ Same URL returns different IP when local vs. remote
-- ✅ Can SSH to containers via hostname remotely
+- ✅ Can access `jellyfin.paniland.com` remotely via Tailscale
+- ✅ Same URL returns LAN IP locally, Tailscale IP remotely
+- ✅ Can SSH to containers via hostname: `ssh media@jellyfin` works both local and remote
 
 ---
 
@@ -306,23 +349,28 @@ sudo apt-get install unbound
 #### Tasks
 
 **3.1 Cloudflare Setup** (1 hour)
-- Add paniland.com to Cloudflare
-- Create API token for DNS-01 challenge
+- Add paniland.com to Cloudflare (transfer DNS management)
+- Create API token for DNS-01 challenge (Zone:DNS:Edit permissions)
+- Store token securely (Ansible Vault)
 
-**3.2 CT307 Caddy Container** (3 hours)
-- Create via Terraform: `terraform/ct307-proxy.tf`
-- Deploy Caddy via Ansible: `ansible/playbooks/ct307-proxy.yml`
-- Configure Caddyfile with services
+**3.2 CT311 Caddy Container** (3 hours)
+- Create via Terraform: `terraform/proxy.tf` (uses .111)
+- Deploy Caddy via Ansible: `ansible/playbooks/proxy.yml`
+- Create Ansible role: `ansible/roles/caddy/`
+- Configure Caddyfile with services:
+  - jellyfin.paniland.com → 192.168.1.130:8096
+  - backup.paniland.com → 192.168.1.120:9898 (Backrest UI)
 
 **3.3 Testing** (2 hours)
+- Update DNS records to point to CT311 (.111)
 - Test HTTPS access to services
-- Verify certificates valid
+- Verify certificates valid (check with Let's Encrypt staging first)
 - Test from local and Tailscale
 
 **Success Criteria**:
 - ✅ `https://jellyfin.paniland.com` shows valid certificate
 - ✅ No browser warnings
-- ✅ Works locally and remotely
+- ✅ Works locally and remotely via Tailscale
 
 ---
 
@@ -354,75 +402,147 @@ sudo apt-get install unbound
 
 ## Terraform Configurations
 
-### CT306: DNS Backup Container
+**Note**: These use the BPG Proxmox provider syntax (`proxmox_virtual_environment_container`) to match existing infrastructure.
 
-**File**: `terraform/ct306-dns.tf`
+### CT310: DNS Backup Container
+
+**File**: `terraform/dns.tf`
 
 ```hcl
-resource "proxmox_lxc" "ct306_dns" {
-  target_node  = "homelab"
-  hostname     = "dns-backup"
-  ostemplate   = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
-  unprivileged = true
+resource "proxmox_virtual_environment_container" "dns" {
+  description = "DNS backup - AdGuard Home + Unbound for failover"
+  node_name   = "homelab"
+  vm_id       = 310
 
-  cores  = 1
-  memory = 512
-  swap   = 512
+  started      = true
+  unprivileged = false  # Match other containers for consistency
 
-  rootfs {
-    storage = "local-lvm"
-    size    = "8G"
+  initialization {
+    hostname = "dns"
+
+    ip_config {
+      ipv4 {
+        address = "192.168.1.110/24"  # Per IP allocation strategy
+        gateway = "192.168.1.1"
+      }
+    }
+
+    dns {
+      domain  = var.dns_domain
+      servers = var.dns_servers
+    }
+
+    user_account {
+      keys = local.ssh_public_keys
+    }
   }
 
-  network {
+  network_interface {
     name   = "eth0"
     bridge = "vmbr0"
-    ip     = "192.168.1.54/24"
-    gw     = "192.168.1.1"
+  }
+
+  operating_system {
+    template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    type             = "debian"
+  }
+
+  cpu {
+    cores = 1
+  }
+
+  memory {
+    dedicated = 1024  # 1GB (matches samba, your lightest container)
+    swap      = 512
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    size         = 8
   }
 
   features {
     nesting = true
   }
 
-  start = true
-  onboot = true
+  tags = ["dns", "infrastructure", "iac"]
 
-  tags = "dns,infrastructure"
+  lifecycle {
+    ignore_changes = [
+      initialization[0].user_account,
+    ]
+  }
 }
 ```
 
-### CT307: Caddy Reverse Proxy
+### CT311: Caddy Reverse Proxy
 
-**File**: `terraform/ct307-proxy.tf`
+**File**: `terraform/proxy.tf`
 
 ```hcl
-resource "proxmox_lxc" "ct307_proxy" {
-  target_node  = "homelab"
-  hostname     = "caddy"
-  ostemplate   = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
-  unprivileged = true
+resource "proxmox_virtual_environment_container" "proxy" {
+  description = "Caddy reverse proxy - automatic HTTPS via Let's Encrypt DNS-01"
+  node_name   = "homelab"
+  vm_id       = 311
 
-  cores  = 1
-  memory = 1024
-  swap   = 512
+  started      = true
+  unprivileged = false  # May need privileged for port 443 binding
 
-  rootfs {
-    storage = "local-lvm"
-    size    = "8G"
+  initialization {
+    hostname = "proxy"
+
+    ip_config {
+      ipv4 {
+        address = "192.168.1.111/24"  # Per IP allocation strategy
+        gateway = "192.168.1.1"
+      }
+    }
+
+    dns {
+      domain  = var.dns_domain
+      servers = var.dns_servers
+    }
+
+    user_account {
+      keys = local.ssh_public_keys
+    }
   }
 
-  network {
+  network_interface {
     name   = "eth0"
     bridge = "vmbr0"
-    ip     = "192.168.1.80/24"
-    gw     = "192.168.1.1"
   }
 
-  start = true
-  onboot = true
+  operating_system {
+    template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    type             = "debian"
+  }
 
-  tags = "proxy,infrastructure"
+  cpu {
+    cores = 1
+  }
+
+  memory {
+    dedicated = 1024  # 1GB
+    swap      = 512
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    size         = 8
+  }
+
+  features {
+    nesting = false  # Not needed for Caddy
+  }
+
+  tags = ["proxy", "infrastructure", "iac"]
+
+  lifecycle {
+    ignore_changes = [
+      initialization[0].user_account,
+    ]
+  }
 }
 ```
 
@@ -583,23 +703,49 @@ resource "proxmox_lxc" "ct307_proxy" {
 
 ## Next Steps
 
-1. **Review this plan** - Adjustments needed?
-2. **Gather prerequisites**:
-   - Raspberry Pi with Raspberry Pi OS
-   - Cloudflare account for paniland.com
-   - Tailscale account
-3. **Start Phase 1** - DNS infrastructure
+1. **Pre-implementation tasks**:
+   - [ ] Set up Pi4 (192.168.1.102) with Raspberry Pi OS if not already
+   - [ ] Create Cloudflare account and add paniland.com
+   - [ ] Create Tailscale account
+   - [ ] Fix current-state.md with correct container IPs (they're already on target IPs!)
+
+2. **Phase 1 Decision**: Pi4 IP strategy
+   - **Option A**: Keep Pi4 at .102, use for DNS as-is
+   - **Option B**: Move Pi4 to .110 (matches IP allocation strategy for "Network, DNS & Security" range)
+   - **Recommendation**: Option A for now, keeps Pi stable; CT310 backup at .110 is sufficient
+
+3. **Start Phase 1** - DNS infrastructure on Pi4
 4. **Incremental validation** - Test each phase before proceeding
 
 **Estimated time**: 4 weeks (working incrementally)
 
 ---
 
-## Related Documentation
+## IP Allocation Summary (After Implementation)
 
-- [Current State](../../reference/current-state.md)
-- [Homelab IaC Strategy](../../reference/current-state.md)
+| IP | Service | Type | Status |
+|----|---------|------|--------|
+| .100 | Proxmox host | Physical | ✅ Active |
+| .101 | Pi3 | Physical | ✅ Active (available) |
+| .102 | Pi4 + AdGuard Primary | Physical | 🎯 Phase 1 |
+| .110 | CT310 DNS Backup | LXC | 🎯 Phase 1 |
+| .111 | CT311 Caddy Proxy | LXC | 🎯 Phase 3 |
+| .120 | CT300 backup | LXC | ✅ Active |
+| .121 | CT301 samba | LXC | ✅ Active |
+| .130 | CT305 jellyfin | LXC | ✅ Active |
+| .131 | CT302 ripper | LXC | ✅ Active |
+| .132 | CT304 transcoder | LXC | ✅ Active |
+| .133 | CT303 analyzer | LXC | ✅ Active |
 
 ---
 
-**Status**: 📋 Planning - Ready for review
+## Related Documentation
+
+- [Current State](../../reference/current-state.md) - **Note: Container IPs need updating**
+- [IP Allocation Strategy](../../reference/ip-allocation-strategy.md)
+- [Terraform Variables](../../../terraform/variables.tf) - DNS servers config
+
+---
+
+**Status**: 📋 Planning - Ready for implementation  
+**Decisions Made**: Pi4 for primary DNS, Proxmox host for Tailscale subnet router, CT310/311 for backup DNS and proxy

@@ -1,13 +1,20 @@
 # Current Work Status
 
 **Date**: 2025-11-15  
-**Focus**: Container DNS Configuration & Base Setup
+**Focus**: DNS Infrastructure Deployment
 
 > **📖 For system specifications**, see `docs/reference/current-state.md`
 
 ---
 
 ## 🎉 Recent Achievement
+
+**2025-11-15**: DNS Infrastructure Deployed!
+- ✅ AdGuard Home on Pi4 (primary DNS at 192.168.1.102)
+- ✅ AdGuard Home on CT310 (backup DNS at 192.168.1.110)
+- ✅ 12 local DNS rewrites for paniland.com services
+- ✅ Full IaC via Ansible role and playbook
+- ✅ Credentials secured in Ansible Vault
 
 **2025-11-12**: Full IaC Migration Complete!
 - ✅ All 6 containers (CT300-305) managed by Terraform + Ansible
@@ -43,7 +50,7 @@
 
 ## 📊 Infrastructure Status
 
-**Active Containers**: 6 (all IaC-managed)
+**Active Containers**: 7 (all IaC-managed)
 
 | CTID | Name | Status | Notes |
 |------|------|--------|-------|
@@ -53,6 +60,11 @@
 | 303 | analyzer | ✅ Running | FileBot ready |
 | 304 | transcoder | ✅ Running | Intel Arc GPU passthrough configured |
 | 305 | jellyfin | ✅ Running | Dual GPU passthrough configured |
+| 310 | dns | ✅ Running | Backup DNS (AdGuard Home) |
+
+**DNS Infrastructure**:
+- Primary: Pi4 (192.168.1.102) - AdGuard Home
+- Backup: CT310 (192.168.1.110) - AdGuard Home
 
 **Storage**: 4.6TB / 35TB used (14%)
 
@@ -76,28 +88,41 @@
 ## 📋 Next Steps
 
 ### Immediate (This Week)
-1. Test Jellyfin with existing media libraries
-2. Rip one test disc through full pipeline
-3. Verify GPU transcoding performance
-4. Document any issues discovered
+1. ✅ ~~Deploy DNS infrastructure~~ DONE
+2. Test DNS from local machine: `dig @192.168.1.102 jellyfin.paniland.com`
+3. Configure one client to use new DNS servers
+4. Update UniFi DHCP to distribute new DNS servers
+5. Test Jellyfin with existing media libraries
 
 ### Short Term (This Month)
 1. Complete media library migration to new structure
 2. Run full backup test (restic + restore)
-3. Create deployment automation script
-4. Update any scripts with hardcoded IPs/paths
+3. Consider adding Unbound for recursive DNS
+4. Explore Tailscale for remote access (Phase 2 of networking plan)
+5. Update any scripts with hardcoded IPs/paths
 
 ### Medium Term (Next 3 Months)
-1. Automate host configuration with Ansible
-2. Test disaster recovery workflow
-3. Add monitoring solution
-4. Consider CI/CD for IaC changes
+1. Add reverse proxy (Caddy) for HTTPS
+2. Configure Tailscale subnet routing
+3. Test disaster recovery workflow
+4. Add monitoring solution
+5. Consider CI/CD for IaC changes
 
 ---
 
 ## 🔧 Recent Changes
 
-### 2025-11-15
+### 2025-11-15 (Evening)
+- ✅ Deployed AdGuard Home on Pi4 as primary DNS (192.168.1.102)
+- ✅ Created CT310 backup DNS container via Terraform
+- ✅ Deployed AdGuard Home on CT310 (192.168.1.110)
+- ✅ Created Ansible role `adguard_home` with full IaC config
+- ✅ Configured 12 local DNS rewrites for paniland.com services
+- ✅ Secured admin credentials in Ansible Vault
+- ✅ Updated networking plan with correct IPs and decisions
+- ✅ Fixed container IPs in current-state.md (now match Terraform)
+
+### 2025-11-15 (Morning)
 - ✅ Fixed container DNS configuration (containers had no nameservers)
 - ✅ Added DNS servers (1.1.1.1, 8.8.8.8) to all Terraform container configs
 - ✅ Applied base Ansible configuration to all containers (locale, timezone, packages)

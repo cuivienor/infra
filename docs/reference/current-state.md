@@ -107,15 +107,17 @@
 
 | CTID | Name | IP | Cores | RAM | Disk | Purpose |
 |------|------|-----|-------|-----|------|---------|
-| 300 | `backup` | 192.168.1.58 | 2 | 2 GB | 20 GB | Restic backup + Backrest UI |
-| 301 | `samba` | 192.168.1.82 | 1 | 1 GB | 8 GB | Samba file server |
-| 302 | `ripper` | 192.168.1.70 | 2 | 4 GB | 8 GB | MakeMKV Blu-ray ripping |
-| 303 | `analyzer` | 192.168.1.73 | 2 | 4 GB | 12 GB | Media analysis & organization |
-| 304 | `transcoder` | 192.168.1.77 | 4 | 8 GB | 20 GB | FFmpeg transcoding (Intel Arc GPU) |
-| 305 | `jellyfin` | 192.168.1.85 | 4 | 8 GB | 32 GB | Media server (dual GPU) |
+| 300 | `backup` | 192.168.1.120 | 2 | 2 GB | 20 GB | Restic backup + Backrest UI |
+| 301 | `samba` | 192.168.1.121 | 1 | 1 GB | 8 GB | Samba file server |
+| 302 | `ripper` | 192.168.1.131 | 2 | 4 GB | 8 GB | MakeMKV Blu-ray ripping |
+| 303 | `analyzer` | 192.168.1.133 | 2 | 4 GB | 12 GB | Media analysis & organization |
+| 304 | `transcoder` | 192.168.1.132 | 4 | 8 GB | 20 GB | FFmpeg transcoding (Intel Arc GPU) |
+| 305 | `jellyfin` | 192.168.1.130 | 4 | 8 GB | 32 GB | Media server (dual GPU) |
+| 310 | `dns` | 192.168.1.110 | 1 | 1 GB | 8 GB | Backup DNS (AdGuard Home) |
 
 **All containers**: Privileged, Debian 12, managed via Terraform + Ansible  
-**Tags**: `iac`, `media`, plus role-specific tags
+**Tags**: `iac`, `media`, plus role-specific tags  
+**DNS**: Configured via Terraform variable `var.dns_servers` (default: 1.1.1.1, 8.8.8.8)
 
 ---
 
@@ -256,6 +258,55 @@ lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
 
 ---
 
+### CT310: DNS (Backup)
+
+**Type**: Privileged LXC  
+**Purpose**: Backup DNS server with AdGuard Home (primary on Pi4)
+
+**Installed Software**:
+- AdGuard Home v0.107.69
+- Local DNS rewrites for paniland.com services
+
+**Configuration**:
+- Web UI: http://192.168.1.110:3000
+- DNS: 192.168.1.110:53
+- 12 local DNS rewrites configured
+- Ad blocking disabled (intentional)
+- Config managed via Ansible template
+
+**Status**: ✅ Production, failover DNS ready
+
+---
+
+## DNS Infrastructure
+
+### Overview
+
+**Primary DNS**: Pi4 (192.168.1.102)  
+**Backup DNS**: CT310 (192.168.1.110)  
+**Technology**: AdGuard Home v0.107.69
+
+### Local DNS Rewrites
+
+| Domain | IP | Service |
+|--------|-----|---------|
+| homelab.paniland.com | 192.168.1.100 | Proxmox host |
+| pi3.paniland.com | 192.168.1.101 | Raspberry Pi 3 |
+| pi4.paniland.com | 192.168.1.102 | Raspberry Pi 4 |
+| dns.paniland.com | 192.168.1.110 | Backup DNS |
+| backup.paniland.com | 192.168.1.120 | Backup container |
+| samba.paniland.com | 192.168.1.121 | Samba container |
+| jellyfin.paniland.com | 192.168.1.130 | Jellyfin |
+| ripper.paniland.com | 192.168.1.131 | Ripper |
+| transcoder.paniland.com | 192.168.1.132 | Transcoder |
+| analyzer.paniland.com | 192.168.1.133 | Analyzer |
+| jellyfin.local | 192.168.1.130 | Jellyfin (short) |
+| samba.local | 192.168.1.121 | Samba (short) |
+
+**Management**: Full IaC via Ansible role `adguard_home` and playbook `dns.yml`
+
+---
+
 ## User Configuration
 
 ### User Strategy
@@ -284,6 +335,10 @@ lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
 ssh cuiv@192.168.1.100  # Proxmox (homelab)
 ssh cuiv@192.168.1.101  # pi3
 ssh cuiv@192.168.1.102  # pi4
+
+# SSH to containers (use root)
+ssh root@192.168.1.130  # jellyfin
+ssh root@192.168.1.120  # backup
 
 # Run commands with sudo
 sudo systemctl status ...
@@ -402,6 +457,7 @@ pct exec 302 -- makemkvcon info disc:0
 - `makemkv` - MakeMKV installation and configuration
 - `media_analyzer` - Media analysis tools (MediaInfo, FileBot)
 - `jellyfin` - Jellyfin media server
+- `adguard_home` - AdGuard Home DNS server
 
 **Playbooks**:
 - `site.yml` - Main playbook for all containers
@@ -411,6 +467,7 @@ pct exec 302 -- makemkvcon info disc:0
 - `analyzer.yml` - Analyzer container
 - `transcoder.yml` - Transcoder container
 - `jellyfin.yml` - Jellyfin container
+- `dns.yml` - DNS infrastructure (Pi4 + CT310)
 
 **Status**: ✅ All containers configured via Ansible
 

@@ -1,0 +1,47 @@
+---
+# AdGuard Home default configuration
+
+# Installation
+adguard_home_version: "latest"  # or specific version like "v0.107.69"
+adguard_home_install_dir: "/opt/AdGuardHome"
+adguard_home_user: "root"  # Service runs as root for port 53 binding
+adguard_home_group: "root"
+
+# Network configuration
+adguard_home_bind_host: "0.0.0.0"
+adguard_home_web_port: 3000  # Web UI port
+adguard_home_dns_port: 53
+
+# Admin credentials
+# Generate password hash with: htpasswd -B -C 10 -n -b username password
+# Then extract just the hash part (after the colon)
+adguard_home_admin_user: "admin"
+adguard_home_admin_password_hash: ""  # REQUIRED: Set this in playbook or vault
+
+# Upstream DNS servers
+adguard_home_upstream_dns:
+  - "1.1.1.1"
+  - "8.8.8.8"
+
+# Bootstrap DNS (used to resolve upstream DNS hostnames)
+adguard_home_bootstrap_dns:
+  - "1.1.1.1"
+  - "8.8.8.8"
+
+# Timezone for schedules
+adguard_home_timezone: "America/Los_Angeles"
+
+# DNS rewrites for local services (key feature for homelab!)
+# Format: list of {domain: "example.com", answer: "192.168.1.x"}
+adguard_home_dns_rewrites: []
+
+# Filter lists (ad blocking)
+adguard_home_filters:
+  - enabled: true
+    url: "https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt"
+    name: "AdGuard DNS filter"
+    id: 1
+  - enabled: true
+    url: "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt"
+    name: "AdAway Default Blocklist"
+    id: 2

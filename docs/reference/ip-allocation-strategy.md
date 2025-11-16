@@ -54,12 +54,14 @@ Core networking infrastructure.
 
 | IP | Service | Container | Status | Description |
 |----|---------|-----------|--------|-------------|
-| .110 | AdGuard Home | TBD | Planned | DNS + ad blocking |
-| .111 | Traefik | TBD | Planned | Reverse proxy |
+| .110 | AdGuard Home | CT310 | Planned | Backup DNS + ad blocking |
+| .111 | Caddy | CT311 | Planned | Reverse proxy (HTTPS) |
 | .112 | Authentik | TBD | Planned | SSO/Identity provider |
 | .113 | Vaultwarden | TBD | Planned | Password manager |
-| .114 | WireGuard | TBD | Planned | VPN server |
+| .114 | WireGuard | TBD | Planned | VPN server (or Tailscale) |
 | .115-.119 | - | - | Reserved | Future (OPNsense, Crowdsec, etc.) |
+
+**Note**: Primary DNS will run on Pi4 (192.168.1.102). CT310 at .110 serves as backup DNS. See networking-dns-architecture-plan.md.
 
 ---
 
@@ -177,32 +179,38 @@ Buffer for future growth and reorganization.
 
 ## Current Active Services
 
-| IP | Service | Hostname | Type |
-|----|---------|----------|------|
-| .100 | Proxmox | homelab | Physical |
-| .101 | Raspberry Pi 3 | pi3 | Physical |
-| .102 | Raspberry Pi 4 | pi4 | Physical |
-| .120 | Backup | backup | LXC (CT300) |
-| .121 | Samba | samba | LXC (CT301) |
-| .130 | Jellyfin | jellyfin | LXC (CT305) |
-| .131 | Ripper | ripper | LXC (CT302) |
-| .132 | Transcoder | transcoder | LXC (CT304) |
-| .133 | Analyzer | analyzer | LXC (CT303) |
+| IP | Service | Hostname | Type | Notes |
+|----|---------|----------|------|-------|
+| .100 | Proxmox | homelab | Physical | Main hypervisor |
+| .101 | Raspberry Pi 3 | pi3 | Physical | Available |
+| .102 | Raspberry Pi 4 | pi4 | Physical | Future primary DNS |
+| .120 | Backup | backup | LXC (CT300) | ✅ Restic + Backrest |
+| .121 | Samba | samba | LXC (CT301) | ✅ File sharing |
+| .130 | Jellyfin | jellyfin | LXC (CT305) | ✅ Media streaming |
+| .131 | Ripper | ripper | LXC (CT302) | ✅ MakeMKV |
+| .132 | Transcoder | transcoder | LXC (CT304) | ✅ FFmpeg + GPU |
+| .133 | Analyzer | analyzer | LXC (CT303) | ✅ FileBot + tools |
+
+**Planned Additions** (see networking-dns-architecture-plan.md):
+- .110: CT310 DNS (backup)
+- .111: CT311 Caddy (reverse proxy)
 
 ---
 
-## Migration Plan
+## Migration Status
 
-### Current → New IPs
+### ✅ Completed Migrations
 
-| Service | CTID | Current IP | New IP | Category |
-|---------|------|-----------|--------|----------|
-| Backup | 300 | .58 | .120 | Backup & Storage |
-| Samba | 301 | .82 | .121 | Backup & Storage |
-| Ripper | 302 | .70 | .131 | Media Stack |
-| Analyzer | 303 | .73 | .133 | Media Stack |
-| Transcoder | 304 | .77 | .132 | Media Stack |
-| Jellyfin | 305 | .85 | .130 | Media Stack |
+| Service | CTID | Old IP | Current IP | Category | Status |
+|---------|------|--------|------------|----------|--------|
+| Backup | 300 | .58 | **.120** | Backup & Storage | ✅ Complete |
+| Samba | 301 | .82 | **.121** | Backup & Storage | ✅ Complete |
+| Ripper | 302 | .70 | **.131** | Media Stack | ✅ Complete |
+| Analyzer | 303 | .73 | **.133** | Media Stack | ✅ Complete |
+| Transcoder | 304 | .77 | **.132** | Media Stack | ✅ Complete |
+| Jellyfin | 305 | .85 | **.130** | Media Stack | ✅ Complete |
+
+**Note**: All containers are now on their target IPs as defined in Terraform configs (as of 2025-11-15).
 
 ---
 

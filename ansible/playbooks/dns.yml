@@ -1,0 +1,123 @@
+---
+# DNS Infrastructure Setup
+#
+# Installs and configures AdGuard Home on target hosts for DNS resolution and ad-blocking.
+# Currently targets Raspberry Pi 4 as primary DNS server.
+#
+# Features:
+# - Full IaC configuration (no manual setup wizard needed)
+# - Local DNS records for paniland.com services
+# - Ad blocking with standard filter lists
+#
+# Usage:
+#   ansible-playbook ansible/playbooks/dns.yml --vault-password-file ../.vault_pass
+#   ansible-playbook ansible/playbooks/dns.yml --limit pi4
+#
+# After running:
+#   1. Test DNS: dig @192.168.1.102 google.com
+#   2. Test local DNS: dig @192.168.1.102 jellyfin.paniland.com
+#   3. Web UI: http://192.168.1.102:3000
+
+- name: Configure DNS Infrastructure
+  hosts: pi4:dns_containers  # Pi4 (primary) and CT310 (backup)
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/secrets.yml
+
+  vars:
+    # Admin credentials - password hash from vault
+    # To change: python3 -c "import bcrypt; print(bcrypt.hashpw(b'your_password', bcrypt.gensalt(rounds=10)).decode())"
+    adguard_home_admin_user: "admin"
+    adguard_home_admin_password_hash: "{{ vault_adguard_admin_password_hash }}"
+
+    # Local DNS records for homelab services
+    adguard_home_dns_rewrites:
+      # Physical hosts
+      - domain: "homelab.paniland.com"
+        answer: "192.168.1.100"
+      - domain: "pi3.paniland.com"
+        answer: "192.168.1.101"
+      - domain: "pi4.paniland.com"
+        answer: "192.168.1.102"
+      # Media services
+      - domain: "jellyfin.paniland.com"
+        answer: "192.168.1.130"
+      - domain: "ripper.paniland.com"
+        answer: "192.168.1.131"
+      - domain: "transcoder.paniland.com"
+        answer: "192.168.1.132"
+      - domain: "analyzer.paniland.com"
+        answer: "192.168.1.133"
+      # Storage & backup
+      - domain: "backup.paniland.com"
+        answer: "192.168.1.120"
+      - domain: "samba.paniland.com"
+        answer: "192.168.1.121"
+      # Infrastructure
+      - domain: "dns.paniland.com"
+        answer: "192.168.1.110"
+      # Short names (for convenience)
+      - domain: "jellyfin.local"
+        answer: "192.168.1.130"
+      - domain: "samba.local"
+        answer: "192.168.1.121"
+
+    # Disable ad blocking for now - be intentional about enabling later
+    adguard_home_filters: []
+
+  pre_tasks:
+    - name: Display target information
+      ansible.builtin.debug:
+        msg: |
+          Setting up DNS on: {{ inventory_hostname }}
+          IP: {{ ansible_host }}
+          Model: {{ pi_model | default('N/A') }}
+
+          Configuration:
+          - Admin user: {{ adguard_home_admin_user }}
+          - DNS rewrites: {{ adguard_home_dns_rewrites | length }} entries
+          - Filter lists: {{ adguard_home_filters | default([]) | length }} lists
+
+  roles:
+    - role: adguard_home
+      tags: ['adguard', 'dns']
+
+  post_tasks:
+    - name: Verify AdGuard Home is running
+      ansible.builtin.command: "{{ adguard_home_install_dir }}/AdGuardHome -s status"
+      register: service_status
+      changed_when: false
+
+    - name: Test DNS resolution
+      ansible.builtin.command: "dig @127.0.0.1 google.com +short"
+      register: dns_test
+      changed_when: false
+      failed_when: dns_test.rc != 0
+
+    - name: Test local DNS rewrite
+      ansible.builtin.command: "dig @127.0.0.1 jellyfin.paniland.com +short"
+      register: local_dns_test
+      changed_when: false
+
+    - name: Display final status
+      ansible.builtin.debug:
+        msg: |
+          ✅ DNS Infrastructure Setup Complete
+
+          Host: {{ inventory_hostname }} ({{ ansible_host }})
+          Service: {{ 'Running' if 'running' in service_status.stdout else 'Check status' }}
+
+          DNS Resolution Test:
+          - google.com: {{ dns_test.stdout_lines[0] | default('FAILED') }}
+          - jellyfin.paniland.com: {{ local_dns_test.stdout | default('NOT CONFIGURED') }}
+
+          Access:
+          - Web UI: http://{{ ansible_host }}:3000
+          - DNS: {{ ansible_host }}:53
+
+          NEXT STEPS:
+          1. Test from client: dig @{{ ansible_host }} jellyfin.paniland.com
+          2. Update DHCP to use {{ ansible_host }} as DNS
+          3. Add CT310 as backup DNS server
