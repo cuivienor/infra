@@ -47,11 +47,12 @@ resource "tailscale_acl" "homelab" {
       { target = ["100.122.226.116"], attr = ["mullvad"] } // surface (laptop)
     ]
 
-    // Auto-approve subnet routes from tagged devices
+    // Auto-approve subnet routes and exit nodes from tagged devices
     autoApprovers = {
       routes = {
         "192.168.1.0/24" = ["tag:subnet-router"]
       }
+      exitNode = ["tag:subnet-router"]
     }
   })
 }
