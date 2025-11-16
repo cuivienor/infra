@@ -47,16 +47,16 @@ variable "gateway" {
 }
 
 variable "dns_servers" {
-  description = "DNS servers for containers (will use local DNS when AdGuard is deployed)"
+  description = "DNS servers for containers (local AdGuard with external fallback)"
   type        = list(string)
-  default     = ["1.1.1.1", "8.8.8.8"]
-  # Future: ["192.168.1.110", "192.168.1.111", "1.1.1.1"] when AdGuard is deployed
+  default     = ["192.168.1.102", "192.168.1.110", "1.1.1.1"]
+  # Pi4 AdGuard (primary), CT310 AdGuard (backup), Cloudflare (external fallback)
 }
 
 variable "dns_domain" {
   description = "DNS search domain"
   type        = string
-  default     = " " # Empty space to match Proxmox API behavior
+  default     = "" # Empty string - no search domain configured
 }
 
 # Tailscale configuration

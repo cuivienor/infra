@@ -69,7 +69,7 @@ resource "tailscale_dns_nameservers" "homelab" {
 }
 
 resource "tailscale_dns_preferences" "homelab" {
-  magic_dns = true
+  magic_dns = false
 }
 
 # Split DNS - route specific domains to your DNS
