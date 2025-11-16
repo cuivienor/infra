@@ -12,7 +12,6 @@ resource "tailscale_acl" "homelab" {
   acl = jsonencode({
     // Tag ownership - who can assign these tags
     tagOwners = {
-      "tag:pc"            = ["autogroup:admin"]
       "tag:server"        = ["autogroup:admin"]
       "tag:subnet-router" = ["autogroup:admin"]
     }
@@ -42,31 +41,10 @@ resource "tailscale_acl" "homelab" {
       }
     ]
 
-    // SSH access rules
-    ssh = [
-      // Allow members to SSH into their own devices (check mode)
-      {
-        action    = "check"
-        src       = ["autogroup:member"]
-        dst       = ["autogroup:self"]
-        users     = ["autogroup:nonroot", "root"]
-        acceptEnv = ["*"]
-      },
-      // Allow admins to SSH into tag:pc devices as cuiv
-      {
-        action    = "accept"
-        src       = ["autogroup:admin"]
-        dst       = ["tag:pc"]
-        users     = ["cuiv"]
-        acceptEnv = ["*"]
-      }
-    ]
-
-    // Node attributes (Mullvad exit nodes)
+    // Node attributes (Mullvad exit nodes for active devices)
     nodeAttrs = [
-      { target = ["100.102.24.110"], attr = ["mullvad"] },
-      { target = ["100.122.226.116"], attr = ["mullvad"] },
-      { target = ["100.78.73.111"], attr = ["mullvad"] }
+      { target = ["100.102.24.110"], attr = ["mullvad"] }, // google-pixel-9a (phone)
+      { target = ["100.122.226.116"], attr = ["mullvad"] } // surface (laptop)
     ]
 
     // Auto-approve subnet routes from tagged devices
