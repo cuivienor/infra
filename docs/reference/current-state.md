@@ -354,7 +354,9 @@ Services: Jellyfin, Proxmox, etc.
 - `*.paniland.com` → 192.168.1.102, 192.168.1.110
 - `*.home.arpa` → 192.168.1.102, 192.168.1.110
 
-**Important**: Pi4 router has `--accept-dns=false` to prevent circular DNS dependency. Since Pi4 IS the DNS server, it cannot use Tailscale's DNS resolver (100.100.100.100) which would point back to itself.
+**Important**: Both subnet routers (Pi4 and Proxmox) have `--accept-dns=false` to prevent circular DNS dependency. They use direct DNS (1.1.1.1/8.8.8.8 or router DNS) instead of Tailscale's DNS proxy (100.100.100.100), which would create a circular path back to Pi4/CT310.
+
+**Expected Warning**: Tailscale health check shows "can't reach configured DNS servers" on subnet routers. This is expected and harmless - the routers don't need to use the Tailscale DNS config themselves, they just route traffic for clients.
 
 **DNS Failover**: If Pi4 goes down, Tailscale clients automatically fail over to CT310 (backup DNS). Both run AdGuard Home with identical local DNS rewrites.
 

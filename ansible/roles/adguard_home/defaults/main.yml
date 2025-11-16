@@ -35,6 +35,10 @@ adguard_home_timezone: "America/Los_Angeles"
 # Format: list of {domain: "example.com", answer: "192.168.1.x"}
 adguard_home_dns_rewrites: []
 
+# Custom user rules (blocking/allowing specific domains)
+# Format: list of strings, e.g., ["||ads.example.com^", "@@||allowed.com^"]
+adguard_home_user_rules: []
+
 # Filter lists (ad blocking)
 adguard_home_filters:
   - enabled: true

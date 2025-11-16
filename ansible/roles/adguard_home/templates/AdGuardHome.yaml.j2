@@ -118,7 +118,13 @@ filters:
 
 whitelist_filters: []
 
-user_rules: []
+user_rules:
+{% for rule in adguard_home_user_rules %}
+  - "{{ rule }}"
+{% endfor %}
+{% if adguard_home_user_rules | length == 0 %}
+  []
+{% endif %}
 
 dhcp:
   enabled: false
