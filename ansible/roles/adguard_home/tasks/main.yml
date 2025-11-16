@@ -1,0 +1,116 @@
+---
+# AdGuard Home installation tasks
+
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - adguard_home_admin_password_hash != ""
+    fail_msg: "adguard_home_admin_password_hash must be set (use htpasswd -B -C 10 -n -b user pass)"
+
+- name: Check if AdGuard Home is already installed
+  ansible.builtin.stat:
+    path: "{{ adguard_home_install_dir }}/AdGuardHome"
+  register: adguard_installed
+
+- name: Display installation status
+  ansible.builtin.debug:
+    msg: "AdGuard Home {{ 'is already installed' if adguard_installed.stat.exists else 'will be installed' }}"
+
+- name: Create AdGuard Home directory
+  ansible.builtin.file:
+    path: "{{ adguard_home_install_dir }}"
+    state: directory
+    owner: "{{ adguard_home_user }}"
+    group: "{{ adguard_home_group }}"
+    mode: '0755'
+  when: not adguard_installed.stat.exists
+
+- name: Download AdGuard Home installer
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh"
+    dest: "/tmp/adguard_install.sh"
+    mode: '0755'
+  when: not adguard_installed.stat.exists
+
+- name: Install AdGuard Home
+  ansible.builtin.shell: |
+    /tmp/adguard_install.sh -v
+  args:
+    creates: "{{ adguard_home_install_dir }}/AdGuardHome"
+  register: adguard_install_result
+  when: not adguard_installed.stat.exists
+
+- name: Display installation output
+  ansible.builtin.debug:
+    var: adguard_install_result.stdout_lines
+  when: adguard_install_result is changed
+
+- name: Clean up installer script
+  ansible.builtin.file:
+    path: "/tmp/adguard_install.sh"
+    state: absent
+
+- name: Stop AdGuard Home for configuration
+  ansible.builtin.systemd:
+    name: AdGuardHome
+    state: stopped
+  when: adguard_install_result is changed
+
+- name: Deploy AdGuard Home configuration
+  ansible.builtin.template:
+    src: AdGuardHome.yaml.j2
+    dest: "{{ adguard_home_install_dir }}/AdGuardHome.yaml"
+    owner: "{{ adguard_home_user }}"
+    group: "{{ adguard_home_group }}"
+    mode: '0600'
+  notify: Restart adguard home
+
+- name: Get AdGuard Home version
+  ansible.builtin.command: "{{ adguard_home_install_dir }}/AdGuardHome --version"
+  register: adguard_version
+  changed_when: false
+
+- name: Display AdGuard Home version
+  ansible.builtin.debug:
+    msg: "{{ adguard_version.stdout }}"
+
+- name: Ensure AdGuard Home service is enabled and started
+  ansible.builtin.systemd:
+    name: AdGuardHome
+    enabled: true
+    state: started
+    daemon_reload: true
+  register: adguard_service
+
+- name: Wait for AdGuard Home DNS to be available
+  ansible.builtin.wait_for:
+    port: "{{ adguard_home_dns_port }}"
+    host: "127.0.0.1"
+    delay: 2
+    timeout: 30
+
+- name: Wait for AdGuard Home Web UI to be available
+  ansible.builtin.wait_for:
+    port: "{{ adguard_home_web_port }}"
+    host: "127.0.0.1"
+    delay: 2
+    timeout: 30
+
+- name: Display post-installation message
+  ansible.builtin.debug:
+    msg: |
+      ✅ AdGuard Home installed and configured!
+
+      Version: {{ adguard_version.stdout }}
+      Install directory: {{ adguard_home_install_dir }}
+      Config file: {{ adguard_home_install_dir }}/AdGuardHome.yaml
+
+      Services:
+      - DNS: {{ ansible_host }}:{{ adguard_home_dns_port }}
+      - Web UI: http://{{ ansible_host }}:{{ adguard_home_web_port }}
+      - Admin user: {{ adguard_home_admin_user }}
+
+      DNS Rewrites configured: {{ adguard_home_dns_rewrites | length }}
+      Filter lists enabled: {{ adguard_home_filters | length }}
+
+      Test with: dig @{{ ansible_host }} google.com
