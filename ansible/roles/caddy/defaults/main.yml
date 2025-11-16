@@ -1,0 +1,31 @@
+---
+# Caddy reverse proxy default configuration
+
+# Caddy installation
+caddy_user: "caddy"
+caddy_group: "caddy"
+caddy_home: "/var/lib/caddy"
+caddy_config_dir: "/etc/caddy"
+caddy_data_dir: "/var/lib/caddy/.local/share/caddy"
+
+# Cloudflare DNS-01 challenge
+# REQUIRED: Set this in vault or playbook
+caddy_cloudflare_api_token: ""
+
+# Email for Let's Encrypt notifications (certificate expiry warnings)
+caddy_acme_email: "admin@paniland.com"
+
+# Use staging environment first to avoid rate limits
+# Set to false for production certificates
+caddy_acme_staging: true
+
+# Reverse proxy targets
+# Format: list of {domain: "example.paniland.com", upstream: "192.168.1.x:port"}
+caddy_proxy_targets: []
+
+# Example:
+# caddy_proxy_targets:
+#   - domain: "jellyfin.paniland.com"
+#     upstream: "192.168.1.130:8096"
+#   - domain: "backup.paniland.com"
+#     upstream: "192.168.1.120:9898"

@@ -33,36 +33,47 @@
     adguard_home_admin_password_hash: "{{ vault_adguard_admin_password_hash }}"
 
     # Local DNS records for homelab services
+    # Pattern: *.paniland.com = service endpoints (via proxy), *.home.arpa = direct host access
     adguard_home_dns_rewrites:
-      # Physical hosts
-      - domain: "homelab.paniland.com"
-        answer: "192.168.1.100"
-      - domain: "pi3.paniland.com"
-        answer: "192.168.1.101"
-      - domain: "pi4.paniland.com"
-        answer: "192.168.1.102"
-      # Media services
+      # ===========================================
+      # SERVICE ENDPOINTS (via reverse proxy)
+      # Use: https://service.paniland.com in browser
+      # ===========================================
       - domain: "jellyfin.paniland.com"
-        answer: "192.168.1.130"
-      - domain: "ripper.paniland.com"
-        answer: "192.168.1.131"
-      - domain: "transcoder.paniland.com"
-        answer: "192.168.1.132"
-      - domain: "analyzer.paniland.com"
-        answer: "192.168.1.133"
-      # Storage & backup
-      - domain: "backup.paniland.com"
+        answer: "192.168.1.111"  # Via Caddy proxy for HTTPS
+      # Future services to add here as they're proxied:
+      # - domain: "backup.paniland.com"
+      #   answer: "192.168.1.111"
+
+      # ===========================================
+      # HOST/MACHINE ACCESS (direct, RFC 8375)
+      # Use: ssh root@host.home.arpa
+      # ===========================================
+      # Physical hosts
+      - domain: "homelab.home.arpa"
+        answer: "192.168.1.100"
+      - domain: "pi3.home.arpa"
+        answer: "192.168.1.101"
+      - domain: "pi4.home.arpa"
+        answer: "192.168.1.102"
+      # Infrastructure containers
+      - domain: "backup.home.arpa"
         answer: "192.168.1.120"
-      - domain: "samba.paniland.com"
+      - domain: "samba.home.arpa"
         answer: "192.168.1.121"
-      # Infrastructure
-      - domain: "dns.paniland.com"
+      - domain: "dns.home.arpa"
         answer: "192.168.1.110"
-      # Short names (for convenience)
-      - domain: "jellyfin.local"
+      - domain: "proxy.home.arpa"
+        answer: "192.168.1.111"
+      # Media pipeline containers
+      - domain: "jellyfin.home.arpa"
         answer: "192.168.1.130"
-      - domain: "samba.local"
-        answer: "192.168.1.121"
+      - domain: "ripper.home.arpa"
+        answer: "192.168.1.131"
+      - domain: "transcoder.home.arpa"
+        answer: "192.168.1.132"
+      - domain: "analyzer.home.arpa"
+        answer: "192.168.1.133"
 
     # Disable ad blocking for now - be intentional about enabling later
     adguard_home_filters: []

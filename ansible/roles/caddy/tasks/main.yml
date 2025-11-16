@@ -1,0 +1,119 @@
+---
+# Install and configure Caddy with Cloudflare DNS plugin
+
+- name: Install dependencies
+  apt:
+    name:
+      - debian-keyring
+      - debian-archive-keyring
+      - apt-transport-https
+      - curl
+    state: present
+    update_cache: true
+  become: true
+
+- name: Add Caddy GPG key
+  shell: |
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  args:
+    creates: /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  become: true
+
+- name: Add Caddy repository
+  copy:
+    content: |
+      deb [signed-by=/usr/share/keyrings/caddy-stable-archive-keyring.gpg] https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main
+      deb-src [signed-by=/usr/share/keyrings/caddy-stable-archive-keyring.gpg] https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main
+    dest: /etc/apt/sources.list.d/caddy-stable.list
+  become: true
+
+- name: Update apt cache after adding Caddy repo
+  apt:
+    update_cache: true
+  become: true
+
+# Download Caddy with Cloudflare DNS plugin from official build service
+- name: Download Caddy with Cloudflare DNS plugin
+  get_url:
+    url: "https://caddyserver.com/api/download?os=linux&arch=amd64&p=github.com%2Fcaddy-dns%2Fcloudflare"
+    dest: /usr/bin/caddy
+    mode: '0755'
+    owner: root
+    group: root
+    force: false
+  become: true
+
+- name: Create caddy group
+  group:
+    name: "{{ caddy_group }}"
+    system: true
+  become: true
+
+- name: Create caddy user
+  user:
+    name: "{{ caddy_user }}"
+    group: "{{ caddy_group }}"
+    home: "{{ caddy_home }}"
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: true
+  become: true
+
+- name: Create Caddy config directory
+  file:
+    path: "{{ caddy_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+
+- name: Create Caddy data directory
+  file:
+    path: "{{ caddy_data_dir }}"
+    state: directory
+    owner: "{{ caddy_user }}"
+    group: "{{ caddy_group }}"
+    mode: '0700'
+  become: true
+
+- name: Create Caddyfile
+  template:
+    src: Caddyfile.j2
+    dest: "{{ caddy_config_dir }}/Caddyfile"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: reload caddy
+  become: true
+
+- name: Create Caddy environment file
+  template:
+    src: caddy.env.j2
+    dest: /etc/default/caddy
+    owner: root
+    group: root
+    mode: '0600'  # Restrictive permissions for API token
+  notify: restart caddy
+  become: true
+
+- name: Create Caddy systemd service
+  template:
+    src: caddy.service.j2
+    dest: /etc/systemd/system/caddy.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: true
+  become: true
+
+- name: Start and enable Caddy
+  systemd:
+    name: caddy
+    state: started
+    enabled: true
+  become: true
