@@ -348,13 +348,15 @@ Services: Jellyfin, Proxmox, etc.
 
 ### DNS Configuration
 
-**Global DNS**: Pi4 AdGuard (192.168.1.102)  
+**Global DNS**: Pi4 AdGuard (192.168.1.102), CT310 backup (192.168.1.110)  
 **MagicDNS**: Disabled (tailnet-wide)  
-**Split DNS Routes**:
-- `*.paniland.com` → 192.168.1.102
-- `*.home.arpa` → 192.168.1.102
+**Split DNS Routes** (with failover):
+- `*.paniland.com` → 192.168.1.102, 192.168.1.110
+- `*.home.arpa` → 192.168.1.102, 192.168.1.110
 
 **Important**: Pi4 router has `--accept-dns=false` to prevent circular DNS dependency. Since Pi4 IS the DNS server, it cannot use Tailscale's DNS resolver (100.100.100.100) which would point back to itself.
+
+**DNS Failover**: If Pi4 goes down, Tailscale clients automatically fail over to CT310 (backup DNS). Both run AdGuard Home with identical local DNS rewrites.
 
 **Result**: Same URLs work locally and remotely:
 - `https://jellyfin.paniland.com` → Caddy proxy → Jellyfin
