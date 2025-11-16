@@ -64,6 +64,9 @@
       - "192.168.1.0/24"
     tailscale_tags:
       - "tag:subnet-router"
+    # Subnet routers must not use Tailscale DNS to avoid circular dependency
+    # when they need to route DNS queries to Pi4/CT310
+    tailscale_accept_dns: false
 
   pre_tasks:
     - name: Display configuration
