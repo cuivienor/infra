@@ -45,6 +45,12 @@
       - domain: "proxmox.paniland.com"
         upstream: "192.168.1.100:8006"
         upstream_https: true  # Proxmox already uses HTTPS (self-signed)
+      - domain: "unifi.paniland.com"
+        upstream: "192.168.1.11:8443"
+        upstream_https: true  # UniFi Network Application (main interface)
+      - domain: "unifi-landing.paniland.com"
+        upstream: "192.168.1.11:443"
+        upstream_https: true  # Ubiquiti landing page (rarely used)
 
   pre_tasks:
     - name: Display configuration
