@@ -43,7 +43,7 @@
         answer: "192.168.1.111"  # Via Caddy proxy for HTTPS
       - domain: "backrest.paniland.com"
         answer: "192.168.1.111"
-      - domain: "adguard.paniland.com"
+      - domain: "dns.paniland.com"
         answer: "192.168.1.111"
       - domain: "proxmox.paniland.com"
         answer: "192.168.1.111"
