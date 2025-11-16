@@ -1,7 +1,8 @@
 # Homelab Current State
 
-**Last Updated**: 2025-11-14  
-**Status**: ✅ Full Infrastructure as Code - All containers managed by Terraform + Ansible
+**Last Updated**: 2025-11-15  
+**Status**: ✅ Full Infrastructure as Code - All containers managed by Terraform + Ansible  
+**Remote Access**: ✅ Tailscale subnet routing with redundant routers
 
 ---
 
@@ -307,6 +308,130 @@ lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
 
 ---
 
+## Remote Access (Tailscale)
+
+### Overview
+
+**Purpose**: Secure remote access to homelab services from anywhere  
+**Technology**: Tailscale subnet routing with redundant routers  
+**Tailnet**: pigeon-piano.ts.net
+
+### Architecture
+
+```
+Remote Client (phone/laptop)
+    ↓
+Tailscale Network
+    ↓
+Subnet Routers (redundant):
+  - Pi4 (primary) - 100.110.39.126
+  - Proxmox (secondary) - 100.97.172.81
+    ↓
+Your LAN (192.168.1.0/24)
+    ↓
+DNS: Pi4 AdGuard → resolves *.paniland.com and *.home.arpa
+    ↓
+Services: Jellyfin, Proxmox, etc.
+```
+
+### Subnet Routers
+
+| Host | Tailscale IP | Role | Routes |
+|------|--------------|------|--------|
+| Pi4 (192.168.1.102) | 100.110.39.126 | Primary | 192.168.1.0/24 |
+| Proxmox (192.168.1.100) | 100.97.172.81 | Secondary | 192.168.1.0/24 |
+
+**Features**:
+- Automatic failover (if Pi4 down, Proxmox takes over)
+- IP forwarding enabled on both hosts
+- Auth keys managed via Terraform (90-day expiry, auto-regenerate)
+
+### DNS Configuration
+
+**Global DNS**: Pi4 AdGuard (192.168.1.102)  
+**Split DNS Routes**:
+- `*.paniland.com` → 192.168.1.102
+- `*.home.arpa` → 192.168.1.102
+
+**Result**: Same URLs work locally and remotely:
+- `https://jellyfin.paniland.com` → Caddy proxy → Jellyfin
+- `ssh cuiv@pi4.home.arpa` → Direct SSH
+
+### Access Control (ACLs)
+
+**Managed via**: Terraform (`terraform/tailscale.tf`)
+
+| Group | Access |
+|-------|--------|
+| `autogroup:admin` (you) | Full access to everything (`*:*`) |
+| `group:friends` | Limited: proxy (80/443), Jellyfin direct (8096) |
+
+**Tags**:
+- `tag:subnet-router` - Applied to Pi4 and Proxmox routers
+- `tag:server` - Available for future server tagging
+- `tag:pc` - For personal devices
+
+### Key Benefits
+
+1. **Same URLs everywhere** - jellyfin.paniland.com works at home and remotely
+2. **Ad-blocking follows you** - Pi4 AdGuard filters all DNS queries
+3. **Redundant routing** - Pi4 down? Proxmox takes over automatically
+4. **Granular friend access** - Share specific services via ACLs
+5. **Mullvad compatibility** - Exit nodes still work alongside subnet routing
+
+### Management Commands
+
+```bash
+# Check router status
+ssh cuiv@192.168.1.102 "sudo tailscale status"
+ssh cuiv@192.168.1.100 "sudo tailscale status"
+
+# Verify routes
+ssh cuiv@192.168.1.102 "sudo tailscale status --json | jq '.Self.PrimaryRoutes'"
+
+# Check DNS config
+ssh cuiv@192.168.1.102 "sudo tailscale dns status"
+
+# Redeploy routers (after key rotation)
+cd ansible && ansible-playbook playbooks/tailscale.yml
+```
+
+### Adding Friends
+
+1. Edit `terraform/tailscale.tf`:
+   ```hcl
+   groups = {
+     "group:friends" = ["friend@gmail.com"]
+   }
+   ```
+2. Apply: `cd terraform && terraform apply`
+3. Invite friend via Tailscale admin console
+4. They install Tailscale, accept invite
+5. They can access allowed services
+
+### Auth Key Rotation
+
+Auth keys expire after 90 days. Terraform handles regeneration:
+
+```bash
+cd terraform
+terraform plan   # Shows key recreation
+terraform apply  # Generates new keys
+
+# Export to Ansible vault
+terraform output -raw tailscale_pi4_auth_key | \
+  ansible-vault encrypt_string --vault-password-file ../.vault_pass \
+  --stdin-name vault_tailscale_pi4_auth_key
+
+# Update ansible/vars/secrets.yml with new encrypted keys
+# Re-run playbook to re-authenticate routers
+cd ansible && ansible-playbook playbooks/tailscale.yml
+```
+
+**Status**: ✅ Production, tested with mobile remote access
+
+---
+
 ## User Configuration
 
 ### User Strategy
@@ -429,7 +554,9 @@ pct exec 302 -- makemkvcon info disc:0
 ### Terraform
 
 **Location**: `terraform/`  
-**Provider**: BPG Proxmox (`~> 0.50.0`)
+**Providers**:
+- BPG Proxmox (`~> 0.50.0`) - Container management
+- Tailscale (`~> 0.16`) - Remote access infrastructure
 
 **Container Definitions**:
 - `backup.tf` - Backup container
@@ -439,7 +566,10 @@ pct exec 302 -- makemkvcon info disc:0
 - `transcoder.tf` - Transcoder with GPU
 - `jellyfin.tf` - Jellyfin with dual GPU
 
-**Status**: ✅ All containers managed by Terraform
+**Tailscale Management**:
+- `tailscale.tf` - ACLs, DNS, auth keys for remote access
+
+**Status**: ✅ All containers + remote access managed by Terraform
 
 ---
 
@@ -458,6 +588,7 @@ pct exec 302 -- makemkvcon info disc:0
 - `media_analyzer` - Media analysis tools (MediaInfo, FileBot)
 - `jellyfin` - Jellyfin media server
 - `adguard_home` - AdGuard Home DNS server
+- `tailscale_subnet_router` - Tailscale subnet routing for remote access
 
 **Playbooks**:
 - `site.yml` - Main playbook for all containers
@@ -468,8 +599,9 @@ pct exec 302 -- makemkvcon info disc:0
 - `transcoder.yml` - Transcoder container
 - `jellyfin.yml` - Jellyfin container
 - `dns.yml` - DNS infrastructure (Pi4 + CT310)
+- `tailscale.yml` - Tailscale subnet routers (Pi4 + Proxmox)
 
-**Status**: ✅ All containers configured via Ansible
+**Status**: ✅ All containers + remote access configured via Ansible
 
 ---
 
@@ -558,6 +690,7 @@ ansible-playbook playbooks/site.yml --tags <tag> --check  # dry-run
 
 ---
 
-**Document Status**: ✅ Current as of 2025-11-14  
+**Document Status**: ✅ Current as of 2025-11-15  
 **IaC Status**: ✅ 100% Infrastructure as Code  
+**Remote Access**: ✅ Tailscale subnet routing operational  
 **Maintenance**: Update when infrastructure changes occur

@@ -1,0 +1,111 @@
+---
+# Tailscale Subnet Router Deployment
+#
+# Configures redundant subnet routing for remote access.
+# Primary: Pi4, Secondary: Proxmox host
+#
+# Prerequisites:
+# - Terraform applied (ACLs, DNS, auth keys configured)
+# - Auth keys stored in Ansible Vault
+#
+# Usage:
+#   ansible-playbook ansible/playbooks/tailscale.yml --vault-password-file .vault_pass
+
+- name: Configure Pi4 as Primary Subnet Router
+  hosts: pi4
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/secrets.yml
+
+  vars:
+    tailscale_auth_key: "{{ vault_tailscale_pi4_auth_key }}"
+    tailscale_hostname: "pi4-router"
+    tailscale_advertise_routes:
+      - "192.168.1.0/24"
+    tailscale_tags:
+      - "tag:subnet-router"
+
+  pre_tasks:
+    - name: Display configuration
+      debug:
+        msg: |
+          Configuring Pi4 as PRIMARY subnet router
+
+          Host: {{ inventory_hostname }} ({{ ansible_host }})
+          Routes: {{ tailscale_advertise_routes | join(', ') }}
+          Tags: {{ tailscale_tags | join(', ') }}
+
+          This will enable remote access to your entire homelab!
+
+  roles:
+    - role: tailscale_subnet_router
+      tags: ['tailscale']
+
+
+- name: Configure Proxmox as Secondary Subnet Router
+  hosts: proxmox_host
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/secrets.yml
+
+  vars:
+    tailscale_auth_key: "{{ vault_tailscale_proxmox_auth_key }}"
+    tailscale_hostname: "proxmox-router"
+    tailscale_advertise_routes:
+      - "192.168.1.0/24"
+    tailscale_tags:
+      - "tag:subnet-router"
+
+  pre_tasks:
+    - name: Display configuration
+      debug:
+        msg: |
+          Configuring Proxmox as SECONDARY subnet router
+
+          Host: {{ inventory_hostname }} ({{ ansible_host }})
+          Routes: {{ tailscale_advertise_routes | join(', ') }}
+          Tags: {{ tailscale_tags | join(', ') }}
+
+          This provides redundancy if Pi4 goes down.
+
+  roles:
+    - role: tailscale_subnet_router
+      tags: ['tailscale']
+
+
+- name: Display Final Status
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Show next steps
+      debug:
+        msg: |
+          Tailscale Subnet Routing Configured!
+
+          Primary Router: Pi4 (192.168.1.102)
+          Secondary Router: Proxmox (192.168.1.100)
+
+          NEXT STEPS:
+          1. Check Tailscale admin console - routes should be auto-approved
+          2. Install Tailscale on your laptop/phone
+          3. Test remote access:
+             - ssh cuiv@pi4.home.arpa
+             - https://jellyfin.paniland.com
+          4. Verify DNS queries go through Pi4 (ad-blocking works)
+
+          SHARING WITH FRIENDS:
+          1. Edit terraform/tailscale.tf
+          2. Add email to group:friends
+          3. Run terraform apply
+          4. Friend accepts Tailscale invite
+          5. They can access allowed services
+
+          MULLVAD EXIT NODES:
+          - Works alongside subnet routing
+          - Internet traffic exits via Mullvad
+          - Homelab traffic still routes through your subnet routers

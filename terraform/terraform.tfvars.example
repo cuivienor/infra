@@ -16,3 +16,10 @@ proxmox_api_token = "root@pam!terraform=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 # Note: SSH keys are automatically loaded from ansible/files/ssh-keys/
 # No need to specify ssh_public_key here
+
+# Tailscale Configuration
+# Create OAuth client at: https://login.tailscale.com/admin/settings/oauth
+# Scopes needed: all (or at minimum: acl, devices, dns, routes, keys)
+tailscale_oauth_client_id     = "your-oauth-client-id"
+tailscale_oauth_client_secret = "tskey-client-xxxxx-xxxxxxxxxxxxx"
+tailscale_tailnet             = "your-tailnet-id"  # Found at Settings → General → Tailnet ID
