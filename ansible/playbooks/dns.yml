@@ -41,9 +41,12 @@
       # ===========================================
       - domain: "jellyfin.paniland.com"
         answer: "192.168.1.111"  # Via Caddy proxy for HTTPS
-      # Future services to add here as they're proxied:
-      # - domain: "backup.paniland.com"
-      #   answer: "192.168.1.111"
+      - domain: "backrest.paniland.com"
+        answer: "192.168.1.111"
+      - domain: "adguard.paniland.com"
+        answer: "192.168.1.111"
+      - domain: "proxmox.paniland.com"
+        answer: "192.168.1.111"
 
       # ===========================================
       # HOST/MACHINE ACCESS (direct, RFC 8375)
