@@ -1,0 +1,123 @@
+---
+# Reverse Proxy Setup with Caddy
+#
+# Deploys Caddy with automatic HTTPS via Let's Encrypt DNS-01 challenge.
+# Uses Cloudflare API for certificate validation (no public exposure needed).
+#
+# Features:
+# - Automatic HTTPS with valid Let's Encrypt certificates
+# - DNS-01 challenge via Cloudflare (internal services, no port forwarding)
+# - Built-in Cloudflare DNS plugin (compiled with xcaddy)
+#
+# Usage:
+#   ansible-playbook ansible/playbooks/proxy.yml --vault-password-file .vault_pass
+#
+# After running:
+#   1. Update AdGuard DNS rewrites to point domains to proxy IP (.111)
+#   2. Test: curl -k https://jellyfin.paniland.com (staging certs)
+#   3. Once working, set caddy_acme_staging: false for production certs
+
+- name: Configure Reverse Proxy
+  hosts: proxy
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/secrets.yml
+
+  vars:
+    # Cloudflare API token from vault
+    caddy_cloudflare_api_token: "{{ vault_cloudflare_api_token }}"
+
+    # IMPORTANT: Start with staging certificates to avoid rate limits
+    # Let's Encrypt has strict rate limits (5 certs/week for same domain)
+    # Set to false only after staging certificates work correctly
+    caddy_acme_staging: false
+
+    # Services to proxy
+    caddy_proxy_targets:
+      - domain: "jellyfin.paniland.com"
+        upstream: "192.168.1.130:8096"
+      # Add more services as needed:
+      # - domain: "backup.paniland.com"
+      #   upstream: "192.168.1.120:9898"
+
+  pre_tasks:
+    - name: Display configuration
+      ansible.builtin.debug:
+        msg: |
+          Configuring Caddy reverse proxy on: {{ inventory_hostname }}
+          IP: {{ ansible_host }}
+
+          Configuration:
+          - ACME Email: {{ caddy_acme_email | default('admin@paniland.com') }}
+          - Staging Mode: {{ caddy_acme_staging }}
+          - Proxy Targets: {{ caddy_proxy_targets | length }}
+          {% for target in caddy_proxy_targets %}
+          - {{ target.domain }} → {{ target.upstream }}
+          {% endfor %}
+
+          {% if caddy_acme_staging %}
+          ⚠️  STAGING MODE: Certificates will be from Let's Encrypt staging CA
+          Browsers will show certificate warnings (expected for testing)
+          {% endif %}
+
+  roles:
+    - role: common
+      tags: ['common', 'base']
+    - role: caddy
+      tags: ['caddy', 'proxy']
+
+  post_tasks:
+    - name: Wait for Caddy to start
+      ansible.builtin.wait_for:
+        port: 443
+        delay: 5
+        timeout: 60
+
+    - name: Check Caddy service status
+      ansible.builtin.systemd:
+        name: caddy
+      register: caddy_service
+
+    - name: Verify Caddy is running
+      ansible.builtin.command: caddy version
+      register: caddy_version
+      changed_when: false
+
+    - name: Display final status
+      ansible.builtin.debug:
+        msg: |
+          ✅ Reverse Proxy Setup Complete
+
+          Host: {{ inventory_hostname }} ({{ ansible_host }})
+          Caddy Version: {{ caddy_version.stdout }}
+          Service Status: {{ caddy_service.status.ActiveState }}
+
+          Proxy Targets:
+          {% for target in caddy_proxy_targets %}
+          - https://{{ target.domain }} → {{ target.upstream }}
+          {% endfor %}
+
+          NEXT STEPS:
+          1. Update AdGuard DNS rewrites to point to {{ ansible_host }}:
+             {% for target in caddy_proxy_targets %}
+             - {{ target.domain }} → {{ ansible_host }}
+             {% endfor %}
+
+          2. Test connectivity:
+             {% for target in caddy_proxy_targets %}
+             curl -k https://{{ target.domain }}
+             {% endfor %}
+
+          {% if caddy_acme_staging %}
+          3. STAGING MODE ACTIVE:
+             - Certificates are from Let's Encrypt staging CA
+             - Browsers will show certificate warnings (this is expected)
+             - Once verified working, edit playbook: caddy_acme_staging: false
+             - Then re-run playbook to get production certificates
+          {% else %}
+          3. PRODUCTION MODE:
+             - Certificates should be valid from Let's Encrypt
+             - No browser warnings expected
+          {% endif %}

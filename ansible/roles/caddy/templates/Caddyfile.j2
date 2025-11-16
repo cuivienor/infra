@@ -1,0 +1,29 @@
+# Caddyfile - Managed by Ansible
+# DO NOT EDIT MANUALLY
+
+{
+    # Global options
+    email {{ caddy_acme_email }}
+
+{% if caddy_acme_staging %}
+    # Using Let's Encrypt staging environment (test certificates)
+    # Remove this block for production certificates
+    acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+{% endif %}
+}
+
+# Reverse proxy configurations
+{% for target in caddy_proxy_targets %}
+{{ target.domain }} {
+    reverse_proxy {{ target.upstream }}
+
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+}
+
+{% endfor %}
+{% if caddy_proxy_targets | length == 0 %}
+# No proxy targets configured yet
+# Add targets via caddy_proxy_targets variable
+{% endif %}

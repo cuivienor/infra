@@ -1,0 +1,26 @@
+# Caddy systemd service - Managed by Ansible
+# Based on official Caddy systemd unit file
+
+[Unit]
+Description=Caddy reverse proxy
+Documentation=https://caddyserver.com/docs/
+After=network.target network-online.target
+Requires=network-online.target
+
+[Service]
+Type=notify
+User={{ caddy_user }}
+Group={{ caddy_group }}
+EnvironmentFile=/etc/default/caddy
+ExecStart=/usr/bin/caddy run --environ --config {{ caddy_config_dir }}/Caddyfile
+ExecReload=/usr/bin/caddy reload --config {{ caddy_config_dir }}/Caddyfile --force
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+LimitNPROC=512
+# Disabled for LXC container compatibility
+# PrivateTmp=true
+# ProtectSystem=full
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target

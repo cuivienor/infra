@@ -1,0 +1,14 @@
+---
+# Caddy handlers
+
+- name: reload caddy
+  systemd:
+    name: caddy
+    state: reloaded
+  become: true
+
+- name: restart caddy
+  systemd:
+    name: caddy
+    state: restarted
+  become: true
