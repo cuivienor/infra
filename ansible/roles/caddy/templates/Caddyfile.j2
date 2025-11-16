@@ -15,7 +15,15 @@
 # Reverse proxy configurations
 {% for target in caddy_proxy_targets %}
 {{ target.domain }} {
+{% if target.upstream_https | default(false) %}
+    reverse_proxy https://{{ target.upstream }} {
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
+{% else %}
     reverse_proxy {{ target.upstream }}
+{% endif %}
 
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
