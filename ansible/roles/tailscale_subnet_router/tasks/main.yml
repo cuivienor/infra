@@ -68,7 +68,7 @@
         (tailscale_status_check.stdout | from_json).BackendState != 'Running'
       }}
 
-- name: Authenticate and configure Tailscale
+- name: Authenticate and configure Tailscale (initial auth)
   command: >
     tailscale up
     --auth-key={{ tailscale_auth_key }}
@@ -83,6 +83,17 @@
   become: true
   no_log: true
 
+- name: Update Tailscale configuration (already authenticated)
+  command: >
+    tailscale set
+    --advertise-routes={{ tailscale_advertise_routes | join(',') }}
+    {% if tailscale_advertise_exit_node %}--advertise-exit-node{% else %}--advertise-exit-node=false{% endif %}
+    --accept-routes={{ tailscale_accept_routes | lower }}
+    --accept-dns={{ tailscale_accept_dns | lower }}
+  when: not tailscale_needs_auth
+  become: true
+  changed_when: true
+
 - name: Get Tailscale IP
   command: tailscale ip -4
   register: tailscale_ip
@@ -96,6 +107,7 @@
 
       Tailscale IP: {{ tailscale_ip.stdout }}
       Advertised routes: {{ tailscale_advertise_routes | join(', ') }}
+      Exit node: {{ tailscale_advertise_exit_node | default(false) }}
       Tags: {{ tailscale_tags | join(', ') }}
 
       This device is now advertising {{ tailscale_advertise_routes | join(', ') }}
