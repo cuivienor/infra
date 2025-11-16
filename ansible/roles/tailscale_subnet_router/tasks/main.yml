@@ -1,0 +1,101 @@
+---
+# Install and configure Tailscale as subnet router
+
+- name: Check if Tailscale is already installed
+  stat:
+    path: /usr/bin/tailscale
+  register: tailscale_installed
+
+- name: Install Tailscale (Debian/Ubuntu)
+  when:
+    - not tailscale_installed.stat.exists
+    - ansible_os_family == "Debian"
+  block:
+    - name: Add Tailscale GPG key
+      shell: |
+        curl -fsSL https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.noarmor.gpg | \
+        tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+      args:
+        creates: /usr/share/keyrings/tailscale-archive-keyring.gpg
+      become: true
+
+    - name: Add Tailscale repository
+      copy:
+        content: |
+          deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main
+        dest: /etc/apt/sources.list.d/tailscale.list
+      become: true
+
+    - name: Install Tailscale package
+      apt:
+        name: tailscale
+        state: present
+        update_cache: true
+      become: true
+
+- name: Enable IP forwarding for subnet routing
+  sysctl:
+    name: "{{ item }}"
+    value: '1'
+    sysctl_set: true
+    state: present
+    reload: true
+  loop:
+    - net.ipv4.ip_forward
+    - net.ipv6.conf.all.forwarding
+  become: true
+
+- name: Ensure tailscaled service is running
+  systemd:
+    name: tailscaled
+    state: started
+    enabled: true
+  become: true
+
+- name: Check current Tailscale status
+  command: tailscale status --json
+  register: tailscale_status_check
+  failed_when: false
+  changed_when: false
+  become: true
+
+- name: Parse Tailscale status
+  set_fact:
+    tailscale_needs_auth: >-
+      {{
+        tailscale_status_check.rc != 0 or
+        tailscale_status_check.stdout == '' or
+        (tailscale_status_check.stdout | from_json).BackendState != 'Running'
+      }}
+
+- name: Authenticate and configure Tailscale
+  command: >
+    tailscale up
+    --auth-key={{ tailscale_auth_key }}
+    --advertise-routes={{ tailscale_advertise_routes | join(',') }}
+    --advertise-tags={{ tailscale_tags | join(',') }}
+    {% if tailscale_hostname %}--hostname={{ tailscale_hostname }}{% endif %}
+    --accept-routes={{ tailscale_accept_routes | lower }}
+    --accept-dns={{ tailscale_accept_dns | lower }}
+    --reset
+  when: tailscale_needs_auth
+  become: true
+  no_log: true
+
+- name: Get Tailscale IP
+  command: tailscale ip -4
+  register: tailscale_ip
+  changed_when: false
+  become: true
+
+- name: Display Tailscale configuration
+  debug:
+    msg: |
+      Tailscale subnet router configured!
+
+      Tailscale IP: {{ tailscale_ip.stdout }}
+      Advertised routes: {{ tailscale_advertise_routes | join(', ') }}
+      Tags: {{ tailscale_tags | join(', ') }}
+
+      This device is now advertising {{ tailscale_advertise_routes | join(', ') }}
+      Routes should be auto-approved via ACL autoApprovers.

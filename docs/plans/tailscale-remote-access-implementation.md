@@ -1,7 +1,7 @@
 # Tailscale Remote Access Implementation Plan
 
 **Created**: 2025-11-15  
-**Status**: Ready to Execute  
+**Status**: ✅ Executed Successfully (2025-11-15)  
 **Purpose**: Enable secure remote access to homelab via Tailscale with redundant subnet routing
 
 ---
@@ -748,14 +748,14 @@ ansible/
 
 ## Success Criteria
 
-- [ ] Pi4 and Proxmox both advertising 192.168.1.0/24
-- [ ] Routes auto-approved via ACL
-- [ ] Remote SSH works: `ssh root@jellyfin.home.arpa`
-- [ ] Remote HTTPS works: `https://jellyfin.paniland.com`
-- [ ] DNS queries go through Pi4 (ad-blocking active)
-- [ ] Failover works (Pi4 down → Proxmox takes over)
-- [ ] Mullvad exit nodes still functional
-- [ ] Friend can access shared services (when configured)
+- [x] Pi4 and Proxmox both advertising 192.168.1.0/24
+- [x] Routes auto-approved via ACL
+- [x] Remote SSH works: `ssh root@jellyfin.home.arpa`
+- [x] Remote HTTPS works: `https://jellyfin.paniland.com`
+- [x] DNS queries go through Pi4 (ad-blocking active)
+- [ ] Failover works (Pi4 down → Proxmox takes over) - Not tested yet
+- [ ] Mullvad exit nodes still functional - Not tested yet
+- [ ] Friend can access shared services (when configured) - Not tested yet
 
 ---
 

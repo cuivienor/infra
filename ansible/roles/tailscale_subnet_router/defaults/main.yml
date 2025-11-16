@@ -1,0 +1,22 @@
+---
+# Tailscale subnet router defaults
+
+# Auth key - REQUIRED, set from vault
+tailscale_auth_key: ""
+
+# Routes to advertise
+tailscale_advertise_routes:
+  - "192.168.1.0/24"
+
+# Tags to apply to this device
+tailscale_tags:
+  - "tag:subnet-router"
+
+# Accept routes from other nodes
+tailscale_accept_routes: false
+
+# Use Tailscale DNS (we want this for our DNS config)
+tailscale_accept_dns: true
+
+# Hostname in Tailscale admin (defaults to system hostname)
+tailscale_hostname: ""
