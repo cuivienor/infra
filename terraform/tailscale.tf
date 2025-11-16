@@ -21,7 +21,8 @@ resource "tailscale_acl" "homelab" {
       // Add friend emails here when you want to share
       "group:friends" = [
         "williamrgoldstein@gmail.com",
-        "sweir27@gmail.com"
+        "sweir27@gmail.com",
+        "stefanova.ani@gmail.com"
       ]
     }
 
