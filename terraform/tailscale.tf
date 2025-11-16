@@ -39,6 +39,8 @@ resource "tailscale_acl" "homelab" {
         action = "accept"
         src    = ["group:friends"]
         dst = [
+          "192.168.1.102:53",     // Pi4 DNS (for resolving paniland.com)
+          "192.168.1.110:53",     // CT310 DNS (backup)
           "192.168.1.111:80,443", // Proxy (HTTPS services)
           "192.168.1.130:8096",   // Jellyfin direct (if needed)
         ]
