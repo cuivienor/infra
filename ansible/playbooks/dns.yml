@@ -29,7 +29,7 @@
   vars:
     # Admin credentials - password hash from vault
     # To change: python3 -c "import bcrypt; print(bcrypt.hashpw(b'your_password', bcrypt.gensalt(rounds=10)).decode())"
-    adguard_home_admin_user: "admin"
+    adguard_home_admin_user: "cuiv"
     adguard_home_admin_password_hash: "{{ vault_adguard_admin_password_hash }}"
 
     # Local DNS records for homelab services
