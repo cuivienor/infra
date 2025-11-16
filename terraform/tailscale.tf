@@ -19,7 +19,10 @@ resource "tailscale_acl" "homelab" {
     // Group definitions for access control
     groups = {
       // Add friend emails here when you want to share
-      "group:friends" = []
+      "group:friends" = [
+        "williamrgoldstein@gmail.com",
+        "sweir27@gmail.com"
+      ]
     }
 
     // Access rules
