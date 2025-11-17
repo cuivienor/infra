@@ -58,15 +58,17 @@
         group: media
         mode: '0755'
       loop:
-        - { src: "../../scripts/media/production/transcode-queue.sh", dest: "transcode-queue.sh" }
+        - { src: "../../scripts/media/production/transcode.sh", dest: "transcode.sh" }
         - { src: "../../scripts/media/utilities/run-bg.sh", dest: "run-bg.sh" }
+        # Legacy script (keeping for reference, can be removed later)
+        - { src: "../../scripts/media/production/transcode-queue.sh", dest: "transcode-queue.sh" }
       tags: ['scripts']
 
-    - name: Configure staging path environment variable
+    - name: Remove old STAGING_BASE environment variable
       ansible.builtin.lineinfile:
         path: /home/media/.bashrc
         line: 'export STAGING_BASE="/mnt/staging"'
-        state: present
+        state: absent
         owner: media
         group: media
       tags: ['scripts']
@@ -162,22 +164,42 @@
 
     - name: Verify scripts deployed
       ansible.builtin.stat:
-        path: /home/media/scripts/transcode-queue.sh
-      register: script_check
+        path: "/home/media/scripts/{{ item }}"
+      loop:
+        - transcode.sh
+        - run-bg.sh
+      register: script_checks
       tags: ['verify']
 
     - name: Display script deployment status
       ansible.builtin.debug:
-        msg: "transcode-queue.sh {{ 'deployed successfully' if script_check.stat.exists else 'MISSING' }}"
+        msg: "{{ item.item }}: {{ 'OK' if item.stat.exists else 'MISSING' }}"
+      loop: "{{ script_checks.results }}"
       tags: ['verify']
 
-    - name: Verify staging mount exists
+    - name: Verify media mount exists
       ansible.builtin.stat:
-        path: /mnt/staging/2-remuxed
+        path: /mnt/media/staging/2-remuxed
       register: staging_mount
       tags: ['verify']
 
-    - name: Display staging mount status
+    - name: Display media mount status
       ansible.builtin.debug:
-        msg: "Staging directory {{ 'mounted correctly' if staging_mount.stat.exists else 'MISSING - check mount configuration' }}"
+        msg: "Media staging directory {{ 'mounted correctly' if staging_mount.stat.exists else 'MISSING - check mount configuration' }}"
+      tags: ['verify']
+
+    - name: Summary of verification
+      ansible.builtin.debug:
+        msg:
+          - "==================================="
+          - "Transcoder Container Verification Summary"
+          - "==================================="
+          - "GPU devices: {{ gpu_devices.results | selectattr('stat.exists') | list | length }}/2"
+          - "Scripts deployed: {{ script_checks.results | selectattr('stat.exists') | list | length }}/2"
+          - "Media mount: {{ 'OK' if staging_mount.stat.exists else 'FAIL' }}"
+          - ""
+          - "Next steps:"
+          - "1. Test with: ssh media@transcoder.home.arpa"
+          - "2. Transcode TV: ~/scripts/transcode.sh -t show -n 'Show Name' -s 1"
+          - "3. Transcode Movie: ~/scripts/transcode.sh -t movie -n 'Movie Name'"
       tags: ['verify']
