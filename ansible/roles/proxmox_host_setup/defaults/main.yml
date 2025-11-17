@@ -16,3 +16,13 @@ pve_kernels_to_keep: 2  # Current + 1 previous
 pve_fstrim_enabled: true
 pve_fstrim_schedule: "Sat 23:00"
 pve_fstrim_log: "/var/log/fstrim.log"
+
+# Automatic security updates (unattended-upgrades)
+pve_auto_updates_enabled: true
+pve_auto_updates_security_only: true  # Only security updates, not all updates
+pve_auto_updates_reboot: false  # Don't auto-reboot (manual control preferred)
+pve_auto_updates_reboot_time: "04:00"  # If reboot enabled, time to reboot
+pve_auto_updates_mail_to: ""  # Email for notifications (empty = no email)
+pve_auto_updates_mail_on_error: true  # Only email on errors
+pve_auto_updates_remove_unused: true  # Auto-remove unused dependencies
+pve_auto_updates_log_dir: "/var/log/unattended-upgrades"

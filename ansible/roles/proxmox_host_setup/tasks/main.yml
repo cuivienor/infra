@@ -20,3 +20,8 @@
   ansible.builtin.import_tasks: fstrim.yml
   when: pve_fstrim_enabled | default(true)
   tags: ['pve-setup', 'fstrim']
+
+- name: Configure automatic security updates
+  ansible.builtin.import_tasks: unattended-upgrades.yml
+  when: pve_auto_updates_enabled | default(true)
+  tags: ['pve-setup', 'auto-updates', 'security']

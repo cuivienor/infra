@@ -1,0 +1,17 @@
+// Automatic updates schedule configuration
+// Managed by Ansible - do not edit manually
+
+// Update package lists (daily)
+APT::Periodic::Update-Package-Lists "1";
+
+// Download upgradeable packages (daily)
+APT::Periodic::Download-Upgradeable-Packages "1";
+
+// Run unattended-upgrade (daily)
+APT::Periodic::Unattended-Upgrade "1";
+
+// Clean up old packages (weekly)
+APT::Periodic::AutocleanInterval "7";
+
+// Verbose logging for APT operations
+APT::Periodic::Verbose "1";

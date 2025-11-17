@@ -52,7 +52,35 @@
           Model: {{ pi_model }}
           OS: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_release'] }}
           User: {{ ansible_user }}
-          IP: {{ ansible_facts['default_ipv4'].address }}
+          IP: {{ ansible_facts['default_ipv4']['address'] | default(ansible_host) }}
+
+    # === Repository Fixes ===
+
+    - name: Fix Raspberry Pi archive repository (bullseye -> bookworm)
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: 'archive\.raspberrypi\.org/debian/?\s+bullseye'
+        replace: 'archive.raspberrypi.org/debian bookworm'
+      loop:
+        - /etc/apt/sources.list
+        - /etc/apt/sources.list.d/raspi.list
+      failed_when: false
+      changed_when: false
+
+    - name: Check for legacy trusted.gpg keyring
+      ansible.builtin.stat:
+        path: /etc/apt/trusted.gpg
+      register: legacy_keyring
+
+    - name: Migrate legacy GPG keys to trusted.gpg.d (if needed)
+      ansible.builtin.shell: |
+        if [ -s /etc/apt/trusted.gpg ]; then
+          apt-key exportall 2>/dev/null | gpg --dearmor > /etc/apt/trusted.gpg.d/legacy-keys.gpg
+          mv /etc/apt/trusted.gpg /etc/apt/trusted.gpg.bak
+        fi
+      when: legacy_keyring.stat.exists and legacy_keyring.stat.size > 0
+      changed_when: false
+      failed_when: false
 
     # === System Updates ===
 
@@ -156,13 +184,71 @@
         - { regexp: '^#?PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
       notify: Restart ssh
 
+    # === Automatic Security Updates ===
+
+    - name: Install unattended-upgrades
+      ansible.builtin.apt:
+        name:
+          - unattended-upgrades
+          - apt-listchanges
+        state: present
+
+    - name: Configure automatic security updates
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/50unattended-upgrades
+        content: |
+          // Unattended-Upgrades for Raspberry Pi
+          // Managed by Ansible - do not edit manually
+
+          Unattended-Upgrade::Allowed-Origins {
+              "Raspbian:stable";
+              "Raspberry Pi Foundation:stable";
+              "Debian:bookworm";
+              "Debian:bookworm-security";
+              "Debian:bookworm-updates";
+          };
+
+          // Remove unused dependencies after upgrade
+          Unattended-Upgrade::Remove-Unused-Dependencies "true";
+          Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+
+          // Don't automatically reboot (Pi is critical for DNS)
+          Unattended-Upgrade::Automatic-Reboot "false";
+
+          // Logging
+          Unattended-Upgrade::SyslogEnable "true";
+          Unattended-Upgrade::SyslogFacility "daemon";
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Enable automatic update schedule
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        content: |
+          // Automatic updates schedule
+          // Managed by Ansible - do not edit manually
+
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Download-Upgradeable-Packages "1";
+          APT::Periodic::Unattended-Upgrade "1";
+          APT::Periodic::AutocleanInterval "7";
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Verify unattended-upgrades configuration
+      ansible.builtin.command: unattended-upgrade --dry-run
+      register: pi_upgrade_check
+      changed_when: false
+      failed_when: false
+
     # === Cleanup ===
 
     - name: Remove unnecessary packages
       ansible.builtin.apt:
         autoremove: true
         autoclean: true
-        purge: true
 
     - name: Clean old journal logs
       ansible.builtin.shell: journalctl --vacuum-time=7d
@@ -178,13 +264,15 @@
     - name: Display setup summary
       ansible.builtin.debug:
         msg: |
-          ✅ {{ inventory_hostname }} configuration complete
+          {{ inventory_hostname }} configuration complete
 
           User: {{ standard_user }}
           SSH: Key-based authentication only
           Sudo: Passwordless for cuiv
           WiFi: Disabled (Ethernet only)
           Packages: {{ base_packages | length }} essential packages installed
+          Auto-updates: Enabled (security updates only)
+          Auto-reboot: Disabled (manual control for DNS stability)
 
   handlers:
     - name: Restart ssh
