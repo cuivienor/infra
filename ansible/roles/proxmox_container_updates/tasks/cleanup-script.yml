@@ -1,0 +1,25 @@
+---
+# Deploy container cleanup script
+
+- name: Create cleanup log file
+  ansible.builtin.file:
+    path: "{{ container_cleanup_config.log_file }}"
+    state: touch
+    mode: '0644'
+    modification_time: preserve
+    access_time: preserve
+  become: true
+
+- name: Deploy container cleanup script
+  ansible.builtin.template:
+    src: cleanup-containers.sh.j2
+    dest: /usr/local/bin/cleanup-containers.sh
+    mode: '0755'
+  become: true
+
+- name: Display cleanup script info
+  ansible.builtin.debug:
+    msg: |
+      Container cleanup script deployed to /usr/local/bin/cleanup-containers.sh
+      Log file: {{ container_cleanup_config.log_file }}
+      Manual run: sudo /usr/local/bin/cleanup-containers.sh

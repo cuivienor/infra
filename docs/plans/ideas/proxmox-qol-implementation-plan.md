@@ -1,237 +1,448 @@
 # Proxmox Quality of Life - Implementation Plan
 
-This is a structured implementation plan for adding quality of life improvements to your Proxmox homelab. Each phase is self-contained and can be implemented independently.
+This is an implementation plan for Proxmox homelab quality of life improvements. All automation is implemented as **Ansible roles** to integrate with existing IaC infrastructure.
+
+**Scope**: Phases 1-4 (Foundation, Container Management, Host Backup, Storage Optimization)  
+**Out of Scope**: Notifications (separate project), Monitoring (Phase 5, separate project)
 
 ---
 
 ## Phase 1: Post-Install Configuration & Cleanup
 
-**Goal:** Fix repositories, remove subscription nag, clean up old kernels
-
-**Prerequisites:**
-- Root access to Proxmox host
-- Backup of current system state
-
-**Implementation Steps:**
+**Goal**: Fix repositories, remove subscription nag, clean up old kernels  
+**Implementation**: New Ansible role `proxmox_host_setup`
 
 ### 1.1 Repository Configuration
-```bash
-# Create script: scripts/proxmox/fix-repositories.sh
 
-# Tasks:
-# - Check current PVE version (9.x expected)
-# - Backup existing sources: /etc/apt/sources.list.d/
-# - Disable pve-enterprise repository
-# - Enable pve-no-subscription repository
-# - Configure Debian Trixie repositories (deb822 format)
-# - Run apt update to verify
+**Ansible Tasks**:
+```yaml
+# ansible/roles/proxmox_host_setup/tasks/repositories.yml
+
+- name: Backup existing apt sources
+  ansible.builtin.copy:
+    src: /etc/apt/sources.list.d/
+    dest: /root/apt-sources-backup-{{ ansible_date_time.date }}/
+    remote_src: true
+    mode: preserve
+
+- name: Disable pve-enterprise repository
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/pve-enterprise.list
+    state: absent
+
+- name: Enable pve-no-subscription repository
+  ansible.builtin.apt_repository:
+    repo: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
+    filename: pve-no-subscription
+    state: present
 ```
 
-**Manual verification:**
+**Testing**:
 ```bash
-# After running, verify:
-cat /etc/apt/sources.list.d/*.sources
-apt update
+ansible-playbook playbooks/proxmox-host.yml --tags repositories --check
+ansible-playbook playbooks/proxmox-host.yml --tags repositories
+ssh cuiv@homelab "apt update"  # Verify no errors
 ```
 
-**Testing:**
-- Run on test VM first if available
-- Verify apt update succeeds
-- Verify web UI still accessible
-
-**Rollback:**
-- Restore backed up sources from backup directory
+**Rollback**:
+```bash
+ssh cuiv@homelab "cp -r /root/apt-sources-backup-*/* /etc/apt/sources.list.d/"
+```
 
 ---
 
 ### 1.2 Remove Subscription Nag
-```bash
-# Create script: scripts/proxmox/remove-subscription-nag.sh
 
-# Tasks:
-# - Create /usr/local/bin/pve-remove-nag.sh
-# - Patch /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
-# - Patch /usr/share/pve-yew-mobile-gui/index.html.tpl (if exists)
-# - Add APT post-invoke hook: /etc/apt/apt.conf.d/no-nag-script
-# - Reinstall proxmox-widget-toolkit
+**Ansible Tasks**:
+```yaml
+# ansible/roles/proxmox_host_setup/tasks/remove-nag.yml
+
+- name: Deploy nag removal script
+  ansible.builtin.template:
+    src: pve-remove-nag.sh.j2
+    dest: /usr/local/bin/pve-remove-nag.sh
+    mode: '0755'
+
+- name: Run nag removal script
+  ansible.builtin.command: /usr/local/bin/pve-remove-nag.sh
+  changed_when: true
+
+- name: Create APT hook to re-run after updates
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/99-pve-no-nag
+    content: |
+      DPkg::Post-Invoke { "/usr/local/bin/pve-remove-nag.sh || true"; };
+    mode: '0644'
 ```
 
-**Testing:**
+**Testing**:
 - Clear browser cache (Ctrl+Shift+R)
-- Log out and log back in
-- Verify no subscription popup appears
+- Log out and back in to Proxmox UI
+- Verify no subscription popup
 
-**Rollback:**
+**Rollback**:
 ```bash
-rm /usr/local/bin/pve-remove-nag.sh
-rm /etc/apt/apt.conf.d/no-nag-script
-apt reinstall proxmox-widget-toolkit
+ssh cuiv@homelab "apt reinstall proxmox-widget-toolkit"
 ```
 
 ---
 
-### 1.3 Kernel Cleanup
-```bash
-# Create script: scripts/proxmox/clean-old-kernels.sh
+### 1.3 Kernel Cleanup (Automatic)
 
-# Tasks:
-# - Detect current running kernel: uname -r
-# - List all installed kernels: dpkg --list | grep 'kernel-.*-pve'
-# - Interactive selection (keep current + 1 previous)
-# - Remove selected kernels: apt purge
-# - Run update-grub
-# - Show disk space freed
+**Ansible Tasks**:
+```yaml
+# ansible/roles/proxmox_host_setup/tasks/kernel-cleanup.yml
+
+- name: Get current running kernel
+  ansible.builtin.command: uname -r
+  register: current_kernel
+  changed_when: false
+
+- name: List all installed PVE kernels
+  ansible.builtin.shell: |
+    dpkg --list | grep 'pve-kernel-[0-9]' | awk '{print $2}' | sort -V
+  register: installed_kernels
+  changed_when: false
+
+- name: Identify kernels to remove (keep current + 1 previous)
+  ansible.builtin.set_fact:
+    kernels_to_remove: "{{ installed_kernels.stdout_lines[:-2] }}"
+  when: installed_kernels.stdout_lines | length > 2
+
+- name: Remove old kernels
+  ansible.builtin.apt:
+    name: "{{ kernels_to_remove }}"
+    state: absent
+    purge: true
+  when: kernels_to_remove is defined and kernels_to_remove | length > 0
+  notify: Update grub
+
+- name: Show disk space after cleanup
+  ansible.builtin.command: df -h /boot
+  register: boot_space
+  changed_when: false
+
+- name: Display boot partition space
+  ansible.builtin.debug:
+    var: boot_space.stdout_lines
 ```
 
-**Safety checks:**
-- Never remove currently running kernel
-- Keep at least 1 backup kernel
-- Verify `/boot` has enough space before update-grub
-
-**Testing:**
-```bash
-# Check boot partition space before/after
-df -h /boot
-```
-
-**Rollback:**
-- If boot issues: boot from older kernel in GRUB menu
-- Reinstall kernel: apt install pve-kernel-<version>
+**Safety**: Always keeps current kernel + 1 previous for rollback via GRUB menu.
 
 ---
 
 ## Phase 2: Automated Container Management
 
-**Goal:** Automate container updates and cleanup
+**Goal**: Automate container updates with active-use detection  
+**Implementation**: New Ansible role `proxmox_container_updates`
 
-### 2.1 Container Update Script
-```bash
-# Create script: scripts/proxmox/update-containers.sh
+### 2.1 Active-Use Detection System
 
-# Features:
-# - List all containers with status
-# - Exclude containers by ID (interactive or config file)
-# - Auto-start stopped containers, update, then stop
-# - Support multi-distro:
-#   - Debian/Ubuntu: apt update && apt dist-upgrade
-#   - Alpine: apk upgrade
-#   - Arch: pacman -Syu
-#   - Fedora/Rocky: dnf update
-# - Show disk usage before/after
-# - Report containers needing reboot
-# - Logging to /var/log/container-updates.log
-```
+**Design**: Hybrid approach with process detection + lock file override
 
-**Configuration file:**
 ```yaml
-# /etc/pve-scripts/container-update.conf
-exclude_containers:
-  - 100  # Test container
-  - 999  # Template
+# ansible/inventory/group_vars/proxmox_host.yml
 
-auto_reboot: false
-notify_on_completion: true
-notification_url: "https://ntfy.sh/your-topic"
+# Active-use detection configuration
+container_update_checks:
+  # Process patterns that indicate container is busy
+  busy_processes:
+    - pattern: "ffmpeg|HandBrakeCLI|av1an"
+      description: "video transcoding"
+    - pattern: "makemkvcon"
+      description: "disc ripping"
+    - pattern: "filebot"
+      description: "media organization"
+
+  # Lock file for manual override (touch this to prevent updates)
+  lock_file: "/var/run/no-container-updates.lock"
+
+  # Per-container overrides (optional)
+  container_overrides:
+    # Example: always skip test container
+    # 199:
+    #   skip: true
+    #   reason: "test container"
+
+# Container update settings
+container_update_config:
+  # Containers to always exclude from updates
+  exclude_ctids: []
+
+  # Auto-start stopped containers for updates, then stop again
+  auto_start_for_update: true
+
+  # Create snapshot before updating (if storage supports it)
+  snapshot_before_update: false
+
+  # Log file location
+  log_file: "/var/log/container-updates.log"
 ```
 
-**Testing:**
-- Run with --dry-run flag first
-- Test on single non-critical container
-- Verify updates applied correctly
-- Check reboot detection works
+### 2.2 Update Script Template
 
-**Rollback:**
-- Container snapshots before updates
-- Keep previous package versions available
-
----
-
-### 2.2 Container Cleanup Script
 ```bash
-# Create script: scripts/proxmox/cleanup-containers.sh
+# ansible/roles/proxmox_container_updates/templates/update-containers.sh.j2
+#!/bin/bash
+set -euo pipefail
 
-# Tasks per container:
-# - Clear /var/cache/*
-# - Clear /var/log/* (keep structure)
-# - Clear /tmp/*
-# - Run package manager cleanup:
-#   - Debian/Ubuntu: apt autoremove, apt autoclean
-#   - Alpine: apk cache clean
-# - Report space freed per container
-# - Total space freed across all containers
-```
+LOG_FILE="{{ container_update_config.log_file }}"
+LOCK_FILE="{{ container_update_checks.lock_file }}"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
-**Safety:**
-- Never delete logs from containers tagged 'keep-logs'
-- Exclude containers by ID
-- Dry-run mode to preview
-
-**Scheduling:**
-```bash
-# Create systemd timer: /etc/systemd/system/container-cleanup.timer
-[Unit]
-Description=Monthly container cleanup
-
-[Timer]
-OnCalendar=monthly
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-```
-
----
-
-### 2.3 Update Automation with Systemd Timer
-```bash
-# Create systemd service: /etc/systemd/system/container-update.service
-# Create systemd timer: /etc/systemd/system/container-update.timer
-
-# Timer config:
-# - Weekly on Sunday at 3 AM
-# - Persistent=true (run if missed)
-# - Send notification on completion
-```
-
-**Integration with ntfy.sh:**
-```bash
-# In script:
-function notify() {
-    local message="$1"
-    local priority="${2:-default}"
-    curl -H "Priority: $priority" \
-         -H "Title: Proxmox Container Updates" \
-         -d "$message" \
-         https://ntfy.sh/your-homelab-topic
+log() {
+    echo "[$TIMESTAMP] $1" | tee -a "$LOG_FILE"
 }
 
-# Usage:
-notify "Container updates completed successfully" "low"
-notify "Container update failed!" "high"
+# Check for global lock file (manual override)
+if [[ -f "$LOCK_FILE" ]]; then
+    log "SKIP: Lock file exists at $LOCK_FILE"
+    exit 0
+fi
+
+# Check if any container has busy processes
+check_container_busy() {
+    local ctid=$1
+    local status
+
+    status=$(pct status "$ctid" 2>/dev/null | awk '{print $2}')
+    if [[ "$status" != "running" ]]; then
+        return 1  # Not running, not busy
+    fi
+
+    # Check each busy process pattern
+{% for check in container_update_checks.busy_processes %}
+    if pct exec "$ctid" -- pgrep -f "{{ check.pattern }}" &>/dev/null; then
+        log "SKIP CT$ctid: {{ check.description }} in progress"
+        return 0  # Busy
+    fi
+{% endfor %}
+
+    return 1  # Not busy
+}
+
+# Get distro type for container
+get_container_distro() {
+    local ctid=$1
+    if pct exec "$ctid" -- test -f /etc/debian_version 2>/dev/null; then
+        echo "debian"
+    elif pct exec "$ctid" -- test -f /etc/alpine-release 2>/dev/null; then
+        echo "alpine"
+    elif pct exec "$ctid" -- test -f /etc/arch-release 2>/dev/null; then
+        echo "arch"
+    else
+        echo "unknown"
+    fi
+}
+
+# Update a single container
+update_container() {
+    local ctid=$1
+    local distro
+
+    distro=$(get_container_distro "$ctid")
+    log "Updating CT$ctid ($distro)..."
+
+    case "$distro" in
+        debian)
+            pct exec "$ctid" -- bash -c "apt-get update && apt-get dist-upgrade -y && apt-get autoremove -y"
+            ;;
+        alpine)
+            pct exec "$ctid" -- apk upgrade --no-cache
+            ;;
+        arch)
+            pct exec "$ctid" -- pacman -Syu --noconfirm
+            ;;
+        *)
+            log "WARNING: Unknown distro for CT$ctid, skipping"
+            return 1
+            ;;
+    esac
+}
+
+log "=== Container Update Run Started ==="
+
+# Get list of all containers
+CONTAINERS=$(pct list | awk 'NR>1 {print $1}')
+
+for ctid in $CONTAINERS; do
+    # Check exclusion list
+{% if container_update_config.exclude_ctids | length > 0 %}
+    if [[ " {{ container_update_config.exclude_ctids | join(' ') }} " =~ " $ctid " ]]; then
+        log "SKIP CT$ctid: In exclusion list"
+        continue
+    fi
+{% endif %}
+
+    # Check if busy
+    if check_container_busy "$ctid"; then
+        continue
+    fi
+
+    # Check if running
+    status=$(pct status "$ctid" 2>/dev/null | awk '{print $2}')
+    was_stopped=false
+
+    if [[ "$status" != "running" ]]; then
+{% if container_update_config.auto_start_for_update %}
+        log "Starting CT$ctid for update..."
+        pct start "$ctid"
+        sleep 5
+        was_stopped=true
+{% else %}
+        log "SKIP CT$ctid: Not running"
+        continue
+{% endif %}
+    fi
+
+    # Perform update
+    if update_container "$ctid"; then
+        log "SUCCESS: CT$ctid updated"
+    else
+        log "ERROR: CT$ctid update failed"
+    fi
+
+    # Stop if we started it
+    if [[ "$was_stopped" == "true" ]]; then
+        log "Stopping CT$ctid (was stopped before update)"
+        pct shutdown "$ctid"
+    fi
+done
+
+log "=== Container Update Run Completed ==="
 ```
 
-**Testing:**
-```bash
-# Test timer
-systemctl start container-update.service
-systemctl status container-update.service
-journalctl -u container-update -f
+### 2.3 Systemd Timer for Automation
 
-# Test timer schedule
-systemctl list-timers container-update
+```yaml
+# ansible/roles/proxmox_container_updates/tasks/systemd.yml
+
+- name: Deploy container update script
+  ansible.builtin.template:
+    src: update-containers.sh.j2
+    dest: /usr/local/bin/update-containers.sh
+    mode: '0755'
+
+- name: Create systemd service for container updates
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/container-update.service
+    content: |
+      [Unit]
+      Description=Update all LXC containers
+      After=network.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/update-containers.sh
+      StandardOutput=journal
+      StandardError=journal
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Create systemd timer for weekly updates
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/container-update.timer
+    content: |
+      [Unit]
+      Description=Weekly container updates
+
+      [Timer]
+      OnCalendar=Sun 03:00
+      Persistent=true
+      RandomizedDelaySec=300
+
+      [Install]
+      WantedBy=timers.target
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Enable container update timer
+  ansible.builtin.systemd:
+    name: container-update.timer
+    enabled: true
+    state: started
 ```
+
+### 2.4 Container Cleanup (Monthly)
+
+```yaml
+# ansible/roles/proxmox_container_updates/tasks/cleanup.yml
+
+- name: Deploy container cleanup script
+  ansible.builtin.template:
+    src: cleanup-containers.sh.j2
+    dest: /usr/local/bin/cleanup-containers.sh
+    mode: '0755'
+
+- name: Create systemd timer for monthly cleanup
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/container-cleanup.timer
+    content: |
+      [Unit]
+      Description=Monthly container cleanup
+
+      [Timer]
+      OnCalendar=monthly
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+    mode: '0644'
+```
+
+**Cleanup script clears**:
+- `/var/cache/apt/` (Debian/Ubuntu)
+- `/var/log/*.gz`, `/var/log/*.old` (rotated logs)
+- `/tmp/*` (temp files)
+- Package manager caches
 
 ---
 
-## Phase 3: Host Backup Automation
+## Phase 3: Host Configuration Backup
 
-**Goal:** Automated, versioned backups of Proxmox host configuration
+**Goal**: Automated backups of Proxmox host config, integrated with existing restic infrastructure  
+**Implementation**: New Ansible role `proxmox_host_backup`
 
-### 3.1 Host Backup Script
+### 3.1 Architecture
+
+```
+Proxmox Host                     Backup Container (CT300)
+     |                                    |
+     | Weekly cron job                    |
+     | creates tar.gz archive             |
+     |                                    |
+     v                                    |
+/mnt/storage/backups/proxmox-host/       |
+     |                                    |
+     +------------------------------------+
+                      |
+                      v
+              Existing restic backup
+              (backs up /mnt/storage)
+                      |
+                      v
+                 Backblaze B2
+```
+
+**Why this works**:
+- Host stays minimal (just a shell script + cron)
+- Archives land in mergerfs pool
+- Your existing restic policy already backs up `/mnt/storage`
+- Automatic offsite backup to B2 with deduplication
+
+### 3.2 Host Backup Script
+
 ```bash
-# Create script: scripts/proxmox/backup-host-config.sh
+# ansible/roles/proxmox_host_backup/templates/backup-host-config.sh.j2
+#!/bin/bash
+set -euo pipefail
 
-# What to backup:
+BACKUP_DIR="{{ host_backup_destination }}"
+TIMESTAMP=$(date '+%Y-%m-%d-%H%M%S')
+BACKUP_NAME="proxmox-host-config-${TIMESTAMP}.tar.gz"
+RETENTION_DAYS={{ host_backup_retention_days }}
+
+# Paths to backup
 BACKUP_PATHS=(
     "/etc/pve"                    # Proxmox config (VMs, containers, cluster)
     "/etc/network/interfaces"     # Network config
@@ -239,484 +450,410 @@ BACKUP_PATHS=(
     "/etc/hostname"               # Hostname
     "/etc/resolv.conf"            # DNS config
     "/etc/fstab"                  # Mount points
+    "/etc/modprobe.d"             # Kernel modules
     "/etc/systemd/system"         # Custom services
     "/root/.ssh"                  # SSH keys
-    "/var/lib/pve-cluster"        # Cluster config
-    "/usr/local/bin"              # Custom scripts
+    "/usr/local/bin"              # Custom scripts (including this one)
+    "/etc/apt/sources.list.d"     # APT repositories
+    "/etc/apt/apt.conf.d"         # APT configuration
 )
 
-# Backup destination:
-BACKUP_DIR="/mnt/backup/proxmox-host"
-RETENTION_DAYS=90
+echo "=== Proxmox Host Config Backup ==="
+echo "Timestamp: $TIMESTAMP"
+echo "Destination: $BACKUP_DIR/$BACKUP_NAME"
 
-# Format:
-# proxmox-host-config-YYYY-MM-DD-HHMMSS.tar.gz
+# Ensure backup directory exists
+mkdir -p "$BACKUP_DIR"
+
+# Create archive
+echo "Creating archive..."
+tar -czf "$BACKUP_DIR/$BACKUP_NAME" \
+    --ignore-failed-read \
+    --warning=no-file-changed \
+    "${BACKUP_PATHS[@]}" 2>/dev/null || true
+
+# Verify archive
+echo "Verifying archive..."
+tar -tzf "$BACKUP_DIR/$BACKUP_NAME" > /dev/null
+ARCHIVE_SIZE=$(du -h "$BACKUP_DIR/$BACKUP_NAME" | cut -f1)
+echo "Archive created: $ARCHIVE_SIZE"
+
+# Cleanup old backups
+echo "Cleaning up backups older than $RETENTION_DAYS days..."
+find "$BACKUP_DIR" -name "proxmox-host-config-*.tar.gz" -mtime +$RETENTION_DAYS -delete
+
+# Show current backups
+echo "Current backups:"
+ls -lh "$BACKUP_DIR"/*.tar.gz | tail -5
+
+echo "=== Backup Complete ==="
 ```
 
-**Features:**
-- Timestamped archives
-- Compression (gzip or zstd)
-- Retention policy (auto-delete old backups)
-- Verify backup integrity after creation
-- Upload to remote location (optional)
+### 3.3 Ansible Role Configuration
 
-**Remote backup options:**
-```bash
-# Option 1: Tailscale to NAS
-rsync -avz $BACKUP_FILE user@nas:/backups/proxmox/
+```yaml
+# ansible/roles/proxmox_host_backup/defaults/main.yml
 
-# Option 2: Rclone to cloud
-rclone copy $BACKUP_FILE remote:backups/proxmox/
+# Where to store host config backups (should be on mergerfs pool)
+host_backup_destination: "/mnt/storage/backups/proxmox-host"
 
-# Option 3: Restic repository
-restic backup $BACKUP_PATHS
+# How long to keep local archives (restic handles long-term retention)
+host_backup_retention_days: 30
+
+# Schedule: Weekly on Sunday at 2 AM (before container updates at 3 AM)
+host_backup_schedule: "Sun 02:00"
 ```
 
----
+```yaml
+# ansible/roles/proxmox_host_backup/tasks/main.yml
 
-### 3.2 Backup Automation
-```bash
-# Create systemd timer: /etc/systemd/system/host-backup.timer
+- name: Create backup destination directory
+  ansible.builtin.file:
+    path: "{{ host_backup_destination }}"
+    state: directory
+    mode: '0750'
+    owner: root
+    group: root
 
-# Schedule:
-# - Weekly on Sunday at 2 AM (before container updates)
-# - Before any major changes (manual trigger)
+- name: Deploy host backup script
+  ansible.builtin.template:
+    src: backup-host-config.sh.j2
+    dest: /usr/local/bin/backup-host-config.sh
+    mode: '0755'
+
+- name: Create systemd service for host backup
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/host-backup.service
+    content: |
+      [Unit]
+      Description=Backup Proxmox host configuration
+      After=mnt-storage.mount
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/backup-host-config.sh
+      StandardOutput=journal
+      StandardError=journal
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Create systemd timer for host backup
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/host-backup.timer
+    content: |
+      [Unit]
+      Description=Weekly Proxmox host config backup
+
+      [Timer]
+      OnCalendar={{ host_backup_schedule }}
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Enable host backup timer
+  ansible.builtin.systemd:
+    name: host-backup.timer
+    enabled: true
+    state: started
 ```
 
-**Pre-change hook:**
-```bash
-# Create alias for major operations
-alias pve-update='backup-host-config.sh --quick && apt update && apt upgrade'
-alias pve-kernel-update='backup-host-config.sh --quick && apt install pve-kernel-*'
-```
+### 3.4 Restore Procedure
 
-**Testing:**
 ```bash
-# Test backup
-./backup-host-config.sh --dry-run
-./backup-host-config.sh
+# 1. Fresh install Proxmox VE (same version if possible)
 
-# Test restore (on test system)
-tar -tzf backup.tar.gz  # List contents
-tar -xzf backup.tar.gz -C /tmp/restore-test
+# 2. Mount storage pool
+mount /mnt/storage
+
+# 3. Extract backup to temp location
+mkdir /tmp/restore
+tar -xzf /mnt/storage/backups/proxmox-host/proxmox-host-config-YYYY-MM-DD-HHMMSS.tar.gz -C /tmp/restore
+
+# 4. SELECTIVELY restore configs (DO NOT blindly copy)
+# Compare each file before overwriting:
+diff /tmp/restore/etc/pve/storage.cfg /etc/pve/storage.cfg
+diff /tmp/restore/etc/network/interfaces /etc/network/interfaces
+diff /tmp/restore/etc/fstab /etc/fstab
+
+# 5. Restore VM/CT configs
+cp -r /tmp/restore/etc/pve/lxc/* /etc/pve/lxc/
+cp -r /tmp/restore/etc/pve/qemu-server/* /etc/pve/qemu-server/
+
+# 6. Reboot and verify
+reboot
 ```
 
 ---
 
 ## Phase 4: Storage & Performance Optimization
 
-**Goal:** Automate SSD maintenance and optimize performance
+**Goal**: Automate SSD maintenance (FSTRIM)  
+**Implementation**: Add to `proxmox_host_setup` role
 
 ### 4.1 FSTRIM Automation
+
 ```bash
-# Create script: scripts/proxmox/fstrim-all.sh
+# ansible/roles/proxmox_host_setup/templates/fstrim-all.sh.j2
+#!/bin/bash
+set -euo pipefail
 
-# Tasks:
-# - Run fstrim on host filesystems
-# - Run fstrim inside all running containers
-# - Optionally start stopped containers for trim
-# - Report space reclaimed per container
-# - Total space reclaimed
-```
+LOG_FILE="/var/log/fstrim.log"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
-**Implementation:**
-```bash
-# Host fstrim
-fstrim -av
+log() {
+    echo "[$TIMESTAMP] $1" | tee -a "$LOG_FILE"
+}
 
-# Container fstrim
-for container in $(pct list | awk 'NR>1 {print $1}'); do
-    status=$(pct status $container)
-    if [[ "$status" == *"running"* ]]; then
-        echo "Trimming CT $container..."
-        pct exec $container -- fstrim -av
+log "=== FSTRIM Run Started ==="
+
+# Trim host filesystems
+log "Trimming host filesystems..."
+fstrim -av 2>&1 | tee -a "$LOG_FILE"
+
+# Trim each running container
+log "Trimming container filesystems..."
+for ctid in $(pct list | awk 'NR>1 {print $1}'); do
+    status=$(pct status "$ctid" 2>/dev/null | awk '{print $2}')
+    if [[ "$status" == "running" ]]; then
+        log "Trimming CT$ctid..."
+        pct exec "$ctid" -- fstrim -av 2>&1 | tee -a "$LOG_FILE" || log "WARNING: fstrim failed for CT$ctid"
     fi
 done
+
+log "=== FSTRIM Run Completed ==="
 ```
 
-**Scheduling:**
-```bash
-# Weekly on Saturday night
-# /etc/systemd/system/fstrim-all.timer
-OnCalendar=Sat 23:00
-```
+### 4.2 Systemd Timer
 
----
-
-### 4.2 CPU Governor Management (Optional)
-```bash
-# Create script: scripts/proxmox/set-cpu-governor.sh
-
-# Options:
-# - performance: Maximum performance, high power
-# - powersave: Minimum power consumption
-# - schedutil: Kernel scheduler decides (default, recommended)
-# - ondemand: Legacy dynamic scaling
-
-# Current N100 default is schedutil - probably fine
-```
-
-**When to change:**
-- **Performance mode:** During heavy workloads, benchmarking
-- **Powersave mode:** Idle/vacation periods
-
-**Implementation:**
-```bash
-# Check current
-cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-
-# Set governor
-echo "performance" | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
-
-# Persist across reboots (systemd service)
-```
-
----
-
-### 4.3 Microcode Updates
-```bash
-# Create script: scripts/proxmox/update-microcode.sh
-
-# Tasks:
-# - Detect CPU vendor (Intel/AMD)
-# - Check current microcode revision
-# - Fetch latest microcode package
-# - Install and verify
-# - Require reboot
-```
-
-**Intel N100 specific:**
-```bash
-# Install Intel microcode
-apt install intel-microcode
-
-# Check current revision
-journalctl -k | grep -i microcode
-
-# After reboot, verify new revision loaded
-```
-
-**Scheduling:**
-- Run quarterly or after major CPU vulnerability announcements
-- Manual trigger before kernel updates
-
----
-
-## Phase 5: Monitoring & Auto-Recovery
-
-**Goal:** Automatic monitoring and recovery of critical services
-
-### 5.1 Container/VM Health Monitoring
-```bash
-# Create script: scripts/proxmox/monitor-services.sh
-
-# Features:
-# - Tag-based monitoring (only monitor tagged VMs/CTs)
-# - Health check methods:
-#   - Containers: ping network interface
-#   - VMs: QEMU guest agent ping
-#   - Application-specific: HTTP endpoint check
-# - Auto-restart on failure
-# - Notification on restart
-# - Cooldown period (don't restart too frequently)
-```
-
-**Tagging system:**
-```bash
-# Tag containers/VMs for monitoring
-pct set 100 -tags "mon-restart,critical"
-qm set 200 -tags "mon-restart"
-
-# Tag meanings:
-# - mon-restart: Auto-restart if unresponsive
-# - critical: High-priority notification
-# - no-mon: Explicitly exclude from monitoring
-```
-
-**Configuration:**
 ```yaml
-# /etc/pve-scripts/monitor-config.yaml
-monitoring:
-  enabled: true
-  check_interval: 300  # 5 minutes
-  restart_cooldown: 900  # 15 minutes
-  max_restarts: 3  # Within 1 hour
+# ansible/roles/proxmox_host_setup/tasks/fstrim.yml
 
-notifications:
-  on_restart: true
-  on_max_restarts: true
-  url: "https://ntfy.sh/homelab-alerts"
+- name: Deploy fstrim script
+  ansible.builtin.template:
+    src: fstrim-all.sh.j2
+    dest: /usr/local/bin/fstrim-all.sh
+    mode: '0755'
 
-health_checks:
-  - id: 100
-    type: ping
-    timeout: 5
-  - id: 101
-    type: http
-    url: "http://localhost:8096/health"
-    expected: 200
+- name: Create systemd service for fstrim
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/fstrim-all.service
+    content: |
+      [Unit]
+      Description=Trim all filesystems (host + containers)
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/fstrim-all.sh
+      StandardOutput=journal
+      StandardError=journal
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Create systemd timer for weekly fstrim
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/fstrim-all.timer
+    content: |
+      [Unit]
+      Description=Weekly FSTRIM for all filesystems
+
+      [Timer]
+      OnCalendar=Sat 23:00
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Enable fstrim timer
+  ansible.builtin.systemd:
+    name: fstrim-all.timer
+    enabled: true
+    state: started
 ```
-
-**Implementation as systemd service:**
-```bash
-# /etc/systemd/system/pve-monitor.service
-# - Run continuously
-# - Restart on failure
-# - Log to journal
-```
-
----
-
-### 5.2 Disk Space Monitoring
-```bash
-# Create script: scripts/proxmox/check-disk-space.sh
-
-# Monitor:
-# - Host: /, /boot, /var/lib/vz
-# - Each container's disk usage
-# - Alert thresholds: 80% warning, 90% critical
-```
-
-**Integration:**
-```bash
-# Run hourly via systemd timer
-# Send notification if threshold exceeded
-# Include cleanup recommendations in alert
-```
-
----
-
-## Phase 6: Advanced Features (As Needed)
-
-### 6.1 Hardware Acceleration for Media
-```bash
-# When deploying Jellyfin/Plex in container:
-# - Enable Intel Quick Sync passthrough
-# - Mount /dev/dri/renderD128
-# - Configure container permissions
-# - Install VAAPI drivers in container
-```
-
-**Implementation for CT 100 (example):**
-```bash
-# Add to /etc/pve/lxc/100.conf
-lxc.cgroup2.devices.allow: c 226:0 rwm
-lxc.cgroup2.devices.allow: c 226:128 rwm
-lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
-
-# Inside container
-apt install intel-media-va-driver-non-free
-```
-
----
-
-### 6.2 Per-Container VPN (Tailscale)
-```bash
-# For containers that need direct Tailscale access
-# - Add TUN device to container config
-# - Install Tailscale in container
-# - Separate Tailscale node per container
-```
-
-**When useful:**
-- Exposing specific services on Tailscale
-- Container-level network isolation
-- Different ACLs per service
-
----
-
-## Implementation Checklist
-
-### Phase 1: Foundation (Week 1)
-- [ ] Create backup of current Proxmox config
-- [ ] Run repository fix script
-- [ ] Remove subscription nag
-- [ ] Clean old kernels
-- [ ] Verify system stability
-- [ ] Document changes in this repo
-
-### Phase 2: Container Automation (Week 2)
-- [ ] Create container update script
-- [ ] Test on single container
-- [ ] Create systemd service + timer
-- [ ] Configure ntfy.sh notifications
-- [ ] Test automated run
-- [ ] Create container cleanup script
-
-### Phase 3: Backup (Week 3)
-- [ ] Create host backup script
-- [ ] Test backup creation
-- [ ] Test restore procedure
-- [ ] Set up remote backup location
-- [ ] Create systemd timer
-- [ ] Verify first automated backup
-
-### Phase 4: Optimization (Week 4)
-- [ ] Create fstrim automation
-- [ ] Test fstrim on containers
-- [ ] Schedule weekly runs
-- [ ] Update microcode
-- [ ] Review CPU governor settings
-- [ ] Document performance baselines
-
-### Phase 5: Monitoring (Optional)
-- [ ] Create monitoring script
-- [ ] Configure health checks
-- [ ] Tag critical services
-- [ ] Test auto-restart functionality
-- [ ] Set up disk space alerts
-- [ ] Deploy as systemd service
-
-### Phase 6: Advanced (As Needed)
-- [ ] Hardware acceleration setup
-- [ ] Per-container VPN
-- [ ] Custom integrations
 
 ---
 
 ## Directory Structure
 
-Create organized structure for scripts:
+```
+ansible/
+├── inventory/
+│   └── group_vars/
+│       └── proxmox_host.yml          # Container update config, etc.
+├── playbooks/
+│   └── proxmox-host.yml              # Main playbook for host setup
+└── roles/
+    ├── proxmox_host_setup/           # Phase 1 & 4
+    │   ├── defaults/
+    │   │   └── main.yml
+    │   ├── handlers/
+    │   │   └── main.yml              # reload systemd, update grub
+    │   ├── tasks/
+    │   │   ├── main.yml
+    │   │   ├── repositories.yml
+    │   │   ├── remove-nag.yml
+    │   │   ├── kernel-cleanup.yml
+    │   │   └── fstrim.yml
+    │   └── templates/
+    │       ├── pve-remove-nag.sh.j2
+    │       └── fstrim-all.sh.j2
+    ├── proxmox_container_updates/    # Phase 2
+    │   ├── defaults/
+    │   │   └── main.yml
+    │   ├── handlers/
+    │   │   └── main.yml
+    │   ├── tasks/
+    │   │   ├── main.yml
+    │   │   ├── update-script.yml
+    │   │   ├── cleanup-script.yml
+    │   │   └── systemd.yml
+    │   └── templates/
+    │       ├── update-containers.sh.j2
+    │       └── cleanup-containers.sh.j2
+    └── proxmox_host_backup/          # Phase 3
+        ├── defaults/
+        │   └── main.yml
+        ├── handlers/
+        │   └── main.yml
+        ├── tasks/
+        │   └── main.yml
+        └── templates/
+            └── backup-host-config.sh.j2
+```
 
-```
-homelab/
-├── scripts/
-│   ├── proxmox/
-│   │   ├── fix-repositories.sh
-│   │   ├── remove-subscription-nag.sh
-│   │   ├── clean-old-kernels.sh
-│   │   ├── update-containers.sh
-│   │   ├── cleanup-containers.sh
-│   │   ├── backup-host-config.sh
-│   │   ├── fstrim-all.sh
-│   │   ├── monitor-services.sh
-│   │   └── utils/
-│   │       ├── common.sh        # Shared functions
-│   │       └── notifications.sh # Notification helpers
-│   └── systemd/
-│       ├── container-update.service
-│       ├── container-update.timer
-│       ├── host-backup.service
-│       ├── host-backup.timer
-│       ├── fstrim-all.service
-│       └── fstrim-all.timer
-├── config/
-│   └── pve-scripts/
-│       ├── container-update.conf
-│       ├── monitor-config.yaml
-│       └── backup-paths.conf
-└── docs/
-    ├── proxmox-qol-ideas.md
-    └── proxmox-qol-implementation-plan.md  # This file
-```
+---
+
+## Implementation Checklist
+
+### Phase 1: Foundation
+- [ ] Create `proxmox_host_setup` role
+- [ ] Implement repository configuration tasks
+- [ ] Implement subscription nag removal
+- [ ] Implement automatic kernel cleanup
+- [ ] Create `proxmox-host.yml` playbook
+- [ ] Test with `--check` (dry-run)
+- [ ] Apply to Proxmox host
+- [ ] Verify system stability
+
+### Phase 2: Container Management
+- [ ] Add container update config to `proxmox_host.yml`
+- [ ] Create `proxmox_container_updates` role
+- [ ] Implement active-use detection logic
+- [ ] Implement update script with distro detection
+- [ ] Implement cleanup script
+- [ ] Deploy systemd timers
+- [ ] Test manual lock file override
+- [ ] Test on single container first
+- [ ] Enable weekly automation
+
+### Phase 3: Host Backup
+- [ ] Create `proxmox_host_backup` role
+- [ ] Implement backup script
+- [ ] Deploy systemd timer
+- [ ] Verify backups land in `/mnt/storage/backups/proxmox-host/`
+- [ ] Verify existing restic picks them up (check B2)
+- [ ] Document restore procedure
+- [ ] Test restore on CTID 199
+
+### Phase 4: Storage Optimization
+- [ ] Implement fstrim script
+- [ ] Deploy systemd timer
+- [ ] Test manual run
+- [ ] Verify logs in `/var/log/fstrim.log`
 
 ---
 
 ## Testing Strategy
 
-### For Each Script:
-1. **Dry-run mode**: Preview changes without executing
-2. **Single target test**: Test on one container/VM first
-3. **Monitor logs**: Watch journalctl during execution
-4. **Verify results**: Check that intended changes occurred
-5. **Test rollback**: Ensure you can undo changes
-
-### For Automation:
-1. **Test service**: `systemctl start service-name`
-2. **Check status**: `systemctl status service-name`
-3. **View logs**: `journalctl -u service-name -f`
-4. **Test timer**: `systemctl list-timers`
-5. **Test notification**: Verify ntfy.sh alerts work
-
----
-
-## Rollback Plans
-
-### Repository Changes
+### For Each Role:
 ```bash
-# Restore original sources
-cp /backup/sources.list.d/* /etc/apt/sources.list.d/
-apt update
+# Syntax check
+ansible-playbook playbooks/proxmox-host.yml --syntax-check
+
+# Dry run
+ansible-playbook playbooks/proxmox-host.yml --check --diff
+
+# Run specific tags
+ansible-playbook playbooks/proxmox-host.yml --tags repositories
+ansible-playbook playbooks/proxmox-host.yml --tags kernel-cleanup
+
+# Full run
+ansible-playbook playbooks/proxmox-host.yml
 ```
 
-### Script Failures
-- All scripts should exit cleanly on error
-- Use `set -e` for automatic error handling
-- Create backups before making changes
-- Log all operations for troubleshooting
-
-### Systemd Services
+### For Active-Use Detection:
 ```bash
-# Stop and disable service
-systemctl stop service-name
-systemctl disable service-name
+# Test lock file
+ssh cuiv@homelab "sudo touch /var/run/no-container-updates.lock"
+ssh cuiv@homelab "sudo /usr/local/bin/update-containers.sh"  # Should skip all
+ssh cuiv@homelab "sudo rm /var/run/no-container-updates.lock"
 
-# Remove timer
-systemctl stop service-name.timer
-systemctl disable service-name.timer
+# Test process detection
+ssh cuiv@homelab "sudo pct exec 304 -- sleep 3600 &"  # Simulate busy process
+ssh cuiv@homelab "sudo /usr/local/bin/update-containers.sh"  # Should skip 304
 ```
 
----
+### For Systemd Timers:
+```bash
+# List all timers
+ssh cuiv@homelab "systemctl list-timers"
 
-## Success Metrics
-
-After full implementation, you should have:
-
-- ✅ Zero subscription nag popups
-- ✅ Automated weekly container updates
-- ✅ Automated weekly host config backups
-- ✅ Automated weekly SSD maintenance (fstrim)
-- ✅ Clean `/boot` partition (old kernels removed)
-- ✅ Notification system for important events
-- ✅ Monitoring for critical services (optional)
-- ✅ All scripts version controlled in this repo
-- ✅ Documentation for maintenance procedures
+# Test manual trigger
+ssh cuiv@homelab "sudo systemctl start container-update.service"
+ssh cuiv@homelab "journalctl -u container-update -f"
+```
 
 ---
 
 ## Maintenance Schedule (After Implementation)
 
-**Daily:**
-- Monitoring checks (automatic)
+**Weekly (Automated)**:
+- Saturday 23:00 - FSTRIM all filesystems
+- Sunday 02:00 - Host config backup
+- Sunday 03:00 - Container updates (if not busy)
 
-**Weekly:**
-- Container updates (automatic, Sunday 3 AM)
-- Host config backup (automatic, Sunday 2 AM)
-- FSTRIM (automatic, Saturday 11 PM)
+**Monthly (Automated)**:
+- Container cleanup (clear caches, old logs)
 
-**Monthly:**
-- Container cleanup (automatic)
-- Review backup retention
-- Check disk space trends
+**Quarterly (Manual)**:
+- Review kernel updates
+- Check backup retention
+- Test restore procedure
 
-**Quarterly:**
-- Microcode updates
-- Kernel updates (pin if needed)
-- Review and update scripts
-- Test restore procedures
+---
 
-**Annually:**
-- Full disaster recovery test
-- Review and update documentation
-- Audit automated tasks
+## Success Metrics
+
+- [ ] No subscription nag in Proxmox UI
+- [ ] `/boot` partition has adequate free space
+- [ ] Container updates run weekly without intervention
+- [ ] Updates skip containers with active jobs (transcoding, ripping, etc.)
+- [ ] Host configs backed up to mergerfs pool
+- [ ] Host config archives appear in B2 via restic
+- [ ] FSTRIM runs weekly on all filesystems
+- [ ] All automation is version-controlled in Ansible
+- [ ] Can restore Proxmox config from backup
 
 ---
 
 ## Notes
 
-- All scripts should be idempotent (safe to run multiple times)
-- Use version control for all scripts and configs
-- Test on non-production system when possible
-- Keep this plan updated as you implement
-- Document any deviations from the plan
-- Share learnings in journal entries
+- All scripts idempotent (safe to run multiple times)
+- Active-use detection is extensible (add new process patterns in vars)
+- Lock file provides manual override for maintenance windows
+- Host backup integrates with existing restic infrastructure (no new tools on host)
+- Notifications deferred to separate project (can add hooks later)
+- Monitoring deferred to Phase 5 (separate project)
 
 ---
 
-## Resources
+## References
 
-- Original scripts: `/tmp/ProxmoxVE/` (temporary)
-- Community repo: https://github.com/community-scripts/ProxmoxVE
 - Proxmox docs: https://pve.proxmox.com/pve-docs/
 - Systemd timers: `man systemd.timer`
-- Ntfy.sh: https://ntfy.sh
+- Community backup scripts: https://github.com/DerDanilo/proxmox-stuff
+- Your existing restic role: `ansible/roles/restic_backup/`

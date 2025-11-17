@@ -1,0 +1,7 @@
+---
+# Handlers for proxmox_container_updates role
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true

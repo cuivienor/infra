@@ -1,0 +1,87 @@
+---
+# Cleanup old Proxmox VE kernels to free space in /boot
+
+- name: Get current running kernel
+  ansible.builtin.command: uname -r
+  register: current_kernel
+  changed_when: false
+  become: true
+  check_mode: false
+
+- name: Display current kernel
+  ansible.builtin.debug:
+    msg: "Current running kernel: {{ current_kernel.stdout }}"
+
+- name: Get boot partition usage before cleanup
+  ansible.builtin.command: df -h /boot
+  register: boot_space_before
+  changed_when: false
+  become: true
+  check_mode: false
+
+- name: Display boot partition before cleanup
+  ansible.builtin.debug:
+    msg: "{{ boot_space_before.stdout_lines }}"
+
+- name: List all installed PVE kernels
+  ansible.builtin.shell: |
+    set -o pipefail
+    dpkg --list | grep -E 'proxmox-kernel-[0-9]+\.[0-9]+\.[0-9]+-[0-9]+-pve' | awk '{print $2}' | sort -V || true
+  args:
+    executable: /bin/bash
+  register: installed_kernels
+  changed_when: false
+  become: true
+  check_mode: false
+
+- name: Display installed kernels
+  ansible.builtin.debug:
+    msg: "Installed PVE kernels: {{ installed_kernels.stdout_lines | default([]) }}"
+
+- name: Calculate kernels to remove
+  ansible.builtin.set_fact:
+    kernels_to_remove: "{{ installed_kernels.stdout_lines[:-pve_kernels_to_keep] | default([]) }}"
+  when: installed_kernels.stdout_lines | default([]) | length > pve_kernels_to_keep
+
+- name: Display kernels to remove
+  ansible.builtin.debug:
+    msg: "Kernels to remove: {{ kernels_to_remove | default([]) }}"
+
+- name: Verify current kernel is not in removal list
+  ansible.builtin.assert:
+    that:
+      - "current_kernel.stdout not in (kernels_to_remove | default([]) | map('regex_replace', 'proxmox-kernel-(.*)-signed', '\\\\1') | list)"
+    fail_msg: "SAFETY CHECK FAILED: Current kernel would be removed!"
+    success_msg: "Safety check passed: Current kernel is protected"
+  when: kernels_to_remove is defined and kernels_to_remove | length > 0
+
+- name: Remove old kernels
+  ansible.builtin.apt:
+    name: "{{ kernels_to_remove }}"
+    state: absent
+    purge: true
+  when: kernels_to_remove is defined and kernels_to_remove | length > 0
+  become: true
+  notify: Update grub
+
+- name: Flush handlers to update grub immediately
+  ansible.builtin.meta: flush_handlers
+
+- name: Get boot partition usage after cleanup
+  ansible.builtin.command: df -h /boot
+  register: boot_space_after
+  changed_when: false
+  become: true
+  check_mode: false
+
+- name: Display boot partition after cleanup
+  ansible.builtin.debug:
+    msg: "{{ boot_space_after.stdout_lines }}"
+
+- name: Display cleanup summary
+  ansible.builtin.debug:
+    msg: >
+      Kernel cleanup complete.
+      Removed {{ kernels_to_remove | default([]) | length }} old kernel(s).
+      Keeping {{ pve_kernels_to_keep }} most recent kernel(s).
+  when: kernels_to_remove is defined

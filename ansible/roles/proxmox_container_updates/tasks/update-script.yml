@@ -1,0 +1,41 @@
+---
+# Deploy container update script
+
+- name: Create log directory
+  ansible.builtin.file:
+    path: "{{ container_update_config.log_file | dirname }}"
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Create update log file
+  ansible.builtin.file:
+    path: "{{ container_update_config.log_file }}"
+    state: touch
+    mode: '0644'
+    modification_time: preserve
+    access_time: preserve
+  become: true
+
+- name: Deploy container update script
+  ansible.builtin.template:
+    src: update-containers.sh.j2
+    dest: /usr/local/bin/update-containers.sh
+    mode: '0755'
+  become: true
+
+- name: Display update script info
+  ansible.builtin.debug:
+    msg: |
+      Container update script deployed to /usr/local/bin/update-containers.sh
+
+      Active-use detection patterns:
+      {% for check in container_busy_processes %}
+        - {{ check.pattern }} ({{ check.description }})
+      {% endfor %}
+
+      Lock file: {{ container_update_lock_file }}
+      Log file: {{ container_update_config.log_file }}
+
+      Manual run: sudo /usr/local/bin/update-containers.sh
+      Prevent updates: sudo touch {{ container_update_lock_file }}

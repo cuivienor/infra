@@ -1,0 +1,36 @@
+#!/bin/bash
+# FSTRIM all filesystems (host + containers)
+# Managed by Ansible - do not edit manually
+
+set -euo pipefail
+
+LOG_FILE="{{ pve_fstrim_log }}"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+log() {
+    echo "[$TIMESTAMP] $1" | tee -a "$LOG_FILE"
+}
+
+log "=== FSTRIM Run Started ==="
+
+# Trim host filesystems
+log "Trimming host filesystems..."
+fstrim -av 2>&1 | tee -a "$LOG_FILE"
+
+# Trim each running container
+log "Trimming container filesystems..."
+for ctid in $(pct list 2>/dev/null | awk 'NR>1 {print $1}'); do
+    status=$(pct status "$ctid" 2>/dev/null | awk '{print $2}')
+    if [[ "$status" == "running" ]]; then
+        log "Trimming CT$ctid..."
+        if pct exec "$ctid" -- fstrim -av 2>&1 | tee -a "$LOG_FILE"; then
+            log "SUCCESS: CT$ctid trimmed"
+        else
+            log "WARNING: fstrim failed for CT$ctid (may not support TRIM)"
+        fi
+    else
+        log "SKIP: CT$ctid not running"
+    fi
+done
+
+log "=== FSTRIM Run Completed ==="

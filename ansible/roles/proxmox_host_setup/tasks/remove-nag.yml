@@ -1,0 +1,37 @@
+---
+# Remove Proxmox VE subscription nag popup
+
+- name: Deploy nag removal script
+  ansible.builtin.template:
+    src: pve-remove-nag.sh.j2
+    dest: /usr/local/bin/pve-remove-nag.sh
+    mode: '0755'
+  become: true
+
+- name: Check if nag is already patched
+  ansible.builtin.command: grep -q "void({ //Ext.Msg.show" /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+  register: nag_patched
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Run nag removal script
+  ansible.builtin.command: /usr/local/bin/pve-remove-nag.sh
+  when: nag_patched.rc != 0
+  become: true
+  notify: Restart pveproxy
+
+- name: Create APT hook to re-run after package updates
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/99-pve-no-nag
+    content: |
+      // Re-apply subscription nag removal after package updates
+      DPkg::Post-Invoke { "/usr/local/bin/pve-remove-nag.sh 2>/dev/null || true"; };
+    mode: '0644'
+  become: true
+
+- name: Display nag removal status
+  ansible.builtin.debug:
+    msg: >
+      Subscription nag removal configured.
+      Clear browser cache (Ctrl+Shift+R) and re-login to see changes.
