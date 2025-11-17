@@ -2,7 +2,7 @@
 # Install and configure Tailscale as subnet router
 
 - name: Check if Tailscale is already installed
-  stat:
+  ansible.builtin.stat:
     path: /usr/bin/tailscale
   register: tailscale_installed
 
@@ -12,29 +12,34 @@
     - ansible_os_family == "Debian"
   block:
     - name: Add Tailscale GPG key
-      shell: |
+      ansible.builtin.shell: |
+        set -o pipefail
         curl -fsSL https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.noarmor.gpg | \
         tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
       args:
         creates: /usr/share/keyrings/tailscale-archive-keyring.gpg
+        executable: /bin/bash
       become: true
 
     - name: Add Tailscale repository
-      copy:
+      ansible.builtin.copy:
         content: |
-          deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main
+          deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] \
+          https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }} \
+          {{ ansible_distribution_release }} main
         dest: /etc/apt/sources.list.d/tailscale.list
+        mode: '0644'
       become: true
 
     - name: Install Tailscale package
-      apt:
+      ansible.builtin.apt:
         name: tailscale
         state: present
         update_cache: true
       become: true
 
 - name: Enable IP forwarding for subnet routing
-  sysctl:
+  ansible.posix.sysctl:
     name: "{{ item }}"
     value: '1'
     sysctl_set: true
@@ -46,21 +51,21 @@
   become: true
 
 - name: Ensure tailscaled service is running
-  systemd:
+  ansible.builtin.systemd:
     name: tailscaled
     state: started
     enabled: true
   become: true
 
 - name: Check current Tailscale status
-  command: tailscale status --json
+  ansible.builtin.command: tailscale status --json
   register: tailscale_status_check
   failed_when: false
   changed_when: false
   become: true
 
 - name: Parse Tailscale status
-  set_fact:
+  ansible.builtin.set_fact:
     tailscale_needs_auth: >-
       {{
         tailscale_status_check.rc != 0 or
@@ -69,7 +74,7 @@
       }}
 
 - name: Authenticate and configure Tailscale (initial auth)
-  command: >
+  ansible.builtin.command: >
     tailscale up
     --auth-key={{ tailscale_auth_key }}
     --advertise-routes={{ tailscale_advertise_routes | join(',') }}
@@ -84,7 +89,7 @@
   no_log: true
 
 - name: Update Tailscale configuration (already authenticated)
-  command: >
+  ansible.builtin.command: >
     tailscale set
     --advertise-routes={{ tailscale_advertise_routes | join(',') }}
     {% if tailscale_advertise_exit_node %}--advertise-exit-node{% else %}--advertise-exit-node=false{% endif %}
@@ -95,13 +100,13 @@
   changed_when: true
 
 - name: Get Tailscale IP
-  command: tailscale ip -4
+  ansible.builtin.command: tailscale ip -4
   register: tailscale_ip
   changed_when: false
   become: true
 
 - name: Display Tailscale configuration
-  debug:
+  ansible.builtin.debug:
     msg: |
       Tailscale subnet router configured!
 
