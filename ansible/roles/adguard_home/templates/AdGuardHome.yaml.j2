@@ -168,6 +168,7 @@ filtering:
 {% for rewrite in adguard_home_dns_rewrites %}
     - domain: "{{ rewrite.domain }}"
       answer: "{{ rewrite.answer }}"
+      enabled: true
 {% endfor %}
 {% if adguard_home_dns_rewrites | length == 0 %}
     []
@@ -190,7 +191,31 @@ clients:
     rdns: true
     dhcp: true
     hosts: true
-  persistent: []
+  persistent:
+{% if adguard_home_persistent_clients | default([]) | length > 0 %}
+{% for client in adguard_home_persistent_clients %}
+    - name: "{{ client.name }}"
+      tags: {{ client.tags | default([]) | to_json }}
+      ids:
+{% for id in client.ids %}
+        - "{{ id }}"
+{% endfor %}
+      blocked_services:
+        schedule:
+          time_zone: {{ adguard_home_timezone }}
+        ids: []
+      upstreams: []
+      use_global_settings: {{ client.use_global_settings | default(false) | lower }}
+      filtering_enabled: {{ client.filtering_enabled | default(true) | lower }}
+      parental_enabled: {{ client.parental_enabled | default(false) | lower }}
+      safebrowsing_enabled: {{ client.safebrowsing_enabled | default(false) | lower }}
+      use_global_blocked_services: {{ client.use_global_blocked_services | default(true) | lower }}
+      ignore_querylog: {{ client.ignore_querylog | default(false) | lower }}
+      ignore_statistics: {{ client.ignore_statistics | default(false) | lower }}
+{% endfor %}
+{% else %}
+    []
+{% endif %}
 
 log:
   file: ""
@@ -206,4 +231,4 @@ os:
   user: ""
   rlimit_nofile: 0
 
-schema_version: 29
+schema_version: 31

@@ -49,3 +49,13 @@ adguard_home_filters:
     url: "https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt"
     name: "AdAway Default Blocklist"
     id: 2
+
+# Persistent clients (per-client filtering settings)
+# Example:
+# adguard_home_persistent_clients:
+#   - name: "Wife's iPhone"
+#     ids:
+#       - "192.168.1.50"
+#     filtering_enabled: false
+#     tags: []
+adguard_home_persistent_clients: []
