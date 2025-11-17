@@ -16,13 +16,18 @@
 #
 # PREREQUISITE: You must manually organize files first:
 #   TV Shows:
-#     - Episodes → _episodes/ (renamed as 01.mkv, 02.mkv, etc.)
+#     - Episodes → _episodes/ (renamed as 01.mkv, 02.mkv, or 12-13.mkv for multi-episode)
 #     - Extras → _extras/{category}/ (with descriptive names)
 #     - Discarded → _discarded/ (ignored by this script)
 #   Movies:
 #     - Main feature → _main/ (single file)
 #     - Extras → _extras/{category}/ (with descriptive names)
 #     - Discarded → _discarded/ (ignored by this script)
+#
+# Episode Naming Convention:
+#   - Single episode: XX.mkv (e.g., 01.mkv, 09.mkv) → S02E01.mkv, S02E09.mkv
+#   - Multi-episode: XX-YY.mkv (e.g., 12-13.mkv) → S02E12-E13.mkv
+#   - FileBot recognizes S02E12-E13.mkv format for multi-episode files
 #
 # State Management:
 #   - Creates .remux/ directory with status, logs, and metadata
@@ -65,9 +70,13 @@ Examples:
 
 Prerequisites:
   TV Shows: Manually organize files in each disc directory:
-    - Episodes → _episodes/ (as 01.mkv, 02.mkv, etc.)
+    - Episodes → _episodes/ (as 01.mkv, 02.mkv, or 12-13.mkv for multi-episode)
     - Extras → _extras/{category}/ (with descriptive names)
     - Discarded → _discarded/
+
+    Episode naming: Use raw episode numbers. Script adds season prefix.
+      01.mkv → S02E01.mkv
+      12-13.mkv → S02E12-E13.mkv (FileBot recognizes this format)
 
   Movies: Manually organize files in the movie directory:
     - Main feature → _main/ (single file)
@@ -185,12 +194,7 @@ fi
 # Check if output directory already exists
 if [ -d "$OUTPUT_DIR" ]; then
     echo "Warning: Output directory already exists: $OUTPUT_DIR"
-    read -p "Continue and potentially overwrite? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Aborted."
-        exit 1
-    fi
+    echo "Continuing - existing files will be overwritten"
 fi
 
 # Create output directory and state tracking
@@ -398,6 +402,7 @@ if [ "$TYPE" == "show" ]; then
     echo "Scanning episodes from all discs..."
     declare -a ALL_EPISODES
     declare -a EPISODE_SOURCES
+    declare -a EPISODE_NUMBERS
 
     for disc_dir in "${DISC_DIRS[@]}"; do
         disc_name=$(basename "$disc_dir")
@@ -408,10 +413,21 @@ if [ "$TYPE" == "show" ]; then
             continue
         fi
 
-        # Get episodes sorted by filename (01.mkv, 02.mkv, etc.)
+        # Get episodes sorted by filename (01.mkv, 02.mkv, 12-13.mkv, etc.)
         while IFS= read -r -d '' file; do
+            basename_noext=$(basename "$file" .mkv)
+
+            # Validate filename matches episode pattern: number or number-number
+            if [[ ! "$basename_noext" =~ ^[0-9]+(-[0-9]+)?$ ]]; then
+                echo "Warning: Invalid episode filename '$basename_noext.mkv' in $disc_name"
+                echo "  Expected format: XX.mkv or XX-YY.mkv (e.g., 01.mkv, 12-13.mkv)"
+                echo "  Skipping this file"
+                continue
+            fi
+
             ALL_EPISODES+=("$file")
             EPISODE_SOURCES+=("$disc_name")
+            EPISODE_NUMBERS+=("$basename_noext")
         done < <(find "$episodes_dir" -maxdepth 1 -name "*.mkv" -type f -print0 | sort -z)
     done
 
@@ -422,16 +438,28 @@ if [ "$TYPE" == "show" ]; then
         exit 1
     fi
 
-    echo "Found $TOTAL_EPISODES total episodes"
+    echo "Found $TOTAL_EPISODES total episode file(s)"
     echo ""
 
     # Display episode mapping
     echo "Episode mapping:"
     for i in "${!ALL_EPISODES[@]}"; do
-        ep_num=$((i + 1))
         src_file=$(basename "${ALL_EPISODES[$i]}")
         src_disc="${EPISODE_SOURCES[$i]}"
-        printf "  S%02dE%02d ← %s [%s]\n" "$SEASON" "$ep_num" "$src_file" "$src_disc"
+        ep_num="${EPISODE_NUMBERS[$i]}"
+
+        # Format output filename based on episode number pattern
+        if [[ "$ep_num" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+            # Multi-episode: 12-13 → S02E12-E13
+            ep_start="${BASH_REMATCH[1]}"
+            ep_end="${BASH_REMATCH[2]}"
+            output_name=$(printf "S%02dE%s-E%s.mkv" "$SEASON" "$ep_start" "$ep_end")
+        else
+            # Single episode: 09 → S02E09
+            output_name=$(printf "S%02dE%s.mkv" "$SEASON" "$ep_num")
+        fi
+
+        printf "  %s ← %s [%s]\n" "$output_name" "$src_file" "$src_disc"
     done
     echo ""
 
@@ -466,11 +494,23 @@ if [ "$TYPE" == "show" ]; then
     echo ""
 
     for i in "${!ALL_EPISODES[@]}"; do
-        ep_num=$((i + 1))
         input_file="${ALL_EPISODES[$i]}"
-        output_file=$(printf "%s/S%02dE%02d.mkv" "$OUTPUT_DIR" "$SEASON" "$ep_num")
+        ep_num="${EPISODE_NUMBERS[$i]}"
 
-        printf "[%d/%d] S%02dE%02d ← %s\n" "$((i + 1))" "$TOTAL_FILES" "$SEASON" "$ep_num" "$(basename "$input_file")"
+        # Format output filename based on episode number pattern
+        if [[ "$ep_num" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+            # Multi-episode: 12-13 → S02E12-E13
+            ep_start="${BASH_REMATCH[1]}"
+            ep_end="${BASH_REMATCH[2]}"
+            output_file=$(printf "%s/S%02dE%s-E%s.mkv" "$OUTPUT_DIR" "$SEASON" "$ep_start" "$ep_end")
+            display_name=$(printf "S%02dE%s-E%s" "$SEASON" "$ep_start" "$ep_end")
+        else
+            # Single episode: 09 → S02E09
+            output_file=$(printf "%s/S%02dE%s.mkv" "$OUTPUT_DIR" "$SEASON" "$ep_num")
+            display_name=$(printf "S%02dE%s" "$SEASON" "$ep_num")
+        fi
+
+        printf "[%d/%d] %s ← %s\n" "$((i + 1))" "$TOTAL_FILES" "$display_name" "$(basename "$input_file")"
 
         if remux_filter_tracks "$input_file" "$output_file"; then
             PROCESSED=$((PROCESSED + 1))
