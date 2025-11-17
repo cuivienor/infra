@@ -8,10 +8,20 @@ This directory contains Terraform configurations for deploying and managing LXC 
 terraform/
 ├── main.tf                    # Provider configuration
 ├── variables.tf               # Variable definitions
+├── outputs.tf                 # Centralized outputs (TFLint compliant)
+├── .tflint.hcl                # TFLint configuration
 ├── terraform.tfvars.example   # Example variables file
 ├── terraform.tfvars           # Your variables (git-ignored)
-└── containers/
-    └── ct300-backup.tf        # CT300 backup container
+├── analyzer.tf                # Media analyzer container
+├── backup.tf                  # Backup container
+├── dns.tf                     # DNS (AdGuard) container
+├── jellyfin.tf                # Jellyfin media server
+├── proxy.tf                   # Caddy reverse proxy
+├── ripper.tf                  # Disc ripper container
+├── samba.tf                   # Samba file server
+├── ssh_keys.tf                # SSH key management
+├── tailscale.tf               # Tailscale subnet router keys
+└── transcoder.tf              # Media transcoder container
 ```
 
 ## Prerequisites
@@ -219,6 +229,8 @@ Check your `terraform.tfvars`:
 3. **Document changes** - Add comments to `.tf` files
 4. **Test with CT300s first** - Don't touch production containers (CT200s) yet
 5. **Backup state** - `terraform.tfstate` is critical (consider remote backend)
+6. **Run TFLint before committing** - `tflint` enforces best practices
+7. **Use pre-commit hooks** - Automatic formatting and linting on commit
 
 ## Next Steps
 
@@ -234,6 +246,28 @@ Check your `terraform.tfvars`:
 - **Terraform Docs**: https://www.terraform.io/docs
 - **Container Resource**: https://registry.terraform.io/providers/bpg/proxmox/latest/docs/resources/virtual_environment_container
 
+## Linting
+
+TFLint is configured to enforce best practices:
+
+```bash
+# Run linter
+cd terraform
+tflint
+
+# Initialize plugins (if needed)
+tflint --init
+```
+
+The `.tflint.hcl` configuration enforces:
+- Standard module structure (outputs in `outputs.tf`)
+- No unused variables or declarations
+- Naming conventions
+- Required provider/version constraints
+- Documentation requirements
+
+Pre-commit hooks automatically run TFLint on every commit.
+
 ---
 
-**Last Updated**: 2025-11-11
+**Last Updated**: 2025-11-16
