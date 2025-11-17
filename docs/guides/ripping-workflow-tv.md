@@ -46,7 +46,7 @@ cat ~/active-jobs/*/status           # Check status
 **What happens:**
 - MakeMKV rips all titles from disc
 - Creates organization scaffolding (`_episodes/`, `_extras/`, `_discarded/`)
-- Output: `/mnt/staging/1-ripped/tv/Show_Name/S02/Disc1/`
+- Output: `/mnt/media/1-ripped/tv/Show_Name/S02/Disc1/`
 - State tracked in `.rip/` directory (status, logs, metadata)
 - Time: ~20-60 minutes per disc
 
@@ -57,8 +57,8 @@ ls ~/active-jobs/                         # Shows symlinks to active jobs
 cat ~/active-jobs/*/status                # "in_progress"
 
 # After completion (symlink removed)
-cat /mnt/staging/1-ripped/tv/Show_Name/S02/Disc1/.rip/status   # "completed" or "failed"
-cat /mnt/staging/1-ripped/tv/Show_Name/S02/Disc1/.rip/rip.log  # Full log
+cat /mnt/media/1-ripped/tv/Show_Name/S02/Disc1/.rip/status   # "completed" or "failed"
+cat /mnt/media/1-ripped/tv/Show_Name/S02/Disc1/.rip/rip.log  # Full log
 ```
 
 **Repeat for ALL discs in the season** before proceeding.
@@ -71,7 +71,7 @@ cat /mnt/staging/1-ripped/tv/Show_Name/S02/Disc1/.rip/rip.log  # Full log
 
 ```bash
 # SSH to ripper or any machine with access to staging
-cd /mnt/staging/1-ripped/tv/Show_Name/S02/Disc1/
+cd /mnt/media/1-ripped/tv/Show_Name/S02/Disc1/
 
 # Review the structure
 ls -la
@@ -133,7 +133,7 @@ nano _REVIEW.txt
 
 ---
 
-## Step 3: Organize & Remux Each Disc (analyzer)
+## Step 3: Remux Each Disc (analyzer)
 
 **For each ripped disc:**
 
@@ -142,20 +142,21 @@ ssh analyzer
 cd ~/scripts
 
 # Find ripped folders for your show
-ls /mnt/staging/1-ripped/tv/Show_Name/S02/
+ls /mnt/media/1-ripped/tv/Show_Name/S02/
 
-# Run organize script for each disc
-./run-bg.sh ./organize-and-remux-tv.sh /mnt/staging/1-ripped/tv/Show_Name/S02/Disc1/
+# Run remux script for each disc (processes _episodes/ folder)
+./run-bg.sh ./remux.sh -t show -n "Show Name" -s 2 -d 1
 
 # Monitor progress
-tail -f ~/logs/organize-and-remux-tv_*.log
+tail -f ~/logs/remux_*.log
 ```
 
 **What happens:**
-- Analyzes all episodes on the disc
-- Identifies episode files (usually largest titles)
-- Remuxes to remove unwanted streams
-- Consolidates all episodes into: `/mnt/staging/2-remuxed/tv/Show_Name/Season_02/`
+- Remuxes all episodes from `_episodes/` folder
+- Preserves manual episode numbering (e.g., `12-13.mkv` → `S02E12-E13.mkv`)
+- Removes unwanted streams
+- Consolidates all episodes into: `/mnt/media/2-remuxed/tv/Show_Name/Season_02/`
+- Copies extras to appropriate subdirectories
 - Time: ~5-15 minutes per disc
 
 **Process ALL discs** - they all merge into the same `Season_XX/` folder.
@@ -170,18 +171,23 @@ tail -f ~/logs/organize-and-remux-tv_*.log
 ssh transcoder
 cd ~/scripts
 
-# Transcode the entire season folder
-./run-bg.sh ./transcode-queue.sh /mnt/staging/2-remuxed/tv/Show_Name/Season_02/ 20 software --auto
+# Transcode the entire season
+./run-bg.sh ./transcode.sh -t show -n "Show Name" -s 2
 
 # Monitor progress
-tail -f ~/logs/transcode-queue_*.log
+tail -f ~/logs/transcode_*.log
+
+# Check job status
+cat /mnt/media/2-remuxed/tv/Show_Name/Season_02/.transcode/status
+ls /mnt/media/2-remuxed/tv/Show_Name/Season_02/.transcode/queue/
 ```
 
 **What happens:**
 - Transcodes ALL episodes in the season to HEVC (H.265)
 - Uses CRF 20 for quality
 - Processes episodes sequentially
-- Output: `/mnt/staging/3-transcoded/tv/Show_Name/Season_02/`
+- State tracked in `.transcode/` directory
+- Output: `/mnt/media/3-transcoded/tv/Show_Name/Season_02/`
 - Time: ~2-6 hours per episode (can take 12-48 hours for full season)
 
 **This is the longest step.** You can disconnect and check back later.
@@ -194,16 +200,22 @@ tail -f ~/logs/transcode-queue_*.log
 ssh analyzer
 cd ~/scripts
 
-./filebot-process.sh /mnt/staging/3-transcoded/tv/Show_Name/Season_02/
+# Preview what FileBot will do (dry-run)
+./filebot.sh -t show -n "Show Name" -s 2 --preview
+
+# If preview looks good, run for real
+./filebot.sh -t show -n "Show Name" -s 2
 ```
 
 **What happens:**
 - FileBot looks up show in TheTVDB
 - Matches episode files to episode metadata
-- Shows preview with proper naming: `Show Name - S01E01 - Episode Title.mkv`
-- **Prompts for confirmation** - review carefully!
-- Type `y` to confirm
-- Moves to `/mnt/library/tv/Show Name/Season 02/`
+- In preview mode: shows what would be renamed/copied
+- In normal mode: copies files (preserves source for safe cleanup)
+- Proper naming: `Show Name - S01E01 - Episode Title.mkv`
+- Copies to `/mnt/library/tv/Show Name/Season 02/`
+- Copies extras to Jellyfin-compatible subdirectories
+- State tracked in `.filebot/` directory
 - Jellyfin automatically detects new content
 
 **Time:** ~1-2 minutes
@@ -240,7 +252,7 @@ cd ~/scripts
 ### Manual review each disc:
 ```bash
 # For each disc, identify and organize episodes/extras
-cd /mnt/staging/1-ripped/tv/Avatar_The_Last_Airbender/S02/Disc1/
+cd /mnt/media/1-ripped/tv/Avatar_The_Last_Airbender/S02/Disc1/
 # Review files, rename episodes to 01.mkv, 02.mkv, etc.
 # Move to _episodes/, organize extras, discard duplicates
 ```
@@ -249,25 +261,30 @@ cd /mnt/staging/1-ripped/tv/Avatar_The_Last_Airbender/S02/Disc1/
 ```bash
 ssh analyzer
 cd ~/scripts
-./run-bg.sh ./organize-and-remux-tv.sh /mnt/staging/1-ripped/tv/Avatar_The_Last_Airbender/S02/Disc1/
-./run-bg.sh ./organize-and-remux-tv.sh /mnt/staging/1-ripped/tv/Avatar_The_Last_Airbender/S02/Disc2/
-./run-bg.sh ./organize-and-remux-tv.sh /mnt/staging/1-ripped/tv/Avatar_The_Last_Airbender/S02/Disc3/
+./run-bg.sh ./remux.sh -t show -n "Avatar The Last Airbender" -s 2 -d 1
+./run-bg.sh ./remux.sh -t show -n "Avatar The Last Airbender" -s 2 -d 2
+./run-bg.sh ./remux.sh -t show -n "Avatar The Last Airbender" -s 2 -d 3
 ```
 
-All episodes now in: `/mnt/staging/2-remuxed/tv/Avatar_The_Last_Airbender/Season_02/`
+All episodes now in: `/mnt/media/2-remuxed/tv/Avatar_The_Last_Airbender/Season_02/`
 
 ### Transcode once for entire season:
 ```bash
 ssh transcoder
 cd ~/scripts
-./run-bg.sh ./transcode-queue.sh /mnt/staging/2-remuxed/tv/Avatar_The_Last_Airbender/Season_02/ 20 software --auto
+./run-bg.sh ./transcode.sh -t show -n "Avatar The Last Airbender" -s 2
 ```
 
 ### FileBot once for entire season:
 ```bash
 ssh analyzer
 cd ~/scripts
-./filebot-process.sh /mnt/staging/3-transcoded/tv/Avatar_The_Last_Airbender/Season_02/
+
+# Preview first
+./filebot.sh -t show -n "Avatar The Last Airbender" -s 2 --preview
+
+# If good, run for real
+./filebot.sh -t show -n "Avatar The Last Airbender" -s 2
 ```
 
 Done! Full season in library.
@@ -285,18 +302,24 @@ tail -f ~/active-jobs/*/rip.log      # Follow logs of all jobs
 
 ### Check job state after completion
 ```bash
-# State lives in the output directory
+# Rip state
 cat /path/to/rip/.rip/status         # "completed" or "failed"
 cat /path/to/rip/.rip/rip.log        # Full log
-cat /path/to/rip/.rip/started_at     # When job started
-cat /path/to/rip/.rip/completed_at   # When job finished
+
+# Transcode state
+cat /path/to/season/.transcode/status
+ls /path/to/season/.transcode/queue/  # Files waiting to be processed
+
+# FileBot state
+cat /path/to/season/.filebot/status
+cat /path/to/season/.filebot/filebot.log
 ```
 
 ### Check staging directories
 ```bash
-ls /mnt/staging/1-ripped/tv/Show_Name/
-ls /mnt/staging/2-remuxed/tv/Show_Name/
-ls /mnt/staging/3-transcoded/tv/Show_Name/
+ls /mnt/media/1-ripped/tv/Show_Name/
+ls /mnt/media/2-remuxed/tv/Show_Name/
+ls /mnt/media/3-transcoded/tv/Show_Name/
 ls /mnt/library/tv/
 ```
 
@@ -319,13 +342,15 @@ ls /mnt/library/tv/
 
 ### FileBot can't match episodes
 - Make sure show name is correct (check TheTVDB)
+- Use `--id` flag to force specific TVDB ID: `./filebot.sh -t show -n "Name" -s 2 --id 12345`
+- Use `--preview` to see what FileBot detects
 - Episodes should be in Season_XX folders
 - FileBot expects standard naming patterns
 
 ### Remux script doesn't find episodes
-- Check the MKV files were actually created in 1-ripped
-- Episodes are usually the largest titles (>100MB typically)
-- Review organize script output for clues
+- Check the `_episodes/` folder has files from manual review step
+- Files must be renamed to episode numbers (01.mkv, 02.mkv, etc.)
+- For combined episodes, use format like `12-13.mkv`
 
 ### Episodes in wrong order
 - FileBot uses database episode order
@@ -341,9 +366,11 @@ ls /mnt/library/tv/
 - **Episode count**: Note how many episodes are on each disc (usually 3-5)
 - **Manual review**: Take time to properly identify episodes and extras - this saves trouble later
 - **Extras organization**: Use Jellyfin-compatible folder names (with spaces) in `_extras/`
-- **State tracking**: All job state lives in `.rip/` directory within the output
+- **State tracking**: All job state lives in `.rip/`, `.transcode/`, and `.filebot/` directories
+- **Safe cleanup**: FileBot uses copy (not move), so source files are preserved until you manually clean up
+- **Preview mode**: Use `--preview` flag with filebot.sh to see what will happen before committing
 - **Global visibility**: Active jobs symlinked in `~/active-jobs/` for easy monitoring
-- **Cleanup**: Scripts clean up staging directories after FileBot completes
+- **Cleanup**: Scripts preserve source files - clean up staging directories after verification
 - **Metadata**: FileBot pulls episode titles, descriptions, and air dates automatically
 
 ---

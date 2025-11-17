@@ -37,7 +37,7 @@ tail -f ~/logs/rip-disc_*.log
 
 **What happens:**
 - MakeMKV rips all titles from disc
-- Output: `/mnt/staging/1-ripped/movies/Movie_Title_Here_YYYY-MM-DD/`
+- Output: `/mnt/media/1-ripped/movies/Movie_Title_Here_YYYY-MM-DD/`
 - Time: ~20-60 minutes depending on disc size
 
 **Wait for completion** before proceeding.
@@ -55,20 +55,20 @@ ssh analyzer
 cd ~/scripts
 
 # Find the exact folder name (with date stamp)
-ls /mnt/staging/1-ripped/movies/ | grep -i "movie title"
+ls /mnt/media/1-ripped/movies/ | grep -i "movie title"
 
-# Run organize script (replace YYYY-MM-DD with actual date)
-./run-bg.sh ./organize-and-remux-movie.sh /mnt/staging/1-ripped/movies/Movie_Title_Here_YYYY-MM-DD/
+# Run remux script with new CLI (replace YYYY-MM-DD with actual date)
+./run-bg.sh ./remux.sh -t movie -n "Movie Title Here" -d YYYY-MM-DD
 
 # Monitor progress
-tail -f ~/logs/organize-and-remux-movie_*.log
+tail -f ~/logs/remux_*.log
 ```
 
 **What happens:**
 - Analyzes all MKV files
 - Identifies main movie and extras (by duration >30min and size >5GB)
 - Remuxes to remove unwanted streams
-- Output: `/mnt/staging/2-remuxed/movies/Movie_Title_Here/` (date stamp removed)
+- Output: `/mnt/media/2-remuxed/movies/Movie_Title_Here/` (date stamp removed)
 - Time: ~5-15 minutes
 
 **Wait for completion** before proceeding.
@@ -82,17 +82,21 @@ ssh transcoder
 cd ~/scripts
 
 # Note: folder name has NO date stamp now
-./run-bg.sh ./transcode-queue.sh /mnt/staging/2-remuxed/movies/Movie_Title_Here/ 20 software --auto
+./run-bg.sh ./transcode.sh -t movie -n "Movie Title Here"
 
-# Monitor progress
-tail -f ~/logs/transcode-queue_*.log
+# Monitor progress  
+tail -f ~/logs/transcode_*.log
+
+# Check job status
+cat /mnt/media/2-remuxed/movies/Movie_Title_Here/.transcode/status
 ```
 
 **What happens:**
 - Transcodes video to HEVC (H.265) using CRF 20
 - Copies audio and subtitle streams as-is
 - Preserves extras in subdirectories
-- Output: `/mnt/staging/3-transcoded/movies/Movie_Title_Here/`
+- State tracked in `.transcode/` directory
+- Output: `/mnt/media/3-transcoded/movies/Movie_Title_Here/`
 - Time: ~2-6 hours depending on length and quality
 
 **This is the longest step.** You can disconnect and check back later.
@@ -105,16 +109,20 @@ tail -f ~/logs/transcode-queue_*.log
 ssh analyzer
 cd ~/scripts
 
-./filebot-process.sh /mnt/staging/3-transcoded/movies/Movie_Title_Here/
+# Preview what FileBot will do (dry-run)
+./filebot.sh -t movie -n "Movie Title Here" --preview
+
+# If preview looks good, run for real
+./filebot.sh -t movie -n "Movie Title Here"
 ```
 
 **What happens:**
 - FileBot looks up movie in TheMovieDB
-- Shows preview of rename/move operation
-- **Prompts for confirmation** - review carefully!
-- Type `y` to confirm
-- Moves main movie to `/mnt/library/movies/Movie Name (Year)/`
-- Copies extras to `extras/` subdirectory
+- In preview mode: shows what would be renamed/copied
+- In normal mode: copies files (preserves source for safe cleanup)
+- Copies main movie to `/mnt/library/movies/Movie Name (Year)/`
+- Copies extras to Jellyfin-compatible subdirectories (behind the scenes/, featurettes/, etc.)
+- State tracked in `.filebot/` directory
 - Jellyfin automatically detects new content
 
 **Time:** ~1-2 minutes
@@ -149,10 +157,21 @@ tail -f ~/logs/script-name_*.log
 
 ### Check staging directories
 ```bash
-ls /mnt/staging/1-ripped/movies/
-ls /mnt/staging/2-remuxed/movies/
-ls /mnt/staging/3-transcoded/movies/
+ls /mnt/media/1-ripped/movies/
+ls /mnt/media/2-remuxed/movies/
+ls /mnt/media/3-transcoded/movies/
 ls /mnt/library/movies/
+```
+
+### Check job state
+```bash
+# Transcode state
+cat /mnt/media/2-remuxed/movies/Movie_Title/.transcode/status
+ls /mnt/media/2-remuxed/movies/Movie_Title/.transcode/
+
+# FileBot state
+cat /mnt/media/3-transcoded/movies/Movie_Title/.filebot/status
+ls /mnt/media/3-transcoded/movies/Movie_Title/.filebot/
 ```
 
 ---
@@ -163,7 +182,7 @@ Some movies span **multiple discs** (e.g., extended editions, director's cuts wi
 
 ### Strategy: Merge Before Processing
 
-**Best Practice**: Rip all discs first, then **manually merge** into one folder before running organize/remux.
+**Best Practice**: Rip all discs first, then **manually merge** into one folder before running remux.
 
 #### Step-by-Step for Multi-Disc Movies
 
@@ -185,35 +204,34 @@ Some movies span **multiple discs** (e.g., extended editions, director's cuts wi
    ssh analyzer  # Switch to analyzer container
 
    # List the ripped directories
-   ls /mnt/staging/1-ripped/movies/ | grep -i "dragon"
+   ls /mnt/media/1-ripped/movies/ | grep -i "dragon"
 
    # Create a merged directory
-   mkdir -p /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_merged
+   mkdir -p /mnt/media/1-ripped/movies/How_to_Train_Your_Dragon_3_merged
 
    # Move all MKV files from both discs into merged folder
-   mv /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_Disc_1_2024-11-13/*.mkv \
-      /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_merged/
+   mv /mnt/media/1-ripped/movies/How_to_Train_Your_Dragon_3_Disc_1_2024-11-13/*.mkv \
+      /mnt/media/1-ripped/movies/How_to_Train_Your_Dragon_3_merged/
 
-   mv /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_Disc_2_2024-11-13/*.mkv \
-      /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_merged/
+   mv /mnt/media/1-ripped/movies/How_to_Train_Your_Dragon_3_Disc_2_2024-11-13/*.mkv \
+      /mnt/media/1-ripped/movies/How_to_Train_Your_Dragon_3_merged/
    ```
 
 4. **Continue normal workflow** using the merged folder:
    ```bash
-   # Now proceed with organize-and-remux
-   ./run-bg.sh ./organize-and-remux-movie.sh \
-     /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_merged/
+   # Now proceed with remux - use 'merged' as date placeholder
+   ./run-bg.sh ./remux.sh -t movie -n "How to Train Your Dragon 3" -d merged
    ```
 
 5. **Cleanup** the original disc folders after verification:
    ```bash
    # After confirming merged folder looks good
-   rm -rf /mnt/staging/1-ripped/movies/How_to_Train_Your_Dragon_3_Disc_*
+   rm -rf /mnt/media/1-ripped/movies/How_to_Train_Your_Dragon_3_Disc_*
    ```
 
 ### Why Merge First?
 
-- **organize-and-remux-movie.sh** analyzes all MKV files in a folder together
+- **remux.sh** analyzes all MKV files in a folder together
 - It auto-detects main features vs extras by duration/size
 - Multi-disc movies often have:
   - **Disc 1**: Main movie
@@ -224,7 +242,7 @@ Some movies span **multiple discs** (e.g., extended editions, director's cuts wi
 
 If you prefer manual control:
 
-1. Process each disc separately through organize/remux/transcode
+1. Process each disc separately through remux/transcode/filebot
 2. After FileBot, manually move extras from Disc 2 to the Disc 1 movie folder:
    ```bash
    # Example: Move Disc 2 extras to main movie folder
@@ -246,8 +264,9 @@ If you prefer manual control:
 
 ### FileBot can't find movie
 - Make sure movie title is clear and unambiguous
-- Add year to folder name if multiple versions exist
+- Use `--id` flag to force specific TMDb ID: `./filebot.sh -t movie -n "Name" --id 12345`
 - Check TheMovieDB to verify movie exists
+- Use `--preview` to see what FileBot detects
 
 ### Transcode is slow
 - This is normal for software encoding
@@ -262,7 +281,7 @@ If you prefer manual control:
 ### Multi-disc: Wrong files categorized as main feature
 - The script uses >30min AND >5GB as criteria for main features
 - If extras are large/long, they may be miscategorized
-- Review the categorization when organize-and-remux prompts for confirmation
+- Review the categorization when remux prompts for confirmation
 - You can manually move files between main folder and extras/ afterward
 
 ---
@@ -271,11 +290,13 @@ If you prefer manual control:
 
 - **Background jobs**: All long-running scripts use `run-bg.sh` so you can disconnect
 - **Monitor remotely**: SSH back in anytime to check `tail -f ~/logs/`
+- **State tracking**: Check `.transcode/` and `.filebot/` directories for job status and metadata
+- **Safe cleanup**: FileBot uses copy (not move), so source files are preserved until you manually clean up
+- **Preview mode**: Use `--preview` flag with filebot.sh to see what will happen before committing
 - **Multiple discs**: Rip all discs first, then merge into one folder before processing
-- **Cleanup**: Scripts automatically clean up staging directories after FileBot completes
-- **Verify before transcoding**: Always check organize-and-remux output before starting the long transcode step
+- **Verify before transcoding**: Always check remux output before starting the long transcode step
 - **Organize extras in Jellyfin**: Use Jellyfin category folders for clean presentation - see [Extras Labeling Workflow](extras-labeling-workflow.md)
 
 ---
 
-**Last updated:** 2025-11-13
+**Last updated:** 2025-11-17
