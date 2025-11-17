@@ -64,6 +64,6 @@ media_user_shell: "/bin/zsh"  # Changed from bash to zsh for homelab shell
 
 # Homelab dotfiles deployment
 homelab_dotfiles_enabled: true
-homelab_dotfiles_local_path: "{{ playbook_dir }}/../../dotfiles/stow/homelab"  # Path to dotfiles on control machine
+homelab_dotfiles_local_path: "{{ lookup('env', 'HOME') }}/dotfiles/stow/homelab"  # Path to dotfiles on control machine
 homelab_dotfiles_users:
   - root  # Deploy to root by default
