@@ -1,0 +1,81 @@
+// Unattended-Upgrades configuration for Proxmox VE
+// Managed by Ansible - do not edit manually
+
+Unattended-Upgrade::Allowed-Origins {
+{% if pve_auto_updates_security_only %}
+    // Security updates only (recommended for production)
+    // Debian bookworm (now oldstable)
+    "Debian:oldstable";
+    "Debian:oldstable-security";
+    "Debian:oldstable-updates";
+    "o=Debian,a=oldstable";
+    "o=Debian,a=oldstable-security";
+    "o=Debian,a=oldstable-updates";
+    // Proxmox VE repository
+    "o=Proxmox,a=stable";
+{% else %}
+    // All updates (use with caution)
+    "Debian:oldstable";
+    "Debian:oldstable-security";
+    "Debian:oldstable-updates";
+    "Debian:oldstable-backports";
+    "o=Debian,a=oldstable";
+    "o=Debian,a=oldstable-security";
+    "o=Debian,a=oldstable-updates";
+    "o=Proxmox,a=stable";
+{% endif %}
+};
+
+// Packages to never update automatically
+// Add packages here that you want to control manually
+Unattended-Upgrade::Package-Blacklist {
+    // Uncomment to blacklist kernel updates (requires manual reboot planning)
+    // "linux-";
+    // "pve-kernel";
+};
+
+// Remove unused kernel-related packages after upgrade
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "{{ pve_auto_updates_remove_unused | lower }}";
+
+// Remove unused dependencies after upgrade
+Unattended-Upgrade::Remove-Unused-Dependencies "{{ pve_auto_updates_remove_unused | lower }}";
+
+// Automatically reboot if required
+Unattended-Upgrade::Automatic-Reboot "{{ pve_auto_updates_reboot | lower }}";
+
+{% if pve_auto_updates_reboot %}
+// Reboot time (if automatic reboot is enabled)
+Unattended-Upgrade::Automatic-Reboot-Time "{{ pve_auto_updates_reboot_time }}";
+
+// Reboot even if users are logged in
+Unattended-Upgrade::Automatic-Reboot-WithUsers "false";
+{% endif %}
+
+{% if pve_auto_updates_mail_to %}
+// Email notifications
+Unattended-Upgrade::Mail "{{ pve_auto_updates_mail_to }}";
+{% if pve_auto_updates_mail_on_error %}
+Unattended-Upgrade::MailOnlyOnError "true";
+{% else %}
+Unattended-Upgrade::MailReport "on-change";
+{% endif %}
+{% endif %}
+
+// Logging
+Unattended-Upgrade::SyslogEnable "true";
+Unattended-Upgrade::SyslogFacility "daemon";
+
+// Don't split upgrades (safer for Proxmox)
+Unattended-Upgrade::MinimalSteps "false";
+
+// Install updates when on AC power only (not applicable for server, but safe default)
+Unattended-Upgrade::OnlyOnACPower "false";
+
+// Skip updates if on metered connection (not applicable for server)
+Unattended-Upgrade::Skip-Updates-On-Metered-Connections "false";
+
+// Verbose logging for troubleshooting
+Unattended-Upgrade::Verbose "false";
+
+// Debug mode (set to true for troubleshooting)
+Unattended-Upgrade::Debug "false";
