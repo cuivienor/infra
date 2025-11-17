@@ -23,6 +23,11 @@
   ansible.builtin.import_tasks: ssh-keys.yml
   tags: ['ssh-keys', 'ssh']
 
+- name: Import homelab shell tasks
+  ansible.builtin.import_tasks: homelab-shell.yml
+  tags: ['homelab-shell', 'shell', 'dotfiles']
+  when: homelab_shell_enabled | bool
+
 # SSH hardening disabled for now - don't want to risk lockout
 # TODO: Enable once backup key strategy is in place
 # - name: Import SSHD hardening tasks

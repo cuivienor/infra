@@ -33,6 +33,22 @@ common_packages:
   - gnupg
   - sudo
 
+# Homelab shell environment packages
+homelab_shell_enabled: true
+homelab_shell_packages:
+  - zsh           # Better shell
+  - tmux          # Terminal multiplexer
+  - bat           # Better cat with syntax highlighting
+  - ripgrep       # Faster grep (rg)
+  - fd-find       # Faster find (fd)
+  - fzf           # Fuzzy finder
+
+# Optional enhanced packages (for interactive hosts like Proxmox)
+homelab_shell_enhanced: false
+homelab_shell_enhanced_packages:
+  - eza           # Better ls (may need manual install)
+  - zoxide        # Smart cd (may need manual install)
+
 # Sudo configuration
 configure_sudo: true
 sudo_users: []  # Users to grant passwordless sudo (set per host/group)
@@ -44,4 +60,10 @@ media_user_uid: 1000
 media_user_gid: 1000
 media_user_groups: []  # Additional groups (e.g., ['cdrom'] for optical drive access)
 media_user_home: "/home/{{ media_user_name }}"
-media_user_shell: "/bin/bash"
+media_user_shell: "/bin/zsh"  # Changed from bash to zsh for homelab shell
+
+# Homelab dotfiles deployment
+homelab_dotfiles_enabled: true
+homelab_dotfiles_local_path: "{{ playbook_dir }}/../../dotfiles/stow/homelab"  # Path to dotfiles on control machine
+homelab_dotfiles_users:
+  - root  # Deploy to root by default
