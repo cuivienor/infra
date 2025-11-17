@@ -63,11 +63,12 @@ resource "proxmox_virtual_environment_container" "transcoder" {
     size         = 20 # 20GB for OS, FFmpeg, and temp files
   }
 
-  # Mount staging directory from host (least privilege approach)
-  # Transcoder only needs access to remuxed -> transcoded pipeline
+  # Mount media directory from host (standardized path)
   mount_point {
-    volume = "/mnt/storage/media/staging"
-    path   = "/mnt/staging"
+    volume = "/mnt/storage/media"
+    path   = "/mnt/media"
+    # Provides access to staging (2-remuxed, 3-transcoded) and library
+    # Scripts use /mnt/media/staging/
     # Note: GPU passthrough must be configured via Ansible
     # Terraform BPG provider doesn't support LXC device passthrough configuration
   }
@@ -87,15 +88,4 @@ resource "proxmox_virtual_environment_container" "transcoder" {
       initialization[0].user_account,
     ]
   }
-}
-
-# Output the container's IP and ID
-output "transcoder_container_id" {
-  value       = proxmox_virtual_environment_container.transcoder.vm_id
-  description = "Container ID (CTID)"
-}
-
-output "transcoder_container_ip" {
-  value       = proxmox_virtual_environment_container.transcoder.initialization[0].ip_config[0].ipv4[0].address
-  description = "IP address of the transcoder container (static)"
 }
