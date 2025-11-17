@@ -55,11 +55,9 @@
         path: "/home/media/scripts/{{ item }}"
       loop:
         - analyze-media.sh
-        - organize-and-remux-movie.sh
-        - organize-and-remux-tv.sh
-        - promote-to-ready.sh
+        - remux.sh
         - filebot-process.sh
-        - fix-current-names.sh
+        - run-bg.sh
       register: script_checks
       tags: ['verify']
 
@@ -103,14 +101,15 @@
       ansible.builtin.debug:
         msg:
           - "==================================="
-          - "Analyzer Analyzer Verification Summary"
+          - "Analyzer Container Verification Summary"
           - "==================================="
           - "Staging mount: {{ 'OK' if staging_mount.stat.exists else 'FAIL' }}"
-          - "Scripts deployed: {{ script_checks.results | selectattr('stat.exists') | list | length }}/6"
+          - "Scripts deployed: {{ script_checks.results | selectattr('stat.exists') | list | length }}/4"
           - "Tools installed: {{ tool_checks.results | selectattr('rc', 'equalto', 0) | list | length }}/3"
           - ""
           - "Next steps:"
-          - "1. Test with: pct enter 303; su - media"
-          - "2. Run: ~/scripts/analyze-media.sh /mnt/staging/1-ripped/movies/<folder>/"
-          - "3. Process a movie: ~/scripts/organize-and-remux-movie.sh <path>"
+          - "1. Test with: ssh media@analyzer.home.arpa"
+          - "2. Analyze: ~/scripts/analyze-media.sh /mnt/media/staging/1-ripped/movies/<folder>/"
+          - "3. Remux TV: ~/scripts/remux.sh -t show -n 'Show Name' -s 1"
+          - "4. Remux Movie: ~/scripts/remux.sh -t movie -n 'Movie Name'"
       tags: ['verify']
