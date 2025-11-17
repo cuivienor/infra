@@ -81,14 +81,3 @@ resource "proxmox_virtual_environment_container" "backup" {
     ]
   }
 }
-
-# Output the container's IP for Ansible
-output "backup_container_ip" {
-  value       = proxmox_virtual_environment_container.backup.initialization[0].ip_config[0].ipv4[0].address
-  description = "IP address of the backup container (static)"
-}
-
-output "backup_container_id" {
-  value       = proxmox_virtual_environment_container.backup.vm_id
-  description = "Container ID (CTID)"
-}
