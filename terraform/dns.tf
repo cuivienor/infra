@@ -78,14 +78,3 @@ resource "proxmox_virtual_environment_container" "dns" {
     ]
   }
 }
-
-# Output the container's IP and ID
-output "dns_container_id" {
-  value       = proxmox_virtual_environment_container.dns.vm_id
-  description = "Container ID (CTID)"
-}
-
-output "dns_container_ip" {
-  value       = proxmox_virtual_environment_container.dns.initialization[0].ip_config[0].ipv4[0].address
-  description = "IP address of the DNS container (static)"
-}

@@ -32,20 +32,7 @@ variable "proxmox_insecure" {
   default     = true
 }
 
-# SSH public key for container access
-variable "ssh_public_key" {
-  description = "SSH public key for root access to containers"
-  type        = string
-  default     = ""
-}
-
 # Network configuration
-variable "gateway" {
-  description = "Default gateway for containers"
-  type        = string
-  default     = "192.168.1.1"
-}
-
 variable "dns_servers" {
   description = "DNS servers for containers (local AdGuard with external fallback)"
   type        = list(string)

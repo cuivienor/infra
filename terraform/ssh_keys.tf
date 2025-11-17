@@ -11,14 +11,3 @@ locals {
     trimspace(file("${path.module}/../ansible/files/ssh-keys/${f}"))
   ]
 }
-
-# Output for verification
-output "ssh_keys_loaded" {
-  value       = length(local.ssh_public_keys)
-  description = "Number of SSH public keys loaded from ansible/files/ssh-keys/"
-}
-
-output "ssh_key_files" {
-  value       = local.ssh_key_files
-  description = "SSH key files found"
-}

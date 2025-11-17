@@ -85,14 +85,3 @@ resource "proxmox_virtual_environment_container" "samba" {
     ]
   }
 }
-
-# Output the container's IP for Ansible
-output "samba_container_ip" {
-  value       = proxmox_virtual_environment_container.samba.initialization[0].ip_config[0].ipv4[0].address
-  description = "IP address of the Samba container (static)"
-}
-
-output "samba_container_id" {
-  value       = proxmox_virtual_environment_container.samba.vm_id
-  description = "Container ID (CTID)"
-}

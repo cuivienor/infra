@@ -80,14 +80,3 @@ resource "proxmox_virtual_environment_container" "proxy" {
     ]
   }
 }
-
-# Output the container's IP and ID
-output "proxy_container_id" {
-  value       = proxmox_virtual_environment_container.proxy.vm_id
-  description = "Container ID (CTID)"
-}
-
-output "proxy_container_ip" {
-  value       = proxmox_virtual_environment_container.proxy.initialization[0].ip_config[0].ipv4[0].address
-  description = "IP address of the proxy container (static)"
-}
