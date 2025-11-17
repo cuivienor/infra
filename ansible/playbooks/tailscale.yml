@@ -33,7 +33,7 @@
 
   pre_tasks:
     - name: Display configuration
-      debug:
+      ansible.builtin.debug:
         msg: |
           Configuring Pi4 as PRIMARY subnet router + exit node
 
@@ -70,7 +70,7 @@
 
   pre_tasks:
     - name: Display configuration
-      debug:
+      ansible.builtin.debug:
         msg: |
           Configuring Proxmox as SECONDARY subnet router
 
@@ -91,7 +91,7 @@
 
   tasks:
     - name: Show next steps
-      debug:
+      ansible.builtin.debug:
         msg: |
           Tailscale Subnet Routing Configured!
 
