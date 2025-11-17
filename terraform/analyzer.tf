@@ -63,25 +63,12 @@ resource "proxmox_virtual_environment_container" "analyzer" {
     size         = 12 # 12GB for OS, tools, and temporary files
   }
 
-  # Mount complete media directory from host (for analysis and organization)
+  # Mount complete media directory from host (standardized path)
   mount_point {
     volume = "/mnt/storage/media"
     path   = "/mnt/media"
-    # Analyzer needs access to all media: staging, library, legacy-media, etc.
-  }
-
-  # Mount staging directory from host (media processing) - DEPRECATED, use /mnt/media/staging
-  mount_point {
-    volume = "/mnt/storage/media/staging"
-    path   = "/mnt/staging"
-    # Kept for backward compatibility with existing scripts
-  }
-
-  # Mount library directory from host (FileBot output) - DEPRECATED, use /mnt/media/library
-  mount_point {
-    volume = "/mnt/storage/media/library"
-    path   = "/mnt/library"
-    # Kept for backward compatibility with existing scripts
+    # Analyzer needs access to all media: staging, library, etc.
+    # Scripts use /mnt/media/staging/ and /mnt/media/library/
   }
 
   # Features
@@ -99,15 +86,4 @@ resource "proxmox_virtual_environment_container" "analyzer" {
       initialization[0].user_account,
     ]
   }
-}
-
-# Output the container's IP and ID
-output "analyzer_container_id" {
-  value       = proxmox_virtual_environment_container.analyzer.vm_id
-  description = "Container ID (CTID)"
-}
-
-output "analyzer_container_ip" {
-  value       = proxmox_virtual_environment_container.analyzer.initialization[0].ip_config[0].ipv4[0].address
-  description = "IP address of the analyzer container (static)"
 }

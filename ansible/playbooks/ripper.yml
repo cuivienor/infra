@@ -42,15 +42,6 @@
         - { src: "../../scripts/media/utilities/run-bg.sh", dest: "run-bg.sh" }
       tags: ['scripts']
 
-    - name: Configure staging path environment variable
-      ansible.builtin.lineinfile:
-        path: /home/media/.bashrc
-        line: 'export STAGING_BASE="/mnt/staging"'
-        state: present
-        owner: media
-        group: media
-      tags: ['scripts']
-
 # Optical drive passthrough must run on the Proxmox host
 - name: Configure optical drive passthrough
   hosts: homelab

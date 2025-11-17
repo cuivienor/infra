@@ -64,18 +64,13 @@ resource "proxmox_virtual_environment_container" "jellyfin" {
     size         = 32 # 32GB for Jellyfin data, metadata cache, transcoding cache
   }
 
-  # Mount new organized library structure (read-only recommended for safety)
-  mount_point {
-    volume = "/mnt/storage/media/library"
-    path   = "/media/library"
-    # Note: Consider read-only after testing: add ro option via LXC config
-  }
-
-  # Mount legacy media for migration period
+  # Mount media directory from host (standardized path)
   mount_point {
     volume = "/mnt/storage/media"
-    path   = "/media/legacy"
-    # Provides access to old /movies and /tv directories during transition
+    path   = "/mnt/media"
+    # Provides access to library/movies, library/tv, and staging directories
+    # Jellyfin libraries should point to /mnt/media/library/movies and /mnt/media/library/tv
+    # Note: Consider read-only after testing: add ro option via LXC config
   }
 
   # Features
@@ -93,15 +88,4 @@ resource "proxmox_virtual_environment_container" "jellyfin" {
       initialization[0].user_account,
     ]
   }
-}
-
-# Output the container's IP and ID
-output "jellyfin_container_id" {
-  value       = proxmox_virtual_environment_container.jellyfin.vm_id
-  description = "Container ID (CTID)"
-}
-
-output "jellyfin_container_ip" {
-  value       = proxmox_virtual_environment_container.jellyfin.initialization[0].ip_config[0].ipv4[0].address
-  description = "IP address of the Jellyfin container (static)"
 }

@@ -62,10 +62,11 @@ resource "proxmox_virtual_environment_container" "ripper" {
     size         = 8 # 8GB for OS and MakeMKV binaries
   }
 
-  # Mount only staging directory from host (least privilege)
+  # Mount media directory from host (standardized path)
   mount_point {
-    volume = "/mnt/storage/media/staging"
-    path   = "/mnt/staging"
+    volume = "/mnt/storage/media"
+    path   = "/mnt/media"
+    # Provides access to staging (1-ripped, 2-remuxed, etc.) and library
     # Note: Device passthrough for optical drive must be configured via Ansible
     # Terraform BPG provider doesn't support LXC device passthrough configuration
   }
@@ -85,15 +86,4 @@ resource "proxmox_virtual_environment_container" "ripper" {
       initialization[0].user_account,
     ]
   }
-}
-
-# Output the container's IP and ID
-output "ripper_container_id" {
-  value       = proxmox_virtual_environment_container.ripper.vm_id
-  description = "Container ID (CTID)"
-}
-
-output "ripper_container_ip" {
-  value       = proxmox_virtual_environment_container.ripper.initialization[0].ip_config[0].ipv4[0].address
-  description = "IP address of the ripper container (static)"
 }
