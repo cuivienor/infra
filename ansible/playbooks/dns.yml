@@ -82,8 +82,59 @@
       - domain: "analyzer.home.arpa"
         answer: "192.168.1.133"
 
-    # Disable ad blocking for now - be intentional about enabling later
-    adguard_home_filters: []
+    # ===========================================
+    # AD BLOCKING CONFIGURATION
+    # ===========================================
+    # Using HaGeZi DNS Blocklists - the gold standard (16k+ GitHub stars)
+    # Single consolidated list that includes 100+ source lists
+    # More efficient than multiple overlapping lists
+    # https://github.com/hagezi/dns-blocklists
+    adguard_home_filters:
+      # HaGeZi Pro - Extended protection (354k domains)
+      # Includes: ads, trackers, telemetry, malware, phishing
+      # Consolidates: AdGuard, AdAway, EasyList, EasyPrivacy, and 100+ more
+      - enabled: true
+        url: "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt"
+        name: "HaGeZi Pro DNS Blocklist"
+        id: 1
+      # HaGeZi Threat Intelligence Feeds - additional malware/phishing protection
+      - enabled: true
+        url: "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/tif.txt"
+        name: "HaGeZi Threat Intelligence Feeds"
+        id: 2
+
+    # Whitelist for false positives (add as needed)
+    # HaGeZi Pro is well-maintained so you may not need these
+    adguard_home_user_rules:
+      - "@@||s.shopify.com^"        # Shopify CDN (if blocked)
+      - "@@||cdn.optimizely.com^"   # EA/Origin (if blocked)
+      - "@@||split.io^"             # EA Desktop (if blocked)
+
+    # ===========================================
+    # PER-CLIENT FILTERING (EXEMPTIONS)
+    # ===========================================
+    # Devices that bypass ad blocking when on local network
+    # Configure UniFi DHCP reservations to match these IPs
+    adguard_home_persistent_clients:
+      - name: "Ani's Phone"
+        ids:
+          - "192.168.1.32"
+        filtering_enabled: false
+        safebrowsing_enabled: false
+        parental_enabled: false
+        tags: []
+      - name: "Ani's Work Laptop"
+        ids:
+          - "192.168.1.86"
+        filtering_enabled: false
+        safebrowsing_enabled: false
+        parental_enabled: false
+        tags: []
+      # Add more devices as needed:
+      # - name: "Ani's iPad"
+      #   ids:
+      #     - "192.168.1.xx"
+      #   filtering_enabled: false
 
   pre_tasks:
     - name: Display target information
