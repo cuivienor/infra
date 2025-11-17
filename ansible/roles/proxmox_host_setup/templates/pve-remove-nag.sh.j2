@@ -1,0 +1,41 @@
+#!/bin/bash
+# Remove Proxmox VE subscription nag
+# This script patches the web UI to remove the "No valid subscription" popup
+# Re-run after proxmox-widget-toolkit updates
+
+set -euo pipefail
+
+PROXMOX_LIB="/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js"
+
+# Check if file exists
+if [[ ! -f "$PROXMOX_LIB" ]]; then
+    echo "Error: $PROXMOX_LIB not found"
+    exit 1
+fi
+
+# Check if already patched
+if grep -q "void({ //Ext.Msg.show" "$PROXMOX_LIB"; then
+    echo "Already patched, skipping"
+    exit 0
+fi
+
+# Create backup
+cp "$PROXMOX_LIB" "${PROXMOX_LIB}.bak.$(date +%Y%m%d)"
+
+# Patch the file - replace subscription check popup with void
+sed -i.tmp "s/Ext.Msg.show({/void({ \/\/Ext.Msg.show({/g" "$PROXMOX_LIB"
+
+# Verify patch applied
+if grep -q "void({ //Ext.Msg.show" "$PROXMOX_LIB"; then
+    echo "Successfully patched $PROXMOX_LIB"
+    rm -f "${PROXMOX_LIB}.tmp"
+else
+    echo "Error: Patch failed"
+    mv "${PROXMOX_LIB}.bak.$(date +%Y%m%d)" "$PROXMOX_LIB"
+    exit 1
+fi
+
+# Restart pveproxy to apply changes
+systemctl restart pveproxy.service
+
+echo "Subscription nag removed. Clear browser cache (Ctrl+Shift+R) to see changes."

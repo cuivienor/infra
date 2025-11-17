@@ -1,0 +1,96 @@
+---
+# Main tasks for proxmox_host_backup role
+
+- name: Create backup destination directory
+  ansible.builtin.file:
+    path: "{{ host_backup_destination }}"
+    state: directory
+    mode: '0750'
+    owner: root
+    group: root
+  become: true
+
+- name: Create backup log file
+  ansible.builtin.file:
+    path: "{{ host_backup_log }}"
+    state: touch
+    mode: '0644'
+    modification_time: preserve
+    access_time: preserve
+  become: true
+
+- name: Deploy host backup script
+  ansible.builtin.template:
+    src: backup-host-config.sh.j2
+    dest: /usr/local/bin/backup-host-config.sh
+    mode: '0755'
+  become: true
+
+- name: Create systemd service for host backup
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/host-backup.service
+    content: |
+      [Unit]
+      Description=Backup Proxmox host configuration
+      After=mnt-storage.mount
+      RequiresMountsFor={{ host_backup_destination }}
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/backup-host-config.sh
+      StandardOutput=journal
+      StandardError=journal
+    mode: '0644'
+  become: true
+  notify: Reload systemd
+
+- name: Create systemd timer for host backup
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/host-backup.timer
+    content: |
+      [Unit]
+      Description=Weekly Proxmox host config backup
+
+      [Timer]
+      OnCalendar={{ host_backup_schedule }}
+      Persistent=true
+      RandomizedDelaySec=300
+
+      [Install]
+      WantedBy=timers.target
+    mode: '0644'
+  become: true
+  notify: Reload systemd
+
+- name: Flush handlers to reload systemd
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable host backup timer
+  ansible.builtin.systemd:
+    name: host-backup.timer
+    enabled: true
+    state: started
+  become: true
+  when: pve_host_backup_enabled | default(true)
+
+- name: Display host backup configuration
+  ansible.builtin.debug:
+    msg: |
+      Host backup configured:
+
+      Destination: {{ host_backup_destination }}
+      Schedule: {{ host_backup_schedule }}
+      Retention: {{ host_backup_retention_days }} days (local)
+      Log: {{ host_backup_log }}
+
+      Paths backed up:
+      {% for path in host_backup_paths %}
+        - {{ path }}
+      {% endfor %}
+
+      Manual trigger: sudo systemctl start host-backup.service
+      View logs: journalctl -u host-backup
+      List backups: ls -lh {{ host_backup_destination }}/
+
+      NOTE: These backups will be picked up by your existing restic backup
+      since they're stored on /mnt/storage and sent to Backblaze B2.

@@ -1,0 +1,29 @@
+---
+# Default variables for proxmox_host_backup role
+
+# Enable/disable host backup
+pve_host_backup_enabled: true
+
+# These should be defined in group_vars/proxmox_host.yml:
+# host_backup_destination: "/mnt/storage/backups/proxmox-host"
+# host_backup_retention_days: 30
+# host_backup_schedule: "Sun 02:00"
+# host_backup_log: "/var/log/host-backup.log"
+
+# Paths to backup
+host_backup_paths:
+  - "/etc/pve"                    # Proxmox config (VMs, containers, cluster)
+  - "/etc/network/interfaces"     # Network config
+  - "/etc/hosts"                  # Host resolution
+  - "/etc/hostname"               # Hostname
+  - "/etc/resolv.conf"            # DNS config
+  - "/etc/fstab"                  # Mount points
+  - "/etc/modprobe.d"             # Kernel modules
+  - "/etc/systemd/system"         # Custom systemd services
+  - "/root/.ssh"                  # SSH keys
+  - "/usr/local/bin"              # Custom scripts
+  - "/etc/apt/sources.list.d"     # APT repositories
+  - "/etc/apt/apt.conf.d"         # APT configuration
+  - "/etc/cron.d"                 # Cron jobs
+  - "/etc/cron.daily"             # Daily cron
+  - "/etc/cron.weekly"            # Weekly cron

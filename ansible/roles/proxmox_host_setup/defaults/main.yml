@@ -1,0 +1,18 @@
+---
+# Default variables for proxmox_host_setup role
+
+# Repository configuration
+pve_configure_repositories: true
+pve_no_subscription_repo: true
+
+# Subscription nag removal
+pve_remove_subscription_nag: true
+
+# Kernel cleanup
+pve_cleanup_kernels: true
+pve_kernels_to_keep: 2  # Current + 1 previous
+
+# FSTRIM automation
+pve_fstrim_enabled: true
+pve_fstrim_schedule: "Sat 23:00"
+pve_fstrim_log: "/var/log/fstrim.log"

@@ -1,0 +1,22 @@
+---
+# Main tasks for proxmox_host_setup role
+
+- name: Configure Proxmox repositories
+  ansible.builtin.import_tasks: repositories.yml
+  when: pve_configure_repositories | default(true)
+  tags: ['pve-setup', 'repositories']
+
+- name: Remove subscription nag
+  ansible.builtin.import_tasks: remove-nag.yml
+  when: pve_remove_subscription_nag | default(true)
+  tags: ['pve-setup', 'remove-nag']
+
+- name: Cleanup old kernels
+  ansible.builtin.import_tasks: kernel-cleanup.yml
+  when: pve_cleanup_kernels | default(true)
+  tags: ['pve-setup', 'kernel-cleanup']
+
+- name: Configure FSTRIM automation
+  ansible.builtin.import_tasks: fstrim.yml
+  when: pve_fstrim_enabled | default(true)
+  tags: ['pve-setup', 'fstrim']

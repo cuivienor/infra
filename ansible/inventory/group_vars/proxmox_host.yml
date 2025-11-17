@@ -23,3 +23,57 @@ configure_hosts_file: false
 
 # No media user creation needed (already exists on Proxmox)
 media_user_enabled: false
+
+# =============================================================================
+# Container Update Configuration
+# =============================================================================
+
+# Active-use detection: Processes that indicate container is busy
+container_busy_processes:
+  - pattern: "ffmpeg|HandBrakeCLI|av1an"
+    description: "video transcoding"
+  - pattern: "makemkvcon"
+    description: "disc ripping"
+  - pattern: "filebot"
+    description: "media organization"
+
+# Lock file for manual override (touch this to prevent all updates)
+container_update_lock_file: "/var/run/no-container-updates.lock"
+
+# Container update settings
+container_update_config:
+  # Containers to always exclude from updates (by CTID)
+  exclude_ctids: []
+
+  # Auto-start stopped containers for updates, then stop again
+  auto_start_for_update: false
+
+  # Log file location
+  log_file: "/var/log/container-updates.log"
+
+  # Update schedule (systemd timer format)
+  schedule: "Sun 03:00"
+
+# Container cleanup settings
+container_cleanup_config:
+  # Log file location
+  log_file: "/var/log/container-cleanup.log"
+
+  # Cleanup schedule (systemd timer format)
+  schedule: "monthly"
+
+# =============================================================================
+# Host Backup Configuration
+# =============================================================================
+
+# Where to store host config backups (on mergerfs pool for restic pickup)
+host_backup_destination: "/mnt/storage/backups/proxmox-host"
+
+# How long to keep local archives (restic handles long-term retention)
+host_backup_retention_days: 30
+
+# Backup schedule (systemd timer format)
+host_backup_schedule: "Sun 02:00"
+
+# Log file
+host_backup_log: "/var/log/host-backup.log"

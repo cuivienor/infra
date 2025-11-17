@@ -1,0 +1,16 @@
+---
+# Main tasks for proxmox_container_updates role
+
+- name: Deploy container update automation
+  ansible.builtin.import_tasks: update-script.yml
+  when: pve_container_updates_enabled | default(true)
+  tags: ['container-updates', 'update-script']
+
+- name: Deploy container cleanup automation
+  ansible.builtin.import_tasks: cleanup-script.yml
+  when: pve_container_cleanup_enabled | default(true)
+  tags: ['container-updates', 'cleanup-script']
+
+- name: Configure systemd timers
+  ansible.builtin.import_tasks: systemd.yml
+  tags: ['container-updates', 'systemd']

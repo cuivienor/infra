@@ -1,0 +1,32 @@
+---
+# Proxmox Host Configuration Playbook
+# Applies QoL improvements to Proxmox VE host
+#
+# Usage:
+#   ansible-playbook playbooks/proxmox-host.yml
+#   ansible-playbook playbooks/proxmox-host.yml --tags repositories
+#   ansible-playbook playbooks/proxmox-host.yml --check --diff
+#
+# Tags:
+#   - pve-setup: All host setup tasks
+#   - repositories: Repository configuration only
+#   - remove-nag: Subscription nag removal only
+#   - kernel-cleanup: Old kernel removal only
+#   - fstrim: FSTRIM automation only
+#   - container-updates: Container update automation only
+#   - host-backup: Host config backup only
+
+- name: Configure Proxmox VE host
+  hosts: proxmox_host
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: proxmox_host_setup
+      tags: ['pve-setup']
+
+    - role: proxmox_container_updates
+      tags: ['container-updates']
+
+    - role: proxmox_host_backup
+      tags: ['host-backup']

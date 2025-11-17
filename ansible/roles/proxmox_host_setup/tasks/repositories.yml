@@ -1,0 +1,66 @@
+---
+# Configure Proxmox VE repositories for no-subscription access
+
+- name: Get Proxmox VE version
+  ansible.builtin.command: pveversion --verbose
+  register: pve_version_output
+  changed_when: false
+  become: true
+  check_mode: false
+
+- name: Display Proxmox version
+  ansible.builtin.debug:
+    msg: "{{ pve_version_output.stdout_lines[0] }}"
+  when: pve_version_output.stdout_lines is defined and pve_version_output.stdout_lines | length > 0
+
+- name: Create backup of apt sources
+  ansible.builtin.copy:
+    src: /etc/apt/sources.list.d/
+    dest: "/root/apt-sources-backup-{{ ansible_facts['date_time']['date'] }}/"
+    remote_src: true
+    mode: preserve
+  become: true
+
+- name: Check if pve-enterprise.list exists
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list.d/pve-enterprise.list
+  register: pve_enterprise_file
+
+- name: Disable pve-enterprise repository (comment out)
+  ansible.builtin.replace:
+    path: /etc/apt/sources.list.d/pve-enterprise.list
+    regexp: '^(deb.*pve-enterprise.*)'
+    replace: '# \1'
+  when: pve_enterprise_file.stat.exists
+  become: true
+
+- name: Check if ceph enterprise repo exists
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list.d/ceph.list
+  register: ceph_enterprise_file
+
+- name: Disable ceph enterprise repository (comment out)
+  ansible.builtin.replace:
+    path: /etc/apt/sources.list.d/ceph.list
+    regexp: '^(deb.*enterprise.*ceph.*)'
+    replace: '# \1'
+  when: ceph_enterprise_file.stat.exists
+  become: true
+
+- name: Add Proxmox VE no-subscription repository
+  ansible.builtin.apt_repository:
+    repo: "deb http://download.proxmox.com/debian/pve {{ ansible_facts['distribution_release'] }} pve-no-subscription"
+    filename: pve-no-subscription
+    state: present
+  become: true
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  become: true
+  register: apt_update_result
+
+- name: Display apt update status
+  ansible.builtin.debug:
+    msg: "APT cache updated successfully"
+  when: apt_update_result is success

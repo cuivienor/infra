@@ -1,0 +1,73 @@
+---
+# Configure automated FSTRIM for SSD maintenance
+
+- name: Deploy fstrim script
+  ansible.builtin.template:
+    src: fstrim-all.sh.j2
+    dest: /usr/local/bin/fstrim-all.sh
+    mode: '0755'
+  become: true
+
+- name: Create fstrim log file
+  ansible.builtin.file:
+    path: "{{ pve_fstrim_log }}"
+    state: touch
+    mode: '0644'
+    modification_time: preserve
+    access_time: preserve
+  become: true
+
+- name: Create systemd service for fstrim
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/fstrim-all.service
+    content: |
+      [Unit]
+      Description=Trim all filesystems (host + containers)
+      Documentation=man:fstrim(8)
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/fstrim-all.sh
+      StandardOutput=journal
+      StandardError=journal
+      Nice=19
+      IOSchedulingClass=idle
+    mode: '0644'
+  become: true
+  notify: Reload systemd
+
+- name: Create systemd timer for weekly fstrim
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/fstrim-all.timer
+    content: |
+      [Unit]
+      Description=Weekly FSTRIM for all filesystems
+
+      [Timer]
+      OnCalendar={{ pve_fstrim_schedule }}
+      Persistent=true
+      RandomizedDelaySec=300
+
+      [Install]
+      WantedBy=timers.target
+    mode: '0644'
+  become: true
+  notify: Reload systemd
+
+- name: Flush handlers to reload systemd
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable fstrim timer
+  ansible.builtin.systemd:
+    name: fstrim-all.timer
+    enabled: true
+    state: started
+  become: true
+
+- name: Display fstrim configuration
+  ansible.builtin.debug:
+    msg: >
+      FSTRIM automation configured.
+      Schedule: {{ pve_fstrim_schedule }}
+      Log: {{ pve_fstrim_log }}
+      Manual run: sudo systemctl start fstrim-all.service

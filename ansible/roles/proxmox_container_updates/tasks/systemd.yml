@@ -1,0 +1,112 @@
+---
+# Configure systemd timers for automated container updates and cleanup
+
+- name: Create systemd service for container updates
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/container-update.service
+    content: |
+      [Unit]
+      Description=Update all LXC containers
+      After=network.target pve-cluster.service
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/update-containers.sh
+      StandardOutput=journal
+      StandardError=journal
+      Nice=19
+      IOSchedulingClass=idle
+    mode: '0644'
+  become: true
+  notify: Reload systemd
+
+- name: Create systemd timer for container updates
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/container-update.timer
+    content: |
+      [Unit]
+      Description=Weekly container updates
+
+      [Timer]
+      OnCalendar={{ container_update_config.schedule }}
+      Persistent=true
+      RandomizedDelaySec=600
+
+      [Install]
+      WantedBy=timers.target
+    mode: '0644'
+  become: true
+  notify: Reload systemd
+
+- name: Create systemd service for container cleanup
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/container-cleanup.service
+    content: |
+      [Unit]
+      Description=Cleanup caches and logs in all LXC containers
+      After=network.target pve-cluster.service
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/cleanup-containers.sh
+      StandardOutput=journal
+      StandardError=journal
+      Nice=19
+      IOSchedulingClass=idle
+    mode: '0644'
+  become: true
+  notify: Reload systemd
+
+- name: Create systemd timer for container cleanup
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/container-cleanup.timer
+    content: |
+      [Unit]
+      Description=Monthly container cleanup
+
+      [Timer]
+      OnCalendar={{ container_cleanup_config.schedule }}
+      Persistent=true
+      RandomizedDelaySec=300
+
+      [Install]
+      WantedBy=timers.target
+    mode: '0644'
+  become: true
+  notify: Reload systemd
+
+- name: Flush handlers to reload systemd
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable container update timer
+  ansible.builtin.systemd:
+    name: container-update.timer
+    enabled: true
+    state: started
+  become: true
+  when: pve_container_updates_enabled | default(true)
+
+- name: Enable container cleanup timer
+  ansible.builtin.systemd:
+    name: container-cleanup.timer
+    enabled: true
+    state: started
+  become: true
+  when: pve_container_cleanup_enabled | default(true)
+
+- name: Display timer configuration
+  ansible.builtin.debug:
+    msg: |
+      Systemd timers configured:
+
+      Container Updates:
+        Schedule: {{ container_update_config.schedule }}
+        Check timer: systemctl list-timers container-update
+        Manual trigger: systemctl start container-update.service
+        View logs: journalctl -u container-update
+
+      Container Cleanup:
+        Schedule: {{ container_cleanup_config.schedule }}
+        Check timer: systemctl list-timers container-cleanup
+        Manual trigger: systemctl start container-cleanup.service
+        View logs: journalctl -u container-cleanup

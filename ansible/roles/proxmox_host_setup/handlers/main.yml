@@ -1,0 +1,17 @@
+---
+# Handlers for proxmox_host_setup role
+
+- name: Update grub
+  ansible.builtin.command: update-grub
+  become: true
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+
+- name: Restart pveproxy
+  ansible.builtin.service:
+    name: pveproxy
+    state: restarted
+  become: true

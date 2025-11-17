@@ -1,0 +1,108 @@
+#!/bin/bash
+# Cleanup caches and old logs in all LXC containers
+# Managed by Ansible - do not edit manually
+
+set -euo pipefail
+
+LOG_FILE="{{ container_cleanup_config.log_file }}"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+log() {
+    echo "[$TIMESTAMP] $1" | tee -a "$LOG_FILE"
+}
+
+# Get distro type for container
+get_container_distro() {
+    local ctid=$1
+    if pct exec "$ctid" -- test -f /etc/debian_version 2>/dev/null; then
+        echo "debian"
+    elif pct exec "$ctid" -- test -f /etc/alpine-release 2>/dev/null; then
+        echo "alpine"
+    elif pct exec "$ctid" -- test -f /etc/arch-release 2>/dev/null; then
+        echo "arch"
+    else
+        echo "unknown"
+    fi
+}
+
+# Get disk usage in MB
+get_disk_usage() {
+    local ctid=$1
+    pct exec "$ctid" -- df -m / 2>/dev/null | awk 'NR==2 {print $3}'
+}
+
+# Cleanup a single container
+cleanup_container() {
+    local ctid=$1
+    local distro
+
+    distro=$(get_container_distro "$ctid")
+    log "Cleaning CT$ctid ($distro)..."
+
+    # Get usage before
+    local before
+    before=$(get_disk_usage "$ctid")
+
+    # Common cleanup for all distros
+    pct exec "$ctid" -- bash -c "
+        # Clear old logs (keep structure)
+        find /var/log -type f -name '*.gz' -delete 2>/dev/null || true
+        find /var/log -type f -name '*.old' -delete 2>/dev/null || true
+        find /var/log -type f -name '*.1' -delete 2>/dev/null || true
+
+        # Clear temp files
+        rm -rf /tmp/* 2>/dev/null || true
+        rm -rf /var/tmp/* 2>/dev/null || true
+    " 2>&1 | tee -a "$LOG_FILE"
+
+    # Distro-specific cleanup
+    case "$distro" in
+        debian)
+            pct exec "$ctid" -- bash -c "
+                apt-get clean 2>/dev/null || true
+                apt-get autoclean 2>/dev/null || true
+                rm -rf /var/cache/apt/archives/*.deb 2>/dev/null || true
+            " 2>&1 | tee -a "$LOG_FILE"
+            ;;
+        alpine)
+            pct exec "$ctid" -- ash -c "
+                rm -rf /var/cache/apk/* 2>/dev/null || true
+            " 2>&1 | tee -a "$LOG_FILE"
+            ;;
+        arch)
+            pct exec "$ctid" -- bash -c "
+                pacman -Sc --noconfirm 2>/dev/null || true
+            " 2>&1 | tee -a "$LOG_FILE"
+            ;;
+    esac
+
+    # Get usage after
+    local after
+    after=$(get_disk_usage "$ctid")
+
+    # Calculate freed space
+    local freed=$((before - after))
+    log "CT$ctid: Freed ${freed}MB (${before}MB -> ${after}MB)"
+}
+
+log "========================================="
+log "Container Cleanup Run Started"
+log "========================================="
+
+# Get list of running containers
+CONTAINERS=$(pct list 2>/dev/null | awk 'NR>1 && $2=="running" {print $1}' | sort -n)
+
+if [[ -z "$CONTAINERS" ]]; then
+    log "No running containers found"
+    exit 0
+fi
+
+TOTAL_FREED=0
+
+for ctid in $CONTAINERS; do
+    cleanup_container "$ctid"
+done
+
+log "========================================="
+log "Container Cleanup Run Completed"
+log "========================================="

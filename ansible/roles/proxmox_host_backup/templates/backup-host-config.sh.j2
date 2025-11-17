@@ -1,0 +1,117 @@
+#!/bin/bash
+# Backup Proxmox host configuration
+# Managed by Ansible - do not edit manually
+
+set -euo pipefail
+
+BACKUP_DIR="{{ host_backup_destination }}"
+LOG_FILE="{{ host_backup_log }}"
+TIMESTAMP=$(date '+%Y-%m-%d-%H%M%S')
+BACKUP_NAME="proxmox-host-config-${TIMESTAMP}.tar.gz"
+RETENTION_DAYS={{ host_backup_retention_days }}
+
+log() {
+    local msg="[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+    echo "$msg" | tee -a "$LOG_FILE"
+}
+
+log_error() {
+    local msg="[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $1"
+    echo "$msg" | tee -a "$LOG_FILE" >&2
+}
+
+# Paths to backup
+BACKUP_PATHS=(
+{% for path in host_backup_paths %}
+    "{{ path }}"
+{% endfor %}
+)
+
+log "========================================="
+log "Proxmox Host Config Backup"
+log "========================================="
+log "Timestamp: $TIMESTAMP"
+log "Destination: $BACKUP_DIR/$BACKUP_NAME"
+
+# Ensure backup directory exists
+if [[ ! -d "$BACKUP_DIR" ]]; then
+    log_error "Backup directory does not exist: $BACKUP_DIR"
+    log "Make sure /mnt/storage is mounted"
+    exit 1
+fi
+
+# Check available space (need at least 100MB)
+AVAILABLE_MB=$(df -m "$BACKUP_DIR" | awk 'NR==2 {print $4}')
+if [[ "$AVAILABLE_MB" -lt 100 ]]; then
+    log_error "Insufficient space in $BACKUP_DIR (${AVAILABLE_MB}MB available)"
+    exit 1
+fi
+
+log "Available space: ${AVAILABLE_MB}MB"
+
+# Create archive
+log "Creating archive..."
+log "Paths to backup:"
+for path in "${BACKUP_PATHS[@]}"; do
+    if [[ -e "$path" ]]; then
+        log "  + $path"
+    else
+        log "  - $path (not found, skipping)"
+    fi
+done
+
+# Use tar with options to handle missing files gracefully
+if tar -czf "$BACKUP_DIR/$BACKUP_NAME" \
+    --ignore-failed-read \
+    --warning=no-file-changed \
+    --warning=no-file-removed \
+    "${BACKUP_PATHS[@]}" 2>&1 | tee -a "$LOG_FILE"; then
+    log "Archive created successfully"
+else
+    # tar returns non-zero on warnings too, check if file was created
+    if [[ -f "$BACKUP_DIR/$BACKUP_NAME" ]]; then
+        log "Archive created with warnings (some files may have been skipped)"
+    else
+        log_error "Archive creation failed"
+        exit 1
+    fi
+fi
+
+# Verify archive integrity
+log "Verifying archive integrity..."
+if tar -tzf "$BACKUP_DIR/$BACKUP_NAME" > /dev/null 2>&1; then
+    ARCHIVE_SIZE=$(du -h "$BACKUP_DIR/$BACKUP_NAME" | cut -f1)
+    FILE_COUNT=$(tar -tzf "$BACKUP_DIR/$BACKUP_NAME" | wc -l)
+    log "Archive verified: $ARCHIVE_SIZE, $FILE_COUNT files"
+else
+    log_error "Archive verification failed"
+    rm -f "$BACKUP_DIR/$BACKUP_NAME"
+    exit 1
+fi
+
+# Cleanup old backups
+log "Cleaning up backups older than $RETENTION_DAYS days..."
+OLD_COUNT=$(find "$BACKUP_DIR" -name "proxmox-host-config-*.tar.gz" -mtime +$RETENTION_DAYS | wc -l)
+if [[ "$OLD_COUNT" -gt 0 ]]; then
+    find "$BACKUP_DIR" -name "proxmox-host-config-*.tar.gz" -mtime +$RETENTION_DAYS -delete
+    log "Removed $OLD_COUNT old backup(s)"
+else
+    log "No old backups to remove"
+fi
+
+# Show current backups
+log "Current backups in $BACKUP_DIR:"
+ls -lh "$BACKUP_DIR"/proxmox-host-config-*.tar.gz 2>/dev/null | tail -10 | while read line; do
+    log "  $line"
+done
+
+TOTAL_BACKUPS=$(ls -1 "$BACKUP_DIR"/proxmox-host-config-*.tar.gz 2>/dev/null | wc -l)
+TOTAL_SIZE=$(du -sh "$BACKUP_DIR" 2>/dev/null | cut -f1)
+log "Total: $TOTAL_BACKUPS backup(s), $TOTAL_SIZE"
+
+log "========================================="
+log "Backup Complete"
+log "========================================="
+log ""
+log "NOTE: This backup will be picked up by your restic backup"
+log "to Backblaze B2 on the next scheduled run."
