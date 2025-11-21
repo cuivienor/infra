@@ -1,0 +1,35 @@
+---
+# Deploy container reboot automation
+
+- name: Deploy container reboot script
+  ansible.builtin.template:
+    src: restart-containers.sh.j2
+    dest: /usr/local/bin/restart-containers.sh
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+  tags: ['container-updates', 'restart']
+
+- name: Create log directory for reboot operations
+  ansible.builtin.file:
+    path: "{{ container_restart_config.log_file | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+  tags: ['container-updates', 'restart']
+
+- name: Display restart script information
+  ansible.builtin.debug:
+    msg: |
+      Container reboot script deployed:
+        Script: /usr/local/bin/restart-containers.sh
+        Log: {{ container_restart_config.log_file }}
+        Containers: {{ container_restart_config.container_ids | join(', ') }}
+        Reboot delay: {{ container_restart_config.reboot_delay | default(10) }}s
+
+      Manual trigger: sudo /usr/local/bin/restart-containers.sh
+      View logs: tail -f {{ container_restart_config.log_file }}
+  tags: ['container-updates', 'restart']

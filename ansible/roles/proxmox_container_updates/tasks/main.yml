@@ -11,6 +11,11 @@
   when: pve_container_cleanup_enabled | default(true)
   tags: ['container-updates', 'cleanup-script']
 
+- name: Deploy container service restart automation
+  ansible.builtin.import_tasks: restart-script.yml
+  when: pve_container_restart_enabled | default(true)
+  tags: ['container-updates', 'restart-script']
+
 - name: Configure systemd timers
   ansible.builtin.import_tasks: systemd.yml
   tags: ['container-updates', 'systemd']

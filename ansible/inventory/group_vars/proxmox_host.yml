@@ -62,6 +62,26 @@ container_cleanup_config:
   # Cleanup schedule (systemd timer format)
   schedule: "monthly"
 
+# Container reboot settings
+container_restart_config:
+  # Log file location
+  log_file: "/var/log/container-restart.log"
+
+  # Reboot schedule (systemd timer format)
+  # Run 30 minutes after container updates complete
+  schedule: "Sun 03:30"
+
+  # Container IDs to reboot (in order: non-critical first, critical last)
+  container_ids:
+    - 300  # backup (non-critical)
+    - 301  # samba (file server)
+    - 310  # dns (backup DNS)
+    - 311  # proxy (reverse proxy)
+    - 305  # jellyfin (media server)
+
+  # Delay between reboots (seconds)
+  reboot_delay: 10
+
 # =============================================================================
 # Host Backup Configuration
 # =============================================================================
