@@ -22,22 +22,20 @@
     - name: Gather facts
       ansible.builtin.setup:
 
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: true
-        cache_valid_time: 3600
-
-    - name: Install required packages
+    - name: Install backup-specific packages
       ansible.builtin.apt:
         name:
-          - curl
-          - wget
-          - ca-certificates
           - bzip2
           - jq
         state: present
 
   roles:
+    - role: common
+      vars:
+        media_user_enabled: false      # Backup runs as root
+        homelab_shell_enabled: true    # Enable zsh and tools for troubleshooting
+      tags: ['common', 'base']
+
     - role: restic_backup
       tags: ['backup', 'restic']
 

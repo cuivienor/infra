@@ -21,6 +21,12 @@
       tags: always
 
   roles:
+    - role: common
+      vars:
+        media_user_enabled: true       # Samba needs media user for file sharing
+        homelab_shell_enabled: true    # Enable zsh and tools for troubleshooting
+      tags: ['common', 'base']
+
     - role: samba
       tags: [samba]
 
