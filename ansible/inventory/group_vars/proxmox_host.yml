@@ -68,8 +68,9 @@ container_restart_config:
   log_file: "/var/log/container-restart.log"
 
   # Reboot schedule (systemd timer format)
-  # Run 30 minutes after container updates complete
-  schedule: "Sun 03:30"
+  # Monthly on first Sunday at 3:30 AM (after weekly updates settle)
+  # needrestart handles weekly service restarts; this provides monthly full refresh
+  schedule: "Sun *-*-01..07 03:30"
 
   # Container IDs to reboot (in order: non-critical first, critical last)
   container_ids:
