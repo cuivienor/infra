@@ -4,9 +4,11 @@
 # Enable/disable features
 pve_container_updates_enabled: true
 pve_container_cleanup_enabled: true
+pve_container_restart_enabled: true
 
 # These should be defined in group_vars/proxmox_host.yml
 # container_busy_processes: []
 # container_update_lock_file: "/var/run/no-container-updates.lock"
 # container_update_config: {}
 # container_cleanup_config: {}
+# container_restart_config: {}

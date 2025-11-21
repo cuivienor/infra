@@ -75,6 +75,41 @@
   become: true
   notify: Reload systemd
 
+- name: Create systemd service for container reboots
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/container-restart.service
+    content: |
+      [Unit]
+      Description=Reboot LXC containers
+      After=network.target pve-cluster.service
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/restart-containers.sh
+      StandardOutput=journal
+      StandardError=journal
+    mode: '0644'
+  become: true
+  notify: Reload systemd
+
+- name: Create systemd timer for container reboots
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/container-restart.timer
+    content: |
+      [Unit]
+      Description=Weekly container reboots
+
+      [Timer]
+      OnCalendar={{ container_restart_config.schedule }}
+      Persistent=true
+      RandomizedDelaySec=300
+
+      [Install]
+      WantedBy=timers.target
+    mode: '0644'
+  become: true
+  notify: Reload systemd
+
 - name: Flush handlers to reload systemd
   ansible.builtin.meta: flush_handlers
 
@@ -94,6 +129,14 @@
   become: true
   when: pve_container_cleanup_enabled | default(true)
 
+- name: Enable container restart timer
+  ansible.builtin.systemd:
+    name: container-restart.timer
+    enabled: true
+    state: started
+  become: true
+  when: pve_container_restart_enabled | default(true)
+
 - name: Display timer configuration
   ansible.builtin.debug:
     msg: |
@@ -104,6 +147,13 @@
         Check timer: systemctl list-timers container-update
         Manual trigger: systemctl start container-update.service
         View logs: journalctl -u container-update
+
+      Container Reboots:
+        Schedule: {{ container_restart_config.schedule }}
+        Containers: {{ container_restart_config.container_ids | join(', ') }}
+        Check timer: systemctl list-timers container-restart
+        Manual trigger: systemctl start container-restart.service
+        View logs: journalctl -u container-restart
 
       Container Cleanup:
         Schedule: {{ container_cleanup_config.schedule }}

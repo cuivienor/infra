@@ -1,0 +1,59 @@
+#!/bin/bash
+# Reboot LXC containers on a weekly schedule
+# Managed by Ansible - do not edit manually
+
+set -euo pipefail
+
+LOG_FILE="{{ container_restart_config.log_file }}"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+log() {
+    echo "[$TIMESTAMP] $1" | tee -a "$LOG_FILE"
+}
+
+log_error() {
+    echo "[$TIMESTAMP] ERROR: $1" | tee -a "$LOG_FILE" >&2
+}
+
+log "========================================="
+log "Container Reboot Run Started"
+log "========================================="
+
+# Containers to reboot (in order)
+CONTAINERS=({{ container_restart_config.container_ids | join(' ') }})
+
+REBOOTED=0
+FAILED=0
+
+for ctid in "${CONTAINERS[@]}"; do
+    log "-----------------------------------------"
+    log "Rebooting CT$ctid..."
+
+    # Check if container is running
+    status=$(pct status "$ctid" 2>/dev/null | awk '{print $2}')
+    if [[ "$status" != "running" ]]; then
+        log "SKIP CT$ctid: Not running"
+        continue
+    fi
+
+    # Reboot the container
+    if pct reboot "$ctid" 2>&1 | tee -a "$LOG_FILE"; then
+        log "SUCCESS: CT$ctid rebooted"
+        REBOOTED=$((REBOOTED + 1))
+        # Wait between reboots for stability
+        sleep {{ container_restart_config.reboot_delay | default(10) }}
+    else
+        log_error "FAILED: CT$ctid reboot failed"
+        FAILED=$((FAILED + 1))
+    fi
+done
+
+log "========================================="
+log "Container Reboot Run Completed"
+log "Rebooted: $REBOOTED | Failed: $FAILED"
+log "========================================="
+
+# Exit with error if any failures
+if [[ $FAILED -gt 0 ]]; then
+    exit 1
+fi
