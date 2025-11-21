@@ -22,5 +22,11 @@ LimitNPROC=512
 # ProtectSystem=full
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 
+# Automatic restart on failure
+Restart=on-failure
+RestartSec=10s
+StartLimitBurst=5
+StartLimitIntervalSec=300s
+
 [Install]
 WantedBy=multi-user.target

@@ -74,6 +74,37 @@
   changed_when: false
   tags: [samba, users]
 
+- name: Create systemd override directory for Samba services
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ item }}.service.d"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - smbd
+    - nmbd
+  tags: [samba, service]
+
+- name: Configure Samba service restart policy
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ item }}.service.d/override.conf"
+    content: |
+      # Managed by Ansible - automatic restart on failure
+      [Service]
+      Restart=on-failure
+      RestartSec=10s
+      StartLimitBurst=5
+      StartLimitIntervalSec=300s
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - smbd
+    - nmbd
+  notify: Reload systemd and restart samba
+  tags: [samba, service]
+
 - name: Ensure Samba services are enabled and started
   ansible.builtin.systemd:
     name: "{{ item }}"

@@ -1,6 +1,20 @@
 ---
 # Samba service handlers
 
+- name: Reload systemd and restart samba
+  ansible.builtin.systemd:
+    daemon_reload: true
+  listen: Reload systemd and restart samba
+
+- name: Restart samba services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - smbd
+    - nmbd
+  listen: Reload systemd and restart samba
+
 - name: Restart samba
   ansible.builtin.systemd:
     name: "{{ item }}"
