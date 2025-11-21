@@ -1,0 +1,53 @@
+---
+# Configure needrestart for automatic service restarts after updates
+
+- name: Install needrestart
+  ansible.builtin.apt:
+    name: needrestart
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  tags: ['needrestart', 'packages']
+
+- name: Check if needrestart.conf exists
+  ansible.builtin.stat:
+    path: /etc/needrestart/needrestart.conf
+  register: needrestart_conf
+
+- name: Configure needrestart for automatic service restarts
+  ansible.builtin.lineinfile:
+    path: /etc/needrestart/needrestart.conf
+    regexp: '^\$nrconf\{restart\}'
+    line: "$nrconf{restart} = 'a';"
+    create: false
+  when: needrestart_conf.stat.exists
+  tags: ['needrestart', 'config']
+
+- name: Configure needrestart kernel check mode
+  ansible.builtin.lineinfile:
+    path: /etc/needrestart/needrestart.conf
+    regexp: '^\$nrconf\{kernelhints\}'
+    line: "$nrconf{kernelhints} = -1;"
+    create: false
+  when:
+    - needrestart_conf.stat.exists
+    - needrestart_kernel_check_mode is defined
+  tags: ['needrestart', 'config']
+
+- name: Display needrestart configuration
+  ansible.builtin.debug:
+    msg: |
+      needrestart configured:
+        Automatic restart: enabled (services restart after updates)
+        Mode: automatic ('a' - restart without prompting)
+        Kernel check: {{ 'disabled' if needrestart_kernel_check_mode is defined else 'enabled' }}
+
+      How it works:
+        - Runs automatically during 'apt upgrade'
+        - Detects which services need restart
+        - Restarts affected services immediately
+        - Works with systemd Restart=on-failure
+
+      Manual check: sudo needrestart
+      View pending restarts: sudo needrestart -l
+  tags: ['needrestart']

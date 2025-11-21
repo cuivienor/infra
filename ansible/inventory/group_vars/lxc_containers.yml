@@ -1,0 +1,6 @@
+---
+# Variables specific to LXC containers
+
+# needrestart configuration for containers
+# Containers share host kernel, so disable kernel restart hints
+needrestart_kernel_check_mode: -1

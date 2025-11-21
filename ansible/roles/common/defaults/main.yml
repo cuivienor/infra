@@ -67,3 +67,7 @@ homelab_dotfiles_enabled: true
 homelab_dotfiles_local_path: "{{ lookup('env', 'HOME') }}/dotfiles/stow/homelab"  # Path to dotfiles on control machine
 homelab_dotfiles_users:
   - root  # Deploy to root by default
+
+# needrestart configuration
+needrestart_enabled: true  # Install and configure needrestart for automatic service restarts
+# needrestart_kernel_check_mode: -1  # Uncomment to disable kernel restart hints (containers don't control kernel)
