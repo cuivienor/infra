@@ -28,6 +28,11 @@
   tags: ['homelab-shell', 'shell', 'dotfiles']
   when: homelab_shell_enabled | bool
 
+- name: Import needrestart tasks
+  ansible.builtin.import_tasks: needrestart.yml
+  tags: ['needrestart', 'updates']
+  when: needrestart_enabled | bool
+
 # SSH hardening disabled for now - don't want to risk lockout
 # TODO: Enable once backup key strategy is in place
 # - name: Import SSHD hardening tasks

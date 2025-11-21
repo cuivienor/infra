@@ -150,6 +150,8 @@
           - Filter lists: {{ adguard_home_filters | default([]) | length }} lists
 
   roles:
+    - role: common
+      tags: ['common', 'base']
     - role: adguard_home
       tags: ['adguard', 'dns']
 
