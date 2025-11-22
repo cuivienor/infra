@@ -26,6 +26,7 @@ A collection of personal configuration files managed using GNU Stow.
 - **config** ⚙️ - Core environment configuration and XDG paths
 - **cspell** 📝 - Spell checking with custom dictionaries
 - **ghostty** 👻 - Terminal emulator configuration
+- **homelab** 🏠 - Minimal shell environment for homelab servers (see below)
 - **i3** 🪟 - Window manager with Catppuccin theme
 - **npm** 📦 - Node.js package manager settings
 - **nvim** 💻 - Neovim editor with plugins, LSP and tree-sitter
@@ -251,3 +252,50 @@ cd ~/dev/superhtml && git pull && zig build --release=fast
 ```
 
 The configuration is managed in `stow/nvim/.config/nvim/lua/plugins/zine.lua`.
+
+## 🏠 Homelab Shell Environment
+
+The `homelab` module provides a minimal but modern shell environment for server/container use.
+
+### What's Included
+
+**Tools installed:**
+- `zsh` - Better shell with completion and history
+- `bat` - Syntax-highlighted cat replacement
+- `eza` - Modern ls replacement (optional)
+- `ripgrep` (rg) - Fast grep alternative
+- `fd` - Fast find alternative
+- `fzf` - Fuzzy finder for history/files
+- `zoxide` - Smart cd (optional)
+- `starship` - Minimal, fast prompt
+
+**Configuration:**
+- Minimal `.zshrc` - Fast startup, no oh-my-zsh bloat
+- Smart history search with arrow keys
+- Modern CLI tool aliases (ls→eza, cat→bat, etc.)
+- Starship prompt showing: user@host, directory, git status
+- Automatic tool detection (graceful fallbacks if tools missing)
+
+### Deployment
+
+The homelab module is **not** installed via the normal `install-dotfiles.bash` script. Instead, it's deployed to servers via Ansible.
+
+**Ansible configuration** (in `homelab-notes` repo):
+- Role: `ansible/roles/common`
+- Enabled by default via `homelab_shell_enabled: true`
+- Deploys to `root` and `media` users automatically
+- Packages installed from Debian repos + starship from upstream
+
+**Manual deployment:**
+```bash
+# From homelab-notes repo
+ansible-playbook ansible/playbooks/base-setup.yml --tags homelab-shell
+```
+
+### Design Philosophy
+
+- **Fast:** No oh-my-zsh, minimal plugins, quick startup
+- **Portable:** Works on minimal Debian containers
+- **Graceful:** Checks for tools before aliasing
+- **Familiar:** Same aliases/prompt across all homelab hosts
+- **Maintenance-free:** Updates via Ansible, not manual SSH
