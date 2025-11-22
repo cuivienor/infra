@@ -231,3 +231,10 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 else
 	export PATH=/home/cuiv/.opencode/bin:$PATH
 fi
+
+# SSH Agent - keychain management (WSL2)
+# Automatically start ssh-agent and load keys
+# You'll be prompted for passphrase once per WSL session
+if command -v keychain &> /dev/null; then
+    eval $(keychain --eval --quiet id_ed25519)
+fi
