@@ -18,8 +18,7 @@
         "X11",
         "config",
         "cspell",
-        "claude",
-        "opencode"
+        "claude"
       ]
     },
     "macos": {
@@ -27,7 +26,7 @@
       "packages": [
         "zsh",
         "starship",
-        "tmux", 
+        "tmux",
         "scripts",
         "nvim",
         "ghostty",
@@ -37,19 +36,6 @@
         "npm",
         "config",
         "cspell",
-        "claude",
-        "opencode"
-      ]
-    },
-    "corporate": {
-      "description": "Corporate environment with minimal packages",
-      "packages": [
-        "zsh",
-        "starship",
-        "tmux",
-        "nvim",
-        "npm",
-        "config",
         "claude",
         "opencode"
       ]
@@ -66,11 +52,11 @@
   "package_info": {
     "zsh": {
       "description": "Z shell configuration and plugins",
-      "platforms": ["linux", "macos", "corporate", "minimal"]
+      "platforms": ["linux", "macos", "minimal"]
     },
     "starship": {
       "description": "Cross-shell prompt",
-      "platforms": ["linux", "macos", "corporate"]
+      "platforms": ["linux", "macos"]
     },
     "systemd": {
       "description": "Linux systemd user services",
@@ -78,7 +64,7 @@
     },
     "tmux": {
       "description": "Terminal multiplexer configuration",
-      "platforms": ["linux", "macos", "corporate", "minimal"]
+      "platforms": ["linux", "macos", "minimal"]
     },
     "rofi": {
       "description": "Application launcher and dmenu replacement",
@@ -98,7 +84,7 @@
     },
     "nvim": {
       "description": "Neovim configuration",
-      "platforms": ["linux", "macos", "corporate", "minimal"]
+      "platforms": ["linux", "macos", "minimal"]
     },
     "ghostty": {
       "description": "Ghostty terminal emulator configuration",
@@ -110,7 +96,7 @@
     },
     "npm": {
       "description": "Node.js package manager configuration",
-      "platforms": ["linux", "macos", "corporate"]
+      "platforms": ["linux", "macos"]
     },
     "X11": {
       "description": "X11 display server configuration",
@@ -118,7 +104,7 @@
     },
     "config": {
       "description": "General configuration files",
-      "platforms": ["linux", "macos", "corporate"]
+      "platforms": ["linux", "macos"]
     },
     "cspell": {
       "description": "Code spell checker configuration",
@@ -138,11 +124,15 @@
     },
     "claude": {
       "description": "Claude Code configuration and agents",
-      "platforms": ["linux", "macos", "corporate"]
+      "platforms": ["linux", "macos"]
     },
     "opencode": {
       "description": "OpenCode AI assistant configuration",
-      "platforms": ["linux", "macos", "corporate"]
+      "platforms": ["macos"]
+    },
+    "homelab": {
+      "description": "Minimal shell environment for homelab servers (deployed via Ansible)",
+      "platforms": []
     }
   }
 } 

@@ -67,21 +67,13 @@ get_packages_for_arch() {
 detect_architecture() {
     local os
     os=$(uname -s)
-    
+
     case "$os" in
         Linux*)
-            if [[ -n "${CORPORATE_ENV:-}" ]] || [[ -n "${WORK_ENV:-}" ]]; then
-                echo "corporate"
-            else
-                echo "linux"
-            fi
+            echo "linux"
             ;;
         Darwin*)
-            if [[ -n "${CORPORATE_ENV:-}" ]] || [[ -n "${WORK_ENV:-}" ]]; then
-                echo "corporate"
-            else
-                echo "macos"
-            fi
+            echo "macos"
             ;;
         *)
             echo "minimal"

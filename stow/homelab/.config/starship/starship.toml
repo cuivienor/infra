@@ -1,0 +1,78 @@
+# Homelab minimal starship prompt
+# Fast, essential info only
+
+# Timeout for starship commands (fast for servers)
+command_timeout = 500
+
+# Format: user@host in directory [git] $
+format = """
+[┌─](bold green)$username[@](bold green)$hostname[ in ](bold green)$directory$git_branch$git_status
+[└─](bold green)$character"""
+
+[username]
+show_always = true
+format = "[$user]($style)"
+style_user = "bold blue"
+style_root = "bold red"
+
+[hostname]
+ssh_only = false
+format = "[$hostname]($style)"
+style = "bold blue"
+
+[directory]
+truncation_length = 3
+truncate_to_repo = true
+format = "[$path]($style)"
+style = "bold yellow"
+
+[character]
+success_symbol = "[\\$](bold green)"
+error_symbol = "[\\$](bold red)"
+
+[git_branch]
+format = " on [$symbol$branch]($style)"
+symbol = " "
+style = "bold purple"
+
+[git_status]
+format = '([$all_status$ahead_behind]($style))'
+style = "bold red"
+conflicted = "="
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+untracked = "?${count}"
+stashed = "$"
+modified = "!${count}"
+staged = "+${count}"
+renamed = "»${count}"
+deleted = "✘${count}"
+
+# Disable modules we don't need on servers
+[aws]
+disabled = true
+
+[gcloud]
+disabled = true
+
+[docker_context]
+disabled = true
+
+[nodejs]
+disabled = true
+
+[python]
+disabled = true
+
+[ruby]
+disabled = true
+
+[rust]
+disabled = true
+
+[terraform]
+disabled = true
+
+[package]
+disabled = true
