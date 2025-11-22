@@ -1,0 +1,3 @@
+# Settings file for work environment only
+# Don't stow automatically - manually copy on work machines
+\.claude/settings\.work\.json
