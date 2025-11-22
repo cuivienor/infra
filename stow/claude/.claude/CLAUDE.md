@@ -42,9 +42,9 @@ When asked to do something, just do it - including obvious follow-up actions nee
 - ALWAYS announce when using a skill with: "I'm using the [Skill Name] skill to [purpose]"
 - This announcement MUST be the FIRST line of your response when applying a skill
 - Examples:
-  - "I'm using the Test-Driven Development skill to implement this feature"
-  - "I'm using the Systematic Debugging skill to find the root cause"
-  - "I'm using the Using Git Worktrees skill to set up an isolated workspace"
+  - "I'm using the test-driven-development skill to implement this feature"
+  - "I'm using the systematic-debugging skill to find the root cause"
+  - "I'm using the git-worktrees skill to set up an isolated workspace"
 - This helps Peter understand your process and verify you're following established patterns
 
 ## Designing software
@@ -56,7 +56,7 @@ When asked to do something, just do it - including obvious follow-up actions nee
 
 ## Test Driven Development  (TDD)
 
-- FOR EVERY NEW FEATURE OR BUGFIX, YOU MUST follow Test Driven Development. See @skills/test-driven-development/SKILL.md for complete methodology.
+- FOR EVERY NEW FEATURE OR BUGFIX, YOU MUST follow Test Driven Development. See the test-driven-development skill for complete methodology.
 
 ## Writing code
 
@@ -110,7 +110,7 @@ YOU MUST write comments explaining WHAT and WHY, never temporal context or what 
 YOU MUST ALWAYS find the root cause of any issue you are debugging.
 YOU MUST NEVER fix a symptom or add a workaround instead of finding a root cause, even if it is faster or I seem like I'm in a hurry.
 
-For complete methodology, see @skills/systematic-debugging/SKILL.md
+For complete methodology, see the systematic-debugging skill
 
 ## Learning and Memory Management
 
