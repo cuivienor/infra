@@ -1,0 +1,34 @@
+---
+# Configure wishlist systemd service
+
+- name: Create wishlist environment file
+  ansible.builtin.template:
+    src: wishlist.env.j2
+    dest: /etc/default/wishlist
+    owner: root
+    group: root
+    mode: '0600'  # Restrictive permissions for sensitive data
+  become: true
+  notify: Restart wishlist
+
+- name: Create wishlist systemd service
+  ansible.builtin.template:
+    src: wishlist.service.j2
+    dest: /etc/systemd/system/wishlist.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: Restart wishlist
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+
+- name: Enable and start wishlist service
+  ansible.builtin.systemd:
+    name: wishlist
+    state: started
+    enabled: true
+  become: true
