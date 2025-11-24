@@ -1,0 +1,28 @@
+---
+# Default variables for wishlist role
+
+# Application
+wishlist_user: "wishlist"
+wishlist_group: "wishlist"
+wishlist_home: "/opt/wishlist"
+wishlist_repo_url: "https://github.com/cmintey/wishlist.git"
+wishlist_repo_version: "main"  # Change to specific tag for stability
+
+# Node.js
+nodejs_version: "24"  # Major version
+nodejs_distro: "nodistro"  # For Debian
+
+# Service
+wishlist_port: 3280
+wishlist_origin: "https://wishlist.paniland.com"
+wishlist_token_time: "72"  # Hours
+wishlist_default_currency: "USD"
+
+# Database
+wishlist_data_dir: "{{ wishlist_home }}/data"
+wishlist_uploads_dir: "{{ wishlist_home }}/uploads"
+wishlist_db_path: "{{ wishlist_data_dir }}/prod.db"
+
+# Build
+wishlist_build_dir: "{{ wishlist_home }}/build"
+wishlist_node_modules_dir: "{{ wishlist_home }}/node_modules"

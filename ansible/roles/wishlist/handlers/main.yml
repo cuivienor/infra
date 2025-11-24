@@ -1,0 +1,15 @@
+---
+# Handlers for wishlist role
+
+- name: Restart wishlist
+  ansible.builtin.systemd:
+    name: wishlist
+    state: restarted
+    daemon_reload: true
+  become: true
+
+- name: Reload wishlist
+  ansible.builtin.systemd:
+    name: wishlist
+    state: reloaded
+  become: true
