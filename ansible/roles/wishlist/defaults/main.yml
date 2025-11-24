@@ -10,7 +10,6 @@ wishlist_repo_version: "main"  # Change to specific tag for stability
 
 # Node.js
 nodejs_version: "24"  # Major version
-nodejs_distro: "nodistro"  # For Debian
 
 # Service
 wishlist_port: 3280
