@@ -1,0 +1,14 @@
+---
+# Main tasks for wishlist role
+
+- name: Import installation tasks
+  ansible.builtin.import_tasks: install.yml
+  tags: ['wishlist', 'install', 'nodejs']
+
+- name: Import deployment tasks
+  ansible.builtin.import_tasks: deploy.yml
+  tags: ['wishlist', 'deploy', 'build']
+
+- name: Import systemd tasks
+  ansible.builtin.import_tasks: systemd.yml
+  tags: ['wishlist', 'systemd', 'service']
