@@ -43,6 +43,7 @@ Policy: `eppfrd` (distribute to disk with most free space)
 | 303 | analyzer | .133 | FileBot + media tools |
 | 304 | transcoder | .132 | FFmpeg (Intel Arc GPU passthrough) |
 | 305 | jellyfin | .130 | Media server (dual GPU passthrough) |
+| 307 | wishlist | .186 | Self-hosted gift registry (Node.js) |
 | 310 | dns | .110 | Backup DNS (AdGuard Home) |
 | 311 | proxy | .111 | Caddy reverse proxy (HTTPS) |
 
@@ -88,6 +89,7 @@ Key roles:
 - `jellyfin`, `makemkv`, `media_analyzer` - Media pipeline
 - `intel_gpu_passthrough`, `dual_gpu_passthrough` - GPU config
 - `restic_backup` - Automated backups
+- `wishlist` - Self-hosted gift registry application
 - `proxmox_host_setup` - Host maintenance (repos, kernel cleanup, fstrim)
 - `proxmox_container_updates` - Automated container updates
 - `proxmox_host_backup` - Host config backups
