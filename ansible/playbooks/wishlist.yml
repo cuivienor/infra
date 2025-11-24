@@ -1,0 +1,76 @@
+---
+# Playbook to configure wishlist container
+# Usage: ansible-playbook playbooks/wishlist.yml --vault-password-file .vault_pass
+
+- name: Configure wishlist container
+  hosts: wishlist
+  become: true
+
+  vars:
+    # Wishlist-specific overrides (if needed)
+    wishlist_repo_version: "main"  # Change to tag for specific version
+
+  pre_tasks:
+    - name: Wait for container to be ready
+      ansible.builtin.wait_for_connection:
+        timeout: 60
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+  roles:
+    - role: common
+      vars:
+        media_user_enabled: false       # Wishlist runs as dedicated user
+        homelab_shell_enabled: true     # Enable zsh for troubleshooting
+      tags: ['common', 'base']
+
+    - role: wishlist
+      tags: ['wishlist']
+
+  post_tasks:
+    - name: Wait for wishlist service to be active
+      ansible.builtin.systemd:
+        name: wishlist
+      register: wishlist_service
+      until: wishlist_service.status.ActiveState == "active"
+      retries: 5
+      delay: 5
+      tags: ['verify']
+
+    - name: Check wishlist is responding
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host }}:3280"
+        status_code: 200
+      register: wishlist_health
+      retries: 3
+      delay: 5
+      until: wishlist_health.status == 200
+      tags: ['verify']
+
+    - name: Display wishlist summary
+      ansible.builtin.debug:
+        msg:
+          - "========================================="
+          - "CT307 Wishlist Container Configuration Complete"
+          - "========================================="
+          - ""
+          - "Container: wishlist ({{ ansible_host }})"
+          - "Local access: http://{{ ansible_host }}:3280"
+          - "Public domain: {{ wishlist_origin }}"
+          - ""
+          - "Application details:"
+          - "  - User: wishlist"
+          - "  - Install path: /opt/wishlist"
+          - "  - Database: /opt/wishlist/data/prod.db"
+          - "  - Uploads: /opt/wishlist/uploads"
+          - ""
+          - "Next steps:"
+          - "  1. Configure Caddy reverse proxy (Task 8)"
+          - "  2. Update Tailscale ACLs (Task 9)"
+          - "  3. Complete first-time setup at {{ wishlist_origin }}"
+          - "  4. Create user accounts"
+          - ""
+          - "Logs: journalctl -u wishlist -f"
+          - "========================================="
+      tags: ['verify', 'always']
