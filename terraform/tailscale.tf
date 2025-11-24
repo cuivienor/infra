@@ -43,6 +43,7 @@ resource "tailscale_acl" "homelab" {
           "192.168.1.110:53",     // CT310 DNS (backup)
           "192.168.1.111:80,443", // Proxy (HTTPS services)
           "192.168.1.130:8096",   // Jellyfin direct (if needed)
+          "192.168.1.186:3280",   // Wishlist (gift registry)
         ]
       }
     ]
@@ -72,7 +73,7 @@ resource "tailscale_dns_nameservers" "homelab" {
 }
 
 resource "tailscale_dns_preferences" "homelab" {
-  magic_dns = false
+  magic_dns = true # Enables better DNS coordination with subnet routes
 }
 
 # Split DNS - route specific domains to your DNS
