@@ -1,0 +1,85 @@
+---
+# Deploy wishlist application from GitHub
+
+- name: Clone wishlist repository
+  ansible.builtin.git:
+    repo: "{{ wishlist_repo_url }}"
+    dest: "{{ wishlist_home }}/repo"
+    version: "{{ wishlist_repo_version }}"
+    force: false  # Don't overwrite local changes
+  become: true
+  become_user: "{{ wishlist_user }}"
+  notify: Restart wishlist
+
+- name: Install Node.js dependencies
+  ansible.builtin.command:
+    cmd: pnpm install --prod=false
+    chdir: "{{ wishlist_home }}/repo"
+  become: true
+  become_user: "{{ wishlist_user }}"
+  changed_when: true  # Always consider changed to ensure rebuild
+  notify: Restart wishlist
+
+- name: Generate Prisma client
+  ansible.builtin.command:
+    cmd: pnpm prisma generate
+    chdir: "{{ wishlist_home }}/repo"
+  become: true
+  become_user: "{{ wishlist_user }}"
+  changed_when: true
+  environment:
+    DATABASE_URL: "file:{{ wishlist_db_path }}"
+
+- name: Build wishlist application
+  ansible.builtin.command:
+    cmd: pnpm build
+    chdir: "{{ wishlist_home }}/repo"
+  become: true
+  become_user: "{{ wishlist_user }}"
+  changed_when: true
+  notify: Restart wishlist
+
+- name: Prune development dependencies
+  ansible.builtin.command:
+    cmd: pnpm install --prod
+    chdir: "{{ wishlist_home }}/repo"
+  become: true
+  become_user: "{{ wishlist_user }}"
+  changed_when: true
+
+- name: Check if database exists
+  ansible.builtin.stat:
+    path: "{{ wishlist_db_path }}"
+  register: db_file
+
+- name: Deploy Prisma migrations (initial setup)
+  ansible.builtin.command:
+    cmd: pnpm prisma migrate deploy
+    chdir: "{{ wishlist_home }}/repo"
+  become: true
+  become_user: "{{ wishlist_user }}"
+  when: not db_file.stat.exists
+  environment:
+    DATABASE_URL: "file:{{ wishlist_db_path }}"
+
+- name: Seed database (initial setup)
+  ansible.builtin.command:
+    cmd: pnpm prisma db seed
+    chdir: "{{ wishlist_home }}/repo"
+  become: true
+  become_user: "{{ wishlist_user }}"
+  when: not db_file.stat.exists
+  failed_when: false  # Seed might not be defined
+  environment:
+    DATABASE_URL: "file:{{ wishlist_db_path }}"
+
+- name: Run database patches (initial setup)
+  ansible.builtin.command:
+    cmd: pnpm db:patch
+    chdir: "{{ wishlist_home }}/repo"
+  become: true
+  become_user: "{{ wishlist_user }}"
+  when: not db_file.stat.exists
+  failed_when: false  # Patch might not exist yet
+  environment:
+    DATABASE_URL: "file:{{ wishlist_db_path }}"
