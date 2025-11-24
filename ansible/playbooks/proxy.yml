@@ -51,6 +51,8 @@
       - domain: "unifi-landing.paniland.com"
         upstream: "192.168.1.11:443"
         upstream_https: true  # Ubiquiti landing page (rarely used)
+      - domain: "wishlist.paniland.com"
+        upstream: "192.168.1.186:3280"
 
   pre_tasks:
     - name: Display configuration
