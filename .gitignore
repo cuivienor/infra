@@ -1,5 +1,6 @@
 stow/tmux/.config/tmux/plugins/
 stow/zsh/.config/zsh/plugins/
+stow/ssh/.ssh/sockets/
 catppuccin_mocha-zsh-syntax-highlighting.zsh
 .env
 .aider*

@@ -4,7 +4,7 @@
       "description": "Full Linux desktop environment with window manager",
       "packages": [
         "zsh",
-        "starship", 
+        "starship",
         "systemd",
         "tmux",
         "rofi",
@@ -18,7 +18,8 @@
         "X11",
         "config",
         "cspell",
-        "claude"
+        "claude",
+        "ssh"
       ]
     },
     "macos": {
@@ -133,6 +134,10 @@
     "homelab": {
       "description": "Minimal shell environment for homelab servers (deployed via Ansible)",
       "platforms": []
+    },
+    "ssh": {
+      "description": "SSH client configuration for homelab infrastructure",
+      "platforms": ["linux"]
     }
   }
 } 
