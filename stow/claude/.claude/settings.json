@@ -30,7 +30,8 @@
     ]
   },
   "enabledPlugins": {
-    "superpowers@cuivienor-marketplace": true
+    "superpowers@superpowers-marketplace": true,
+    "superpowers-developing-for-claude-code@superpowers-marketplace": true
   },
   "alwaysThinkingEnabled": false
 }
