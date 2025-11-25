@@ -1,12 +1,12 @@
-# Terraform
-terraform/.terraform/
-terraform/*.tfstate
-terraform/*.tfstate.backup
-terraform/.terraform.lock.hcl
-terraform/terraform.tfvars
-terraform/.terraform.tfstate.lock.info
-terraform/tfplan
-terraform/*.tfplan
+# Terraform - all root modules
+terraform/**/.terraform/
+terraform/**/*.tfstate
+terraform/**/*.tfstate.backup
+terraform/**/.terraform.lock.hcl
+terraform/**/terraform.tfvars
+terraform/**/.terraform.tfstate.lock.info
+terraform/**/tfplan
+terraform/**/*.tfplan
 
 # Ansible
 *.retry
