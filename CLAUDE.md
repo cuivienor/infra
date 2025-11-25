@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Always read these files first:**
 - `docs/reference/current-state.md` - Complete infrastructure state (containers, IPs, hardware)
 
-This is a Proxmox homelab managed entirely as Infrastructure as Code using Terraform (container provisioning) and Ansible (configuration management), with a complete media processing pipeline.
+This is a Proxmox homelab managed entirely as Infrastructure as Code using Terraform (container provisioning) and Ansible (configuration management).
 
 ## IaC Discipline (CRITICAL)
 
@@ -281,12 +281,6 @@ Understanding these roles is key to making infrastructure changes:
 2. Test: `ansible-playbook ansible/playbooks/<service>.yml --check`
 3. Apply: `ansible-playbook ansible/playbooks/<service>.yml --vault-password-file .vault_pass`
 
-**Update media pipeline script:**
-1. Edit script in `scripts/media/production/`
-2. Test locally or on appropriate container
-3. Redeploy via Ansible if needed (scripts synced via roles)
-4. Update `docs/reference/media-pipeline-quick-reference.md` if CLI changed
-
 ## Security Notes
 
 **Never commit:**
@@ -312,8 +306,7 @@ docs/
 
 **Key Documents:**
 - `docs/reference/current-state.md` - System configuration (MUST update after infrastructure changes)
-- `docs/reference/media-pipeline-quick-reference.md` - Media pipeline scripts, job monitoring, and workflows
-- `docs/guides/ripping-workflow-*.md` - Step-by-step guides for movies/TV ripping
+- `docs/guides/ripping-guide.md` - Media ripping workflow
 
 ## Automated Maintenance
 
