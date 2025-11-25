@@ -123,11 +123,11 @@ du -sh /mnt/media/staging/*
 
 ## Container Access
 
-| Container   | CTID | SSH Access                      | Scripts Location |
-|------------|------|----------------------------------|-----------------|
-| Ripper     | 302  | `ssh media@ripper.home.arpa`    | `~/scripts/`    |
-| Analyzer   | 303  | `ssh media@analyzer.home.arpa`  | `~/scripts/`    |
-| Transcoder | 304  | `ssh media@transcoder.home.arpa`| `~/scripts/`    |
+| Container   | CTID | SSH Alias       | Root Access         | Scripts Location |
+|------------|------|-----------------|---------------------|-----------------|
+| Ripper     | 302  | `ssh ripper`    | `ssh ripper-root`   | `~/scripts/`    |
+| Analyzer   | 303  | `ssh analyzer`  | `ssh analyzer-root` | `~/scripts/`    |
+| Transcoder | 304  | `ssh transcoder`| `ssh transcoder-root`| `~/scripts/`   |
 
 All containers mount `/mnt/storage/media` → `/mnt/media`
 

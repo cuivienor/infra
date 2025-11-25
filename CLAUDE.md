@@ -100,49 +100,6 @@ yamllint -c .yamllint.yaml .
 cd ansible && ansible-lint --offline
 ```
 
-## Media Pipeline Architecture
-
-The media pipeline is a 4-stage process across 3 specialized containers:
-
-```
-Stage 1: Rip       → Stage 2: Remux    → Stage 3: Transcode → Stage 4: Organize
-(ripper CT302)       (analyzer CT303)     (transcoder CT304)   (analyzer CT303)
-    ↓                    ↓                      ↓                    ↓
-1-ripped/            2-remuxed/            3-transcoded/         library/
-```
-
-**Storage:** All containers mount `/mnt/storage/media` (host) as `/mnt/media` (container)
-
-**Scripts Location:** `scripts/media/production/` (deployed to `~/scripts/` on containers)
-
-**Standard CLI:** All scripts use `-t <type> -n <name> [-s <season>]` format
-
-### Running Media Scripts
-
-Scripts must run as the `media` user (UID 1000):
-
-```bash
-# On the container directly
-sudo -u media ./rip-disc.sh -t movie -n "The Matrix"
-sudo -u media ./remux.sh -t show -n "Breaking Bad" -s 1
-sudo -u media nohup ./transcode.sh -t show -n "Breaking Bad" -s 1 &
-sudo -u media ./filebot.sh -t show -n "Breaking Bad" -s 1 --preview
-
-# Remote execution from client (NOT from Proxmox host)
-ssh media@ripper.home.arpa "./rip-disc.sh -t movie -n 'The Matrix'"
-```
-
-**Job Monitoring:**
-```bash
-ls ~/active-jobs/                    # List active jobs
-cat ~/active-jobs/*/status           # Check job status
-tail -f ~/active-jobs/*/transcode.log # Follow logs
-```
-
-Each script creates a hidden state directory (`.rip/`, `.remux/`, `.transcode/`, `.filebot/`) with status, logs, and metadata. Active jobs are symlinked to `~/active-jobs/` for visibility.
-
-See `docs/reference/media-pipeline-quick-reference.md` for complete usage.
-
 ## Container Architecture
 
 All containers are:
@@ -359,8 +316,8 @@ docs/
 
 **Key Documents:**
 - `docs/reference/current-state.md` - System configuration (MUST update after infrastructure changes)
-- `docs/reference/media-pipeline-quick-reference.md` - Media script commands
-- `docs/guides/ripping-workflow-*.md` - Complete workflows for movies/TV
+- `docs/reference/media-pipeline-quick-reference.md` - Media pipeline scripts, job monitoring, and workflows
+- `docs/guides/ripping-workflow-*.md` - Step-by-step guides for movies/TV ripping
 
 ## Automated Maintenance
 
