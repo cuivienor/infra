@@ -307,11 +307,8 @@ Understanding these roles is key to making infrastructure changes:
 docs/
 ├── guides/          # Step-by-step how-to guides (setup, workflows)
 ├── reference/       # Quick references and current state
-├── plans/           # Planning workflow
-│   ├── ideas/      # Brainstorming and early concepts
-│   ├── active/     # Current implementation plans (rarely used)
-│   └── archive/    # Completed implementations
-└── archive/         # Obsolete documentation
+├── ideas/           # Future plans and brainstorming
+└── archive/         # Completed implementations
 ```
 
 **Key Documents:**
