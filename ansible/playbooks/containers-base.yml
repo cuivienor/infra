@@ -10,6 +10,9 @@
     - analyzer_containers
     - transcoder_containers
     - jellyfin_containers
+    - dns_containers
+    - proxy_containers
+    - wishlist_containers
   become: true
   gather_facts: true
 

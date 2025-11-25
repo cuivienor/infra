@@ -17,9 +17,9 @@
           OS: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }} ({{ ansible_facts['distribution_release'] }})
           Kernel: {{ ansible_facts['kernel'] }}
           Architecture: {{ ansible_facts['architecture'] }}
-          IP: {{ ansible_facts['default_ipv4'].address }}
+          IP: {{ ansible_facts['default_ipv4']['address'] | default(ansible_host) }}
           Memory: {{ ansible_facts['memtotal_mb'] }}MB
-          Storage: {{ current_storage }}
+          Storage: {{ storage_type }}
           Model: {{ pi_model }}
 
     - name: Check disk space

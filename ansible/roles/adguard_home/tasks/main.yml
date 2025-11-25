@@ -122,7 +122,7 @@
 - name: Display post-installation message
   ansible.builtin.debug:
     msg: |
-      ✅ AdGuard Home installed and configured!
+      AdGuard Home installed and configured!
 
       Version: {{ adguard_version.stdout }}
       Install directory: {{ adguard_home_install_dir }}

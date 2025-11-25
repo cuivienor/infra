@@ -1,8 +1,0 @@
----
-# Handlers for network configuration changes
-
-- name: Reload network interfaces
-  ansible.builtin.command: ifreload -a
-  async: 1
-  poll: 0
-  ignore_errors: true

@@ -51,3 +51,5 @@
     owner: "{{ item }}"
     group: "{{ item }}"
   loop: "{{ ssh_authorized_keys_users }}"
+  # Skip for Proxmox root user - keys stored in /etc/pve/priv with special permissions
+  failed_when: false

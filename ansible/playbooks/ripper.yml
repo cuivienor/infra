@@ -1,5 +1,5 @@
 ---
-# Ripper Ripper Container Configuration
+# Ripper Container Playbook
 # MakeMKV Blu-ray/DVD ripper with optical drive passthrough
 
 - name: Configure ripper container
@@ -39,7 +39,6 @@
         mode: '0755'
       loop:
         - { src: "../../scripts/media/production/rip-disc.sh", dest: "rip-disc.sh" }
-        - { src: "../../scripts/media/utilities/run-bg.sh", dest: "run-bg.sh" }
       tags: ['scripts']
 
 # Optical drive passthrough must run on the Proxmox host

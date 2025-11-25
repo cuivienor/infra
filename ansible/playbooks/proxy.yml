@@ -70,7 +70,7 @@
           {% endfor %}
 
           {% if caddy_acme_staging %}
-          ⚠️  STAGING MODE: Certificates will be from Let's Encrypt staging CA
+          WARNING: STAGING MODE - Certificates will be from Let's Encrypt staging CA
           Browsers will show certificate warnings (expected for testing)
           {% endif %}
 
@@ -100,7 +100,7 @@
     - name: Display final status
       ansible.builtin.debug:
         msg: |
-          ✅ Reverse Proxy Setup Complete
+          Reverse Proxy Setup Complete
 
           Host: {{ inventory_hostname }} ({{ ansible_host }})
           Caddy Version: {{ caddy_version.stdout }}

@@ -70,10 +70,10 @@
         msg: |
           ===== Storage Configuration Complete =====
 
-          ✓ Disks mounted
-          ✓ MergerFS pool configured
-          ✓ SnapRAID installed and configured
-          ✓ Automation timers enabled
+          - Disks mounted
+          - MergerFS pool configured
+          - SnapRAID installed and configured
+          - Automation timers enabled
 
           Next steps:
           1. Review SnapRAID status: ssh homelab "snapraid status"

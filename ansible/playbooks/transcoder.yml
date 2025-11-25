@@ -1,5 +1,5 @@
 ---
-# Transcoder Transcoder Container Configuration
+# Transcoder Container Playbook
 # FFmpeg with Intel Arc A380 GPU hardware acceleration
 
 - name: Configure transcoder container
@@ -59,9 +59,6 @@
         mode: '0755'
       loop:
         - { src: "../../scripts/media/production/transcode.sh", dest: "transcode.sh" }
-        - { src: "../../scripts/media/utilities/run-bg.sh", dest: "run-bg.sh" }
-        # Legacy script (keeping for reference, can be removed later)
-        - { src: "../../scripts/media/production/transcode-queue.sh", dest: "transcode-queue.sh" }
       tags: ['scripts']
 
     - name: Remove old STAGING_BASE environment variable
@@ -164,17 +161,13 @@
 
     - name: Verify scripts deployed
       ansible.builtin.stat:
-        path: "/home/media/scripts/{{ item }}"
-      loop:
-        - transcode.sh
-        - run-bg.sh
-      register: script_checks
+        path: "/home/media/scripts/transcode.sh"
+      register: script_check
       tags: ['verify']
 
     - name: Display script deployment status
       ansible.builtin.debug:
-        msg: "{{ item.item }}: {{ 'OK' if item.stat.exists else 'MISSING' }}"
-      loop: "{{ script_checks.results }}"
+        msg: "transcode.sh: {{ 'OK' if script_check.stat.exists else 'MISSING' }}"
       tags: ['verify']
 
     - name: Verify media mount exists
@@ -195,7 +188,7 @@
           - "Transcoder Container Verification Summary"
           - "==================================="
           - "GPU devices: {{ gpu_devices.results | selectattr('stat.exists') | list | length }}/2"
-          - "Scripts deployed: {{ script_checks.results | selectattr('stat.exists') | list | length }}/2"
+          - "Scripts deployed: {{ '1/1' if script_check.stat.exists else '0/1' }}"
           - "Media mount: {{ 'OK' if staging_mount.stat.exists else 'FAIL' }}"
           - ""
           - "Next steps:"
