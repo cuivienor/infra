@@ -66,8 +66,7 @@ terraform fmt -recursive terraform/
 terraform/
 ├── proxmox-homelab/       # LXC containers on Proxmox
 ├── tailscale/             # Tailscale ACLs, DNS, auth keys
-├── modules/               # Shared modules (future use)
-└── _archive/              # Original single-module files
+└── modules/               # Shared modules (future use)
 ```
 
 **Key Details:**

@@ -20,7 +20,6 @@ terraform/
 │   ├── tailscale.tf           # ACLs, DNS, auth keys
 │   └── terraform.tfvars       # Tailscale secrets (gitignored)
 ├── modules/                   # Shared modules (future use)
-├── _archive/                  # Original single-module files
 ├── backups/                   # State file backups
 ├── .tflint.hcl                # Shared linting config
 ├── terraform.tfvars.example   # Example variables file
