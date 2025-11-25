@@ -19,16 +19,10 @@ media_analyzer_packages:
   - nano            # Text editor
   - tree            # Directory visualization
 
-# Scripts to deploy from repository
+# Scripts to deploy from repository (per ripping-guide.md)
 media_analyzer_scripts:
-  - { src: "scripts/media/production/analyze-media.sh", dest: "analyze-media.sh" }
   - { src: "scripts/media/production/remux.sh", dest: "remux.sh" }
   - { src: "scripts/media/production/filebot.sh", dest: "filebot.sh" }
-  - { src: "scripts/media/utilities/run-bg.sh", dest: "run-bg.sh" }
-  # Legacy scripts (keeping for reference, can be removed later)
-  - { src: "scripts/media/production/filebot-process.sh", dest: "filebot-process.sh" }
-  - { src: "scripts/media/production/organize-and-remux-movie.sh", dest: "organize-and-remux-movie.sh" }
-  - { src: "scripts/media/production/organize-and-remux-tv.sh", dest: "organize-and-remux-tv.sh" }
 
 # Staging base path (where media pipeline directories are mounted)
 staging_base_path: "/mnt/staging"

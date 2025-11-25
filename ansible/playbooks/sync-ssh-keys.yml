@@ -23,4 +23,4 @@
 
     - name: Display success message
       ansible.builtin.debug:
-        msg: "✅ SSH keys synced successfully to {{ inventory_hostname }}"
+        msg: "SSH keys synced successfully to {{ inventory_hostname }}"

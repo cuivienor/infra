@@ -23,7 +23,7 @@
       ansible.builtin.debug:
         msg:
           - "========================================="
-          - "✅ Configuration complete for {{ inventory_hostname }}"
+          - "Configuration complete for {{ inventory_hostname }}"
           - "========================================="
           - "Hostname: {{ ansible_facts['hostname'] }}"
           - "IP Address: {{ ansible_facts['default_ipv4'].address | default('N/A') }}"

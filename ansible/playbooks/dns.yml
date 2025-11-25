@@ -170,7 +170,9 @@
       ansible.builtin.command: "dig @127.0.0.1 google.com +short"
       register: dns_test
       changed_when: false
-      failed_when: dns_test.rc != 0
+      retries: 5
+      delay: 3
+      until: dns_test.rc == 0
 
     - name: Test local DNS rewrite
       ansible.builtin.command: "dig @127.0.0.1 jellyfin.paniland.com +short"
@@ -180,7 +182,7 @@
     - name: Display final status
       ansible.builtin.debug:
         msg: |
-          ✅ DNS Infrastructure Setup Complete
+          DNS Infrastructure Setup Complete
 
           Host: {{ inventory_hostname }} ({{ ansible_host }})
           Service: {{ 'Running' if 'running' in service_status.stdout else 'Check status' }}
