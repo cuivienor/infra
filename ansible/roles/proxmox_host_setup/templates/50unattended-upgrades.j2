@@ -13,6 +13,8 @@ Unattended-Upgrade::Allowed-Origins {
     "o=Debian,a=oldstable-updates";
     // Proxmox VE repository
     "o=Proxmox,a=stable";
+    // Tailscale stable repository
+    "origin=Tailscale Inc";
 {% else %}
     // All updates (use with caution)
     "Debian:oldstable";
@@ -23,6 +25,8 @@ Unattended-Upgrade::Allowed-Origins {
     "o=Debian,a=oldstable-security";
     "o=Debian,a=oldstable-updates";
     "o=Proxmox,a=stable";
+    // Tailscale stable repository
+    "origin=Tailscale Inc";
 {% endif %}
 };
 

@@ -206,6 +206,7 @@
               "Debian:bookworm";
               "Debian:bookworm-security";
               "Debian:bookworm-updates";
+              "origin=Tailscale Inc";
           };
 
           // Remove unused dependencies after upgrade
