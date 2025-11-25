@@ -6,10 +6,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Always read these files first:**
 - `docs/reference/current-state.md` - Complete infrastructure state (containers, IPs, hardware)
-- `AGENTS.md` - Quick command reference and code conventions
 - `notes/wip/CURRENT-STATUS.md` - Active work in progress (if exists)
 
 This is a Proxmox homelab managed entirely as Infrastructure as Code using Terraform (container provisioning) and Ansible (configuration management), with a complete media processing pipeline.
+
+## IaC Discipline (CRITICAL)
+
+**This infrastructure is 100% IaC. All changes MUST go through Terraform or Ansible.**
+
+### SSH is for Debugging Only
+
+SSH access to containers and hosts is **read-only for debugging purposes**. You may:
+- Run diagnostic commands (`systemctl status`, `journalctl`, `ls`, `cat`, `df`, `vainfo`, etc.)
+- Check logs and service state
+- Verify configuration was applied correctly
+- Test connectivity and hardware access
+
+You must **NEVER** run mutating commands via SSH:
+- ❌ `apt install/remove/update`
+- ❌ `systemctl enable/disable/start/stop`
+- ❌ Creating/editing files
+- ❌ Changing permissions or ownership
+- ❌ Any `sudo` command that modifies state
+
+### When You Need to Change Something
+
+1. **Container specs** (CPU, memory, disk, network) → Update Terraform, run `terraform apply`
+2. **Software/packages** → Update Ansible role, run the playbook
+3. **Configuration files** → Update Ansible templates/files, run the playbook
+4. **Services** → Update Ansible handlers, run the playbook
+5. **Users/permissions** → Update Ansible role, run the playbook
+
+**If you find yourself wanting to "just quickly fix" something via SSH, STOP.** Update the IaC instead. The only exception is one-time debugging during active troubleshooting sessions where you'll immediately codify the fix in Ansible afterward.
 
 ## Infrastructure Commands
 
@@ -45,6 +73,8 @@ ansible-playbook ansible/playbooks/site.yml --tags common --vault-password-file 
 # Syntax validation
 ansible-playbook ansible/playbooks/<playbook>.yml --syntax-check
 ```
+
+**Long-Running Playbooks:** Some playbooks (especially `jellyfin.yml`, `transcoder.yml`, `proxmox-host.yml`) can take 5-10+ minutes due to package installations or compilations. When running these, use a 600000ms (10 minute) timeout for the Bash command. Don't assume failure if output is slow - wait for completion.
 
 **Inventory:** `ansible/inventory/hosts.yml` defines all hosts with IPs and container IDs
 
@@ -131,14 +161,26 @@ All containers are:
 | 310  | dns        | 192.168.1.110 | AdGuard Home (backup DNS) | -                        |
 | 311  | proxy      | 192.168.1.111 | Caddy reverse proxy       | -                        |
 
-**SSH Access:**
+**SSH Access (use aliases from ~/.ssh/config):**
 ```bash
-# Direct container access (preferred)
-ssh media@ripper.home.arpa
-ssh root@backup.home.arpa
+# Infrastructure containers (connects as root)
+ssh backup                    # backup.home.arpa
+ssh dns                       # dns.home.arpa
+ssh proxy                     # proxy.home.arpa
+ssh jellyfin                  # jellyfin.home.arpa
 
-# From Proxmox host
-pct enter 302
+# Media containers - default is media user
+ssh ripper                    # ripper.home.arpa as media
+ssh transcoder                # transcoder.home.arpa as media
+ssh analyzer                  # analyzer.home.arpa as media
+
+# Media containers - root access for maintenance
+ssh ripper-root               # ripper.home.arpa as root
+ssh transcoder-root           # transcoder.home.arpa as root
+ssh analyzer-root             # analyzer.home.arpa as root
+
+# Proxmox host
+ssh homelab                   # homelab.home.arpa as cuiv
 ```
 
 **Testing:** Use CTID 199 for testing infrastructure changes before touching production containers.
