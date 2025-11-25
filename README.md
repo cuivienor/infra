@@ -1,159 +1,53 @@
-# Homelab Infrastructure & Media Pipeline
+# Homelab
 
-This repository contains Infrastructure as Code, automation scripts, and documentation for my homelab media processing setup.
+Infrastructure as Code for my Proxmox homelab.
 
-## Repository Structure
+![Terraform](https://img.shields.io/badge/Terraform-7B42BC?style=flat&logo=terraform&logoColor=white)
+![Ansible](https://img.shields.io/badge/Ansible-EE0000?style=flat&logo=ansible&logoColor=white)
+![Proxmox](https://img.shields.io/badge/Proxmox-E57000?style=flat&logo=proxmox&logoColor=white)
+![Tailscale](https://img.shields.io/badge/Tailscale-242424?style=flat&logo=tailscale&logoColor=white)
+![Backblaze](https://img.shields.io/badge/Backblaze_B2-E21E29?style=flat&logo=backblaze&logoColor=white)
+
+## Stack
+
+- **Terraform** - Container provisioning (Proxmox, Tailscale)
+- **Ansible** - Configuration management
+- **Proxmox VE** - Hypervisor running Debian LXC containers
+- **Tailscale** - Remote access with subnet routing
+- **Backblaze B2** - Off-site backups via Restic
+
+## Services
+
+| Service | Description |
+|---------|-------------|
+| [Jellyfin](https://jellyfin.org/) | Media server |
+| [AdGuard Home](https://adguard.com/adguard-home.html) | DNS with ad blocking |
+| [Caddy](https://caddyserver.com/) | Reverse proxy |
+| [Backrest](https://github.com/garethgeorge/backrest) | Restic backup UI |
+| [Wishlist](https://github.com/cmintey/wishlist) | Gift registry |
+| [MakeMKV](https://www.makemkv.com/) | Blu-ray ripper |
+| [FileBot](https://www.filebot.net/) | Media organizer |
+
+## Structure
 
 ```
-├── terraform/          # Infrastructure as Code (Proxmox containers)
-├── ansible/           # Configuration management (playbooks & roles)
-├── scripts/           # Operational scripts
-│   ├── media/        # Media pipeline automation (production/utilities)
-│   └── utils/        # General utilities
-├── docs/             # Formal documentation
-│   ├── guides/       # How-to guides
-│   ├── reference/    # Quick references and strategy docs
-│   ├── plans/        # Planning workflow (ideas → active → archive)
-│   └── archive/      # Completed/obsolete docs
-└── notes/            # Working notes and WIP status
+terraform/     # Infrastructure definitions
+ansible/       # Playbooks and roles
+scripts/       # Operational scripts
+docs/          # Guides and reference
 ```
 
-## Quick Start
-
-### Infrastructure Management
-
-All infrastructure is managed as code using Terraform and Ansible:
+## Usage
 
 ```bash
-# Deploy infrastructure
-cd terraform && terraform plan
-cd ansible && ansible-playbook site.yml
+# Infrastructure changes
+cd terraform && terraform plan && terraform apply
+
+# Configuration changes
+cd ansible && ansible-playbook playbooks/<service>.yml
 ```
 
-See **[Current State](docs/reference/current-state.md)** for complete details.
+## Documentation
 
-### Media Pipeline
-
-Media processing scripts are organized in `scripts/media/production/`:
-
-```bash
-# Rip Blu-ray disc
-sudo -u media scripts/media/production/rip-disc.sh
-
-# Transcode with hardware acceleration
-sudo -u media scripts/media/production/transcode-queue.sh
-
-# Organize and remux media files
-sudo -u media scripts/media/production/organize-and-remux-movie.sh
-sudo -u media scripts/media/production/organize-and-remux-tv.sh
-```
-
-See workflow guides in `docs/guides/ripping-workflow-*.md` for details.
-
-## Container Inventory
-
-All containers use Terraform for provisioning and Ansible for configuration:
-
-| Hostname | Purpose | Playbook |
-|----------|---------|----------|
-| backup | Restic backup + Backrest UI | `ansible/playbooks/backup.yml` |
-| samba | Samba file server | `ansible/playbooks/samba.yml` |
-| ripper | MakeMKV Blu-ray ripper | `ansible/playbooks/ripper.yml` |
-| analyzer | Media analysis & FileBot | `ansible/playbooks/analyzer.yml` |
-| transcoder | FFmpeg transcoder (Intel GPU) | `ansible/playbooks/transcoder.yml` |
-| jellyfin | Media server (dual GPU) | `ansible/playbooks/jellyfin.yml` |
-
-For IPs and container IDs, see [Current State](docs/reference/current-state.md).
-
-## Key Documentation
-
-### Essential Reads
-- **[AGENTS.md](AGENTS.md)** - AI context and conventions for working with this repo
-- **[Current State](docs/reference/current-state.md)** - System configuration details
-- **[Media Pipeline Quick Reference](docs/reference/media-pipeline-quick-reference.md)** - Common commands
-
-### How-To Guides
-- [Movie Ripping Workflow](docs/guides/ripping-workflow-movie.md)
-- [TV Show Ripping Workflow](docs/guides/ripping-workflow-tv.md)
-- [Jellyfin Setup](docs/guides/jellyfin-setup.md)
-- [Backup Setup](docs/guides/backup-setup.md)
-
-## Planning Workflow
-
-This repository uses a structured planning workflow in `docs/plans/`:
-
-- **`ideas/`** - Brainstorming and early concepts
-- **`active/`** - Current/upcoming implementation plans
-- **`archive/`** - Completed implementations (for reference)
-
-
-## Infrastructure Overview
-
-### Host System
-- **Platform**: Proxmox VE 8.4.14
-- **CPU**: Intel i5-9600K (6 cores)
-- **RAM**: 32GB
-- **Storage**: 35TB MergerFS pool (SnapRAID parity)
-- **GPUs**: Intel Arc A380 (transcoding) + NVIDIA GTX 1080 (display)
-
-### Storage Structure
-```
-/mnt/storage/media/
-├── staging/          # Media pipeline staging
-│   ├── 1-ripped/    # Raw MakeMKV output
-│   ├── 2-remuxed/   # Remuxed files
-│   └── 3-transcoded/ # Transcoded files
-├── library/          # Final organized media
-│   ├── movies/
-│   └── tv/
-├── audiobooks/
-└── e-books/
-```
-
-## SSH Access
-
-```bash
-# Proxmox host
-ssh homelab
-
-# Direct container SSH (via hostname)
-ssh ripper
-ssh analyzer
-ssh transcoder
-ssh jellyfin
-
-# Container access (from Proxmox host)
-pct enter <CTID>
-```
-
-## Git Workflow
-
-Never commit secrets or state files. Check `.gitignore` for excluded patterns.
-
-```bash
-# Standard workflow
-git status
-git add <files>
-git commit -m "type: description"
-git push
-```
-
-Commit types: `feat`, `fix`, `docs`, `refactor`, `chore`, `test`
-
-## Working with IaC
-
-### Never Commit
-- Terraform state files (`*.tfstate`)
-- Variable files with secrets (`terraform.tfvars`)
-- Ansible vault passwords (`.vault_pass`)
-- API tokens or credentials
-
-### Always Commit
-- Terraform configurations (`*.tf`)
-- Ansible playbooks and roles
-- IaC helper scripts
-- Documentation
-
-## Contributing
-
-This is a personal homelab repo, but feel free to fork and adapt for your own use!
+- [Current State](docs/reference/current-state.md) - Infrastructure overview
+- [CLAUDE.md](CLAUDE.md) - AI agent context and conventions
