@@ -1,207 +1,144 @@
 # Terraform Infrastructure Configuration
 
-This directory contains Terraform configurations for deploying and managing LXC containers on Proxmox.
+This directory contains Terraform configurations for managing homelab infrastructure, organized into separate root modules.
 
 ## Structure
 
 ```
 terraform/
-├── main.tf                    # Provider configuration
-├── variables.tf               # Variable definitions
-├── outputs.tf                 # Centralized outputs (TFLint compliant)
-├── .tflint.hcl                # TFLint configuration
+├── proxmox-homelab/           # Proxmox LXC containers
+│   ├── main.tf                # Proxmox provider config
+│   ├── variables.tf           # Container-related variables
+│   ├── outputs.tf             # Container IDs and IPs
+│   ├── ssh_keys.tf            # SSH key management
+│   ├── terraform.tfvars       # Proxmox secrets (gitignored)
+│   └── *.tf                   # Individual container definitions
+├── tailscale/                 # Tailscale configuration
+│   ├── main.tf                # Tailscale provider config
+│   ├── variables.tf           # Tailscale variables
+│   ├── outputs.tf             # Auth key outputs
+│   ├── tailscale.tf           # ACLs, DNS, auth keys
+│   └── terraform.tfvars       # Tailscale secrets (gitignored)
+├── modules/                   # Shared modules (future use)
+├── _archive/                  # Original single-module files
+├── backups/                   # State file backups
+├── .tflint.hcl                # Shared linting config
 ├── terraform.tfvars.example   # Example variables file
-├── terraform.tfvars           # Your variables (git-ignored)
-├── analyzer.tf                # Media analyzer container
-├── backup.tf                  # Backup container
-├── dns.tf                     # DNS (AdGuard) container
-├── jellyfin.tf                # Jellyfin media server
-├── proxy.tf                   # Caddy reverse proxy
-├── ripper.tf                  # Disc ripper container
-├── samba.tf                   # Samba file server
-├── ssh_keys.tf                # SSH key management
-├── tailscale.tf               # Tailscale subnet router keys
-└── transcoder.tf              # Media transcoder container
+└── README.md                  # This file
 ```
+
+## Why Separate Modules?
+
+Each module has its own state file for:
+- **State isolation**: Tailscale changes can't accidentally affect containers
+- **Independent workflows**: Apply Tailscale ACLs without touching Proxmox
+- **Future growth**: Easy to add new modules (aws/, cloudflare/, proxmox-lab2/)
 
 ## Prerequisites
 
-1. **Terraform installed**: Version 1.5.0 or later
-   ```bash
-   # Check version
-   terraform version
-   ```
+1. **Terraform**: Version 1.5.0+
+2. **Proxmox API access**: Root credentials or API token
+3. **Tailscale OAuth**: Client ID and secret from Tailscale admin console
+4. **Debian 12 template**: On Proxmox host (`pveam list local`)
 
-2. **Proxmox API access**: Ensure you have credentials
+## Quick Start
 
-3. **Debian 12 template**: Available on Proxmox host
-   ```bash
-   # On Proxmox host, verify template exists
-   pveam list local
-   # Should show: debian-12-standard_12.7-1_amd64.tar.zst
-   ```
-
-## Initial Setup
-
-### 1. Configure Variables
-
-Copy the example file and fill in your credentials:
+### Proxmox Containers
 
 ```bash
-cd terraform
-cp terraform.tfvars.example terraform.tfvars
-nano terraform.tfvars
-```
+cd terraform/proxmox-homelab
+cp ../terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your Proxmox credentials
 
-Required variables:
-- `proxmox_password` - Your Proxmox root password
-- `ssh_public_key` (optional) - For SSH access to containers
-
-### 2. Initialize Terraform
-
-```bash
 terraform init
-```
-
-This downloads the Proxmox provider.
-
-## Usage
-
-### Plan Changes
-
-Preview what Terraform will do:
-
-```bash
 terraform plan
-```
-
-### Apply Changes
-
-Create or update infrastructure:
-
-```bash
 terraform apply
 ```
 
-Review the plan and type `yes` to confirm.
+### Tailscale Configuration
+
+```bash
+cd terraform/tailscale
+# Create terraform.tfvars with:
+# tailscale_oauth_client_id     = "..."
+# tailscale_oauth_client_secret = "..."
+# tailscale_tailnet             = "..."
+
+terraform init
+terraform plan
+terraform apply
+```
+
+## Common Operations
 
 ### View Current State
 
 ```bash
-# List all resources
+# Proxmox containers
+cd terraform/proxmox-homelab
 terraform state list
+terraform output
 
-# Show specific resource
-terraform show
+# Tailscale
+cd terraform/tailscale
+terraform state list
+terraform output tailscale_pi4_auth_key
 ```
 
-### Destroy Resources
+### Add a New Container
 
-**Warning**: This will delete containers!
+1. Create `terraform/proxmox-homelab/<name>.tf`
+2. Run `terraform plan` to preview
+3. Run `terraform apply` to create
+4. Add to Ansible inventory and configure
+
+### Update Tailscale ACLs
+
+1. Edit `terraform/tailscale/tailscale.tf`
+2. Run `cd terraform/tailscale && terraform apply`
+
+### Format All Files
 
 ```bash
-# Destroy specific container
-terraform destroy -target=proxmox_virtual_environment_container.backup
-
-# Destroy everything
-terraform destroy
+terraform fmt -recursive terraform/
 ```
 
-## Containers
+## Container Inventory
 
-### CT300: Backup Container
+| CTID | File        | Hostname   | IP              | Purpose            |
+|------|-------------|------------|-----------------|---------------------|
+| 300  | backup.tf   | backup     | 192.168.1.120   | Restic backups      |
+| 301  | samba.tf    | samba      | 192.168.1.121   | SMB file shares     |
+| 302  | ripper.tf   | ripper     | 192.168.1.131   | MakeMKV ripper      |
+| 303  | analyzer.tf | analyzer   | 192.168.1.133   | FileBot analyzer    |
+| 304  | transcoder.tf | transcoder | 192.168.1.132 | FFmpeg transcoding  |
+| 305  | jellyfin.tf | jellyfin   | 192.168.1.130   | Media server        |
+| 307  | wishlist.tf | wishlist   | 192.168.1.186   | Gift registry       |
+| 310  | dns.tf      | dns        | 192.168.1.110   | AdGuard Home        |
+| 311  | proxy.tf    | proxy      | 192.168.1.111   | Caddy reverse proxy |
 
-**Purpose**: Restic-based backups of /mnt/storage to Backblaze B2
+## Linting
 
-**Resources**:
-- **CTID**: 300
-- **CPU**: 2 cores
-- **RAM**: 2GB
-- **Disk**: 20GB
-- **OS**: Debian 12
-- **Network**: DHCP on vmbr0
-
-**Features**:
-- Mounts `/mnt/storage` from host
-- Runs restic backup scripts (managed by Ansible)
-- Includes Backrest web UI for monitoring
-- Unprivileged container (no special hardware access needed)
-
-**After Terraform Apply**:
-1. Note the IP address from Terraform output
-2. Configure with Ansible:
-   ```bash
-   export CT300_IP="<ip-from-terraform>"
-   ansible-playbook ansible/playbooks/ct300-backup.yml --vault-password-file ~/.vault_pass
-   ```
-
-## Post-Container Creation Steps
-
-### Mount /mnt/storage in Container
-
-After Terraform creates the container, the `/mnt/storage` mount needs additional configuration on the Proxmox host:
+TFLint is configured with `.tflint.hcl`:
 
 ```bash
-# On Proxmox host
-pct set 300 -mp0 /mnt/storage,mp=/mnt/storage
-
-# Start container
-pct start 300
-
-# Verify mount
-pct exec 300 -- df -h /mnt/storage
+cd terraform/proxmox-homelab && tflint
+cd terraform/tailscale && tflint
 ```
 
-**Note**: This step will be automated via Ansible in future updates.
-
-## Workflow
-
-### Creating a New Container
-
-1. **Create Terraform file**: `containers/ct3XX-name.tf`
-2. **Plan**: `terraform plan`
-3. **Apply**: `terraform apply`
-4. **Get IP**: Check Terraform output or Proxmox UI
-5. **Configure**: Run Ansible playbook for the container
-
-### Updating a Container
-
-1. **Edit .tf file**: Modify resource configuration
-2. **Plan**: `terraform plan` (review changes)
-3. **Apply**: `terraform apply`
-
-**Note**: Some changes require container restart or recreation.
-
-### Importing Existing Containers
-
-To bring existing containers under Terraform management:
-
-```bash
-# Example: Import CT200
-terraform import proxmox_virtual_environment_container.ripper homelab/lxc/200
-```
-
-Then create the corresponding `.tf` file matching current state.
+Pre-commit hooks run TFLint automatically.
 
 ## Troubleshooting
 
 ### "Container already exists"
 
-If Terraform fails because container exists:
-
 ```bash
-# Option 1: Import existing container
+# Import existing container
+cd terraform/proxmox-homelab
 terraform import proxmox_virtual_environment_container.backup homelab/lxc/300
-
-# Option 2: Delete container manually and retry
-pct stop 300
-pct destroy 300
-terraform apply
 ```
 
 ### "Template not found"
-
-Download the Debian template:
 
 ```bash
 # On Proxmox host
@@ -211,63 +148,16 @@ pveam download local debian-12-standard_12.7-1_amd64.tar.zst
 
 ### "Authentication failed"
 
-Check your `terraform.tfvars`:
-- Correct Proxmox endpoint
-- Correct username (usually `root@pam`)
-- Correct password
-
-### Container has no network
-
-1. **Check DHCP**: Ensure your router is running DHCP
-2. **Manual IP**: Modify container to use static IP
-3. **Restart container**: `pct stop 300 && pct start 300`
-
-## Best Practices
-
-1. **Always run `terraform plan` first** - Review changes before applying
-2. **Use version control** - Commit `.tf` files, not `terraform.tfvars`
-3. **Document changes** - Add comments to `.tf` files
-4. **Test with CT300s first** - Don't touch production containers (CT200s) yet
-5. **Backup state** - `terraform.tfstate` is critical (consider remote backend)
-6. **Run TFLint before committing** - `tflint` enforces best practices
-7. **Use pre-commit hooks** - Automatic formatting and linting on commit
-
-## Next Steps
-
-- [ ] Deploy CT300 backup container
-- [ ] Test full Terraform + Ansible workflow
-- [ ] Add more containers (CT301, CT302, etc.)
-- [ ] Import existing production containers (CT200-202)
-- [ ] Set up remote state backend (Terraform Cloud or S3)
+Check `terraform.tfvars`:
+- Correct Proxmox endpoint (https://192.168.1.100:8006)
+- Correct credentials (root@pam with password, or API token)
 
 ## Reference
 
-- **Proxmox Provider Docs**: https://registry.terraform.io/providers/bpg/proxmox/latest/docs
-- **Terraform Docs**: https://www.terraform.io/docs
-- **Container Resource**: https://registry.terraform.io/providers/bpg/proxmox/latest/docs/resources/virtual_environment_container
-
-## Linting
-
-TFLint is configured to enforce best practices:
-
-```bash
-# Run linter
-cd terraform
-tflint
-
-# Initialize plugins (if needed)
-tflint --init
-```
-
-The `.tflint.hcl` configuration enforces:
-- Standard module structure (outputs in `outputs.tf`)
-- No unused variables or declarations
-- Naming conventions
-- Required provider/version constraints
-- Documentation requirements
-
-Pre-commit hooks automatically run TFLint on every commit.
+- [Proxmox Provider](https://registry.terraform.io/providers/bpg/proxmox/latest/docs)
+- [Tailscale Provider](https://registry.terraform.io/providers/tailscale/tailscale/latest/docs)
+- [Terraform Docs](https://www.terraform.io/docs)
 
 ---
 
-**Last Updated**: 2025-11-16
+**Last Updated**: 2025-11-25

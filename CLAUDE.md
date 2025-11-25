@@ -41,20 +41,39 @@ You must **NEVER** run mutating commands via SSH:
 ## Infrastructure Commands
 
 ### Terraform Workflow
+
+Terraform is organized into separate root modules with independent state:
+
 ```bash
-# From repository root
-cd terraform
-terraform init              # Initialize providers (first time or after provider changes)
+# Proxmox containers (ripper, jellyfin, dns, proxy, etc.)
+cd terraform/proxmox-homelab
+terraform init              # Initialize providers (first time)
 terraform plan              # Preview changes
 terraform apply             # Apply changes
-terraform fmt -recursive    # Format all .tf files
-terraform validate          # Validate configuration
+
+# Tailscale configuration (ACLs, DNS, auth keys)
+cd terraform/tailscale
+terraform init
+terraform plan
+terraform apply
+
+# Format all modules
+terraform fmt -recursive terraform/
+```
+
+**Directory Structure:**
+```
+terraform/
+├── proxmox-homelab/       # LXC containers on Proxmox
+├── tailscale/             # Tailscale ACLs, DNS, auth keys
+├── modules/               # Shared modules (future use)
+└── _archive/              # Original single-module files
 ```
 
 **Key Details:**
-- Providers: `bpg/proxmox` (~0.50.0), `tailscale/tailscale` (~0.16)
-- Each container has its own `.tf` file (e.g., `ripper.tf`, `jellyfin.tf`)
-- Variables in `variables.tf`, secrets in `terraform.tfvars` (gitignored)
+- Each root module has its own state file and `terraform.tfvars`
+- Proxmox module: `bpg/proxmox` provider (~0.50.0)
+- Tailscale module: `tailscale/tailscale` provider (~0.16)
 - Never commit: `*.tfstate`, `*.tfstate.backup`, `terraform.tfvars`
 
 ### Ansible Workflow
@@ -227,7 +246,7 @@ Understanding these roles is key to making infrastructure changes:
 - Primary subnet router: Pi4 (192.168.1.102)
 - Secondary: Proxmox host (192.168.1.100)
 - Advertised routes: `192.168.1.0/24`
-- ACLs managed via Terraform (`terraform/tailscale.tf`)
+- ACLs managed via Terraform (`terraform/tailscale/`)
 
 **Reverse Proxy (Caddy):**
 - Host: CT311 (192.168.1.111)
@@ -270,11 +289,12 @@ Understanding these roles is key to making infrastructure changes:
 ## Common Development Tasks
 
 **Add a new container:**
-1. Create `terraform/<name>.tf` with container definition
+1. Create `terraform/proxmox-homelab/<name>.tf` with container definition
 2. Add to `ansible/inventory/hosts.yml` with IP and CTID
 3. Create `ansible/playbooks/<name>.yml` playbook
-4. Apply: `terraform apply` then `ansible-playbook ansible/playbooks/<name>.yml`
-5. Update `docs/reference/current-state.md`
+4. Apply: `cd terraform/proxmox-homelab && terraform apply`
+5. Apply: `ansible-playbook ansible/playbooks/<name>.yml`
+6. Update `docs/reference/current-state.md`
 
 **Modify existing container configuration:**
 1. Update relevant Ansible role in `ansible/roles/<role>/`
