@@ -10,19 +10,19 @@
 ### Service Management
 ```bash
 # Check status
-ssh root@192.168.1.186 "systemctl status wishlist"
+ssh wishlist "systemctl status wishlist"
 
 # View logs
-ssh root@192.168.1.186 "journalctl -u wishlist -f"
+ssh wishlist "journalctl -u wishlist -f"
 
 # Restart service
-ssh root@192.168.1.186 "systemctl restart wishlist"
+ssh wishlist "systemctl restart wishlist"
 ```
 
 ### Application Updates
 ```bash
 # SSH to container
-ssh root@192.168.1.186
+ssh wishlist
 
 # Switch to wishlist user
 sudo -u wishlist bash
@@ -49,28 +49,28 @@ systemctl restart wishlist
 ### Database Management
 ```bash
 # Backup database
-ssh root@192.168.1.186 "cp /opt/wishlist/data/prod.db /opt/wishlist/data/prod.db.backup"
+ssh wishlist "cp /opt/wishlist/data/prod.db /opt/wishlist/data/prod.db.backup"
 
 # View database size
-ssh root@192.168.1.186 "du -sh /opt/wishlist/data/"
+ssh wishlist "du -sh /opt/wishlist/data/"
 
 # Run Prisma migrations manually
-ssh root@192.168.1.186 "sudo -u wishlist bash -c 'cd /opt/wishlist/repo && pnpm prisma migrate deploy'"
+ssh wishlist "sudo -u wishlist bash -c 'cd /opt/wishlist/repo && pnpm prisma migrate deploy'"
 ```
 
 ### Troubleshooting
 ```bash
 # Check if port is listening
-ssh root@192.168.1.186 "ss -tlnp | grep 3280"
+ssh wishlist "ss -tlnp | grep 3280"
 
 # Test local connectivity
-ssh root@192.168.1.186 "curl -I http://localhost:3280"
+ssh wishlist "curl -I http://localhost:3280"
 
 # Check Node.js process
-ssh root@192.168.1.186 "ps aux | grep node"
+ssh wishlist "ps aux | grep node"
 
 # View recent errors
-ssh root@192.168.1.186 "journalctl -u wishlist -p err -n 50"
+ssh wishlist "journalctl -u wishlist -p err -n 50"
 ```
 
 ## Configuration
@@ -91,12 +91,9 @@ terraform apply   # Apply infrastructure changes
 
 ### Ansible
 ```bash
-# Full deployment
-ansible-playbook ansible/playbooks/wishlist.yml --vault-password-file .vault_pass
-
-# Specific tasks
-ansible-playbook ansible/playbooks/wishlist.yml --vault-password-file .vault_pass --tags deploy
-ansible-playbook ansible/playbooks/wishlist.yml --vault-password-file .vault_pass --tags systemd
+cd ansible
+ansible-playbook playbooks/wishlist.yml
+ansible-playbook playbooks/wishlist.yml --tags deploy
 ```
 
 ## First-Time Setup
@@ -115,13 +112,13 @@ Wishlist uses built-in user accounts. User management is done through the web UI
 
 ```bash
 # Option 1: Prisma Studio (recommended)
-ssh root@192.168.1.186
+ssh wishlist
 sudo -u wishlist bash
 cd /opt/wishlist/repo
 pnpm prisma studio
 
 # Option 2: Direct SQLite access (advanced)
-ssh root@192.168.1.186
+ssh wishlist
 sqlite3 /opt/wishlist/data/prod.db
 ```
 
@@ -129,14 +126,14 @@ sqlite3 /opt/wishlist/data/prod.db
 
 ### Manual Backup
 ```bash
-ssh root@192.168.1.186 "tar czf /tmp/wishlist-backup.tar.gz /opt/wishlist/data /opt/wishlist/uploads"
-scp root@192.168.1.186:/tmp/wishlist-backup.tar.gz ~/backups/wishlist-$(date +%Y%m%d).tar.gz
+ssh wishlist "tar czf /tmp/wishlist-backup.tar.gz /opt/wishlist/data /opt/wishlist/uploads"
+scp wishlist:/tmp/wishlist-backup.tar.gz ~/backups/wishlist-$(date +%Y%m%d).tar.gz
 ```
 
 ### Restore from Backup
 ```bash
-scp ~/backups/wishlist-20251124.tar.gz root@192.168.1.186:/tmp/
-ssh root@192.168.1.186 "systemctl stop wishlist && tar xzf /tmp/wishlist-20251124.tar.gz -C / && systemctl start wishlist"
+scp ~/backups/wishlist-20251124.tar.gz wishlist:/tmp/
+ssh wishlist "systemctl stop wishlist && tar xzf /tmp/wishlist-20251124.tar.gz -C / && systemctl start wishlist"
 ```
 
 ## Security Notes

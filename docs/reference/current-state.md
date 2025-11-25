@@ -108,7 +108,7 @@ Rip (CT302) → Remux (CT303) → Transcode (CT304) → Organize (CT303) → Ser
 ```
 
 **Directories** (`/mnt/storage/media/`):
-- `staging/{1-ripped,2-remuxed,3-transcoded,4-ready}` - Pipeline stages
+- `staging/{1-ripped,2-remuxed,3-transcoded}` - Pipeline stages
 - `library/{movies,tv}` - Final organized media
 
 **Scripts**: `scripts/media/production/`
@@ -124,7 +124,7 @@ ssh cuiv@homelab "sudo pct enter <CTID>"
 
 # Apply infrastructure changes
 cd terraform && terraform plan && terraform apply
-ansible-playbook ansible/playbooks/<service>.yml --vault-password-file .vault_pass
+cd ansible && ansible-playbook playbooks/<service>.yml
 
 # Check services
 ssh cuiv@homelab "sudo pct exec 304 -- vainfo"  # GPU in transcoder

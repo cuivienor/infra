@@ -200,14 +200,14 @@ restic restore latest --target /mnt/restore --include /mnt/storage/documents
 
 ```bash
 # Edit backup policies
-cd ~/dev/homelab-notes
 nano ansible/roles/restic_backup/defaults/main.yml
 
 # Edit secrets (encrypted)
-ansible-vault edit ansible/vars/backup_secrets.yml
+cd ansible
+ansible-vault edit vars/backup_secrets.yml
 
 # Re-deploy after changes
-ansible-playbook ansible/playbooks/backup.yml --vault-password-file ~/.vault_pass
+ansible-playbook playbooks/backup.yml
 ```
 
 ---
@@ -224,17 +224,7 @@ ansible-playbook ansible/playbooks/backup.yml --vault-password-file ~/.vault_pas
 
 ### Enable/Disable Policies
 
-```bash
-# Edit defaults
-nano ~/dev/homelab-notes/ansible/roles/restic_backup/defaults/main.yml
-
-# Find the policy and change:
-enabled: true   # or false
-
-# Re-deploy
-cd ~/dev/homelab-notes
-ansible-playbook ansible/playbooks/backup.yml --vault-password-file ~/.vault_pass
-```
+Edit `ansible/roles/restic_backup/defaults/main.yml`, change `enabled: true/false`, then redeploy with `ansible-playbook playbooks/backup.yml` from the ansible/ directory.
 
 ---
 
@@ -321,19 +311,3 @@ sudo restic prune --max-repack-size 2G
 - [ ] Verify files: Check restored files match originals
 - [ ] Check B2 costs: Review usage on Backblaze dashboard
 - [ ] Clean up: `rm -rf /tmp/test-*`
-
----
-
-## Support Resources
-
-- **Restic Docs**: https://restic.readthedocs.io/
-- **Backblaze B2 Docs**: https://www.backblaze.com/b2/docs/
-- **Perfect Media Server**: https://perfectmediaserver.com/04-day-two/backups/
-- **Local Docs**: `~/dev/homelab-notes/docs/guides/backup-setup.md`
-
----
-
-**Pro Tip**: Save this page's path in your shell aliases:
-```bash
-echo "alias backup-help='cat ~/dev/homelab-notes/docs/reference/backup-quick-reference.md | less'" >> ~/.bashrc
-```
