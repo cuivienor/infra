@@ -22,7 +22,9 @@ resource "tailscale_acl" "homelab" {
       "group:friends" = [
         "williamrgoldstein@gmail.com",
         "sweir27@gmail.com",
-        "stefanova.ani@gmail.com"
+        "stefanova.ani@gmail.com",
+        "alastairdglennie@gmail.com",
+        "maria.stef.ivanova@gmail.com"
       ]
     }
 
