@@ -11,6 +11,15 @@
   become_user: "{{ wishlist_user }}"
   notify: Restart wishlist
 
+- name: Create uploads directory in repo
+  ansible.builtin.file:
+    path: "{{ wishlist_home }}/repo/uploads"
+    state: directory
+    owner: "{{ wishlist_user }}"
+    group: "{{ wishlist_group }}"
+    mode: '0755'
+  become: true
+
 - name: Install Node.js dependencies
   ansible.builtin.command:
     cmd: pnpm install --prod=false
