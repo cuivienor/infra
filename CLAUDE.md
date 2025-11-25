@@ -6,7 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Always read these files first:**
 - `docs/reference/current-state.md` - Complete infrastructure state (containers, IPs, hardware)
-- `notes/wip/CURRENT-STATUS.md` - Active work in progress (if exists)
 
 This is a Proxmox homelab managed entirely as Infrastructure as Code using Terraform (container provisioning) and Ansible (configuration management), with a complete media processing pipeline.
 
