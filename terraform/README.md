@@ -150,6 +150,23 @@ Check `terraform.tfvars`:
 - Correct Proxmox endpoint (https://192.168.1.100:8006)
 - Correct credentials (root@pam with password, or API token)
 
+## Known Issues
+
+### Mount point drift (analyzer, jellyfin)
+
+`terraform plan` shows mount_points wanting to be removed from analyzer and jellyfin containers, but `terraform apply` doesn't actually remove them. This is a **known bug** in the bpg/proxmox provider ([Issue #1392](https://github.com/bpg/terraform-provider-proxmox/issues/1392)).
+
+**Root cause:** The provider can't reliably track which physical mount point (mp0, mp1, etc.) each config item maps to. When you remove one, indices shift and the wrong mount gets updated.
+
+**Current state:** These containers have extra mount_points that were added manually and aren't in Terraform config. The drift is cosmetic - infrastructure works fine.
+
+**Fix timeline:** Targeted for provider v2.0 (requires Plugin Framework migration).
+
+**Options if it bothers you:**
+1. Add `mount_point` to `lifecycle.ignore_changes` to silence the warnings
+2. Add the extra mounts to the `.tf` files to match reality
+3. Recreate the containers (nuclear option)
+
 ## Reference
 
 - [Proxmox Provider](https://registry.terraform.io/providers/bpg/proxmox/latest/docs)
