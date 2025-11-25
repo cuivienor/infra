@@ -60,18 +60,21 @@ terraform validate          # Validate configuration
 
 ### Ansible Workflow
 ```bash
-# From repository root or ansible/ directory
-ansible-playbook ansible/playbooks/site.yml --vault-password-file .vault_pass
-ansible-playbook ansible/playbooks/<service>.yml --vault-password-file .vault_pass
+# ALWAYS run from the ansible/ directory
+cd ansible
+
+# Run a playbook (vault password auto-loaded from ansible.cfg)
+ansible-playbook playbooks/site.yml
+ansible-playbook playbooks/<service>.yml
 
 # Dry-run with check mode
-ansible-playbook ansible/playbooks/site.yml --check --vault-password-file .vault_pass
+ansible-playbook playbooks/site.yml --check
 
 # Target specific tags
-ansible-playbook ansible/playbooks/site.yml --tags common --vault-password-file .vault_pass
+ansible-playbook playbooks/site.yml --tags common
 
 # Syntax validation
-ansible-playbook ansible/playbooks/<playbook>.yml --syntax-check
+ansible-playbook playbooks/<playbook>.yml --syntax-check
 ```
 
 **Long-Running Playbooks:** Some playbooks (especially `jellyfin.yml`, `transcoder.yml`, `proxmox-host.yml`) can take 5-10+ minutes due to package installations or compilations. When running these, use a 600000ms (10 minute) timeout for the Bash command. Don't assume failure if output is slow - wait for completion.
@@ -83,7 +86,7 @@ ansible-playbook ansible/playbooks/<playbook>.yml --syntax-check
 - `containers-base.yml` - Base setup for all containers
 - Service-specific: `ripper.yml`, `jellyfin.yml`, `backup.yml`, `dns.yml`, `proxy.yml`, etc.
 
-**Never commit:** `.vault_pass`, `**/secrets*.yml` (encrypted with Ansible Vault)
+**Never commit:** `ansible/.vault_pass`, `**/secrets*.yml` (encrypted with Ansible Vault)
 
 ### Linting and Pre-commit
 ```bash
@@ -338,8 +341,8 @@ Understanding these roles is key to making infrastructure changes:
 
 **Secrets Management:**
 - Terraform: Use `terraform.tfvars` (gitignored)
-- Ansible: Encrypt with `ansible-vault encrypt ansible/vars/<name>_secrets.yml`
-- Decrypt: `ansible-vault view ansible/vars/<name>_secrets.yml --vault-password-file .vault_pass`
+- Ansible: Encrypt with `ansible-vault encrypt vars/<name>_secrets.yml` (from ansible/ directory)
+- Decrypt: `ansible-vault view vars/<name>_secrets.yml` (vault password auto-loaded from ansible.cfg)
 
 ## Documentation Structure
 
