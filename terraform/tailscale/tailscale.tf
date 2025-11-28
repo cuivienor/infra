@@ -18,7 +18,8 @@ resource "tailscale_acl" "homelab" {
         "sweir27@gmail.com",
         "stefanova.ani@gmail.com",
         "alastairdglennie@gmail.com",
-        "maria.stef.ivanova@gmail.com"
+        "maria.stef.ivanova@gmail.com",
+        "tomov90@gmail.com"
       ]
     }
 
