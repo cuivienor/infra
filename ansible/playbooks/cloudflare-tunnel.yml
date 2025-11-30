@@ -1,0 +1,74 @@
+---
+# Cloudflare Tunnel Setup
+#
+# Deploys cloudflared daemon to establish secure tunnel to Cloudflare edge.
+# Traffic flow: Internet → Cloudflare → CT313 → Caddy → Services
+#
+# Prerequisites:
+#   - Terraform cloudflare module applied (creates tunnel + DNS)
+#   - Tunnel token stored in vault (vault_cloudflare_tunnel_token)
+#
+# Usage:
+#   ansible-playbook ansible/playbooks/cloudflare-tunnel.yml
+
+- name: Configure Cloudflare Tunnel
+  hosts: cloudflared
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/secrets.yml
+
+  vars:
+    # Tunnel token from vault
+    cloudflare_tunnel_token: "{{ vault_cloudflare_tunnel_token }}"
+
+  pre_tasks:
+    - name: Display configuration
+      ansible.builtin.debug:
+        msg: |
+          Configuring Cloudflare Tunnel on: {{ inventory_hostname }}
+          IP: {{ ansible_host }}
+
+          Traffic will route through this tunnel to Caddy (192.168.1.111)
+
+  roles:
+    - role: common
+      tags: ['common', 'base']
+    - role: cloudflare_tunnel
+      tags: ['cloudflare', 'tunnel']
+
+  post_tasks:
+    - name: Wait for cloudflared to start
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Check cloudflared service status
+      ansible.builtin.systemd:
+        name: cloudflared
+      register: cloudflared_service
+
+    - name: Verify cloudflared is running
+      ansible.builtin.command: cloudflared --version
+      register: cloudflared_version
+      changed_when: false
+
+    - name: Display final status
+      ansible.builtin.debug:
+        msg: |
+          Cloudflare Tunnel Setup Complete
+
+          Host: {{ inventory_hostname }} ({{ ansible_host }})
+          Cloudflared Version: {{ cloudflared_version.stdout }}
+          Service Status: {{ cloudflared_service.status.ActiveState }}
+
+          VERIFICATION:
+          1. Check Cloudflare dashboard → Zero Trust → Networks → Tunnels
+             Tunnel "homelab-tunnel" should show as HEALTHY
+
+          2. Test public access:
+             curl -I https://wishlist.paniland.com
+             (Should redirect to Authelia for authentication)
+
+          3. View tunnel logs:
+             journalctl -u cloudflared -f
