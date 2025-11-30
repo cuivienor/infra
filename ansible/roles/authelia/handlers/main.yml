@@ -1,0 +1,14 @@
+---
+# Authelia handlers
+
+- name: Restart authelia
+  ansible.builtin.systemd:
+    name: authelia
+    state: restarted
+  become: true
+
+- name: Reload authelia
+  ansible.builtin.systemd:
+    name: authelia
+    state: reloaded
+  become: true

@@ -53,6 +53,8 @@
         answer: "192.168.1.111"
       - domain: "wishlist.paniland.com"
         answer: "192.168.1.111"
+      - domain: "auth.paniland.com"
+        answer: "192.168.1.111"  # Via Caddy proxy for HTTPS
 
       # ===========================================
       # HOST/MACHINE ACCESS (direct, RFC 8375)
@@ -86,6 +88,9 @@
       # Personal & productivity containers
       - domain: "wishlist.home.arpa"
         answer: "192.168.1.186"
+      # Security/infrastructure containers
+      - domain: "authelia.home.arpa"
+        answer: "192.168.1.112"
 
     # ===========================================
     # AD BLOCKING CONFIGURATION

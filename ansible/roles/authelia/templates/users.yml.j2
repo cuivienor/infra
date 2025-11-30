@@ -1,0 +1,17 @@
+# Authelia Users Database
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+users:
+{% for user in authelia_users %}
+  {{ user.username }}:
+    disabled: false
+    displayname: '{{ user.displayname }}'
+    email: '{{ user.email }}'
+    password: '{{ user.password_hash }}'
+{% if user.groups is defined and user.groups | length > 0 %}
+    groups:
+{% for group in user.groups %}
+      - '{{ group }}'
+{% endfor %}
+{% endif %}
+{% endfor %}

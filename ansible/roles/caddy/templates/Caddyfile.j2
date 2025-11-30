@@ -15,6 +15,14 @@
 # Reverse proxy configurations
 {% for target in caddy_proxy_targets %}
 {{ target.domain }} {
+{% if authelia_enabled | default(false) and target.authelia_protected | default(false) %}
+    # Forward authentication to Authelia
+    forward_auth {{ authelia_address }} {
+        uri /api/authz/forward-auth
+        copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+    }
+
+{% endif %}
 {% if target.upstream_https | default(false) %}
     reverse_proxy https://{{ target.upstream }} {
         transport http {
