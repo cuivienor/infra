@@ -1,0 +1,114 @@
+---
+# Authelia SSO Setup
+#
+# Deploys Authelia authentication server for centralized SSO with TOTP 2FA.
+# Integrates with Caddy reverse proxy via forward_auth directive.
+#
+# Features:
+# - Single Sign-On across all homelab services
+# - File-based user database with argon2id password hashing
+# - SQLite storage backend
+# - TOTP 2FA support (enrollment via web UI)
+#
+# Usage:
+#   ansible-playbook ansible/playbooks/authelia.yml
+#
+# After running:
+#   1. Add DNS rewrite: auth.paniland.com → 192.168.1.112
+#   2. Navigate to https://auth.paniland.com to verify
+#   3. Update Caddy with forward_auth for protected services
+
+- name: Configure Authelia SSO
+  hosts: authelia
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/secrets.yml
+
+  vars:
+    # Secrets from vault
+    authelia_jwt_secret: "{{ vault_authelia_jwt_secret }}"
+    authelia_session_secret: "{{ vault_authelia_session_secret }}"
+    authelia_storage_encryption_key: "{{ vault_authelia_storage_encryption_key }}"
+
+    # User configuration
+    authelia_users:
+      - username: peter
+        displayname: Peter
+        email: petrov.p.peter@gmail.com
+        password_hash: "{{ vault_authelia_admin_password_hash }}"
+        groups:
+          - admins
+
+    # Access control rules - wishlist only for now
+    authelia_access_rules:
+      - domain: "wishlist.paniland.com"
+        policy: "one_factor"
+
+    # Override default policy to deny unauthenticated access
+    authelia_default_policy: "deny"
+
+  pre_tasks:
+    - name: Display configuration
+      ansible.builtin.debug:
+        msg: |
+          Configuring Authelia SSO on: {{ inventory_hostname }}
+          IP: {{ ansible_host }}
+
+          Configuration:
+          - Auth URL: {{ authelia_auth_url | default('https://auth.paniland.com') }}
+          - Session Domain: {{ authelia_domain | default('paniland.com') }}
+          - Default Policy: {{ authelia_default_policy }}
+          - Users: {{ authelia_users | map(attribute='username') | list }}
+          - Protected Domains:
+          {% for rule in authelia_access_rules %}
+            - {{ rule.domain }} ({{ rule.policy }})
+          {% endfor %}
+
+  roles:
+    - role: common
+      tags: ['common', 'base']
+    - role: authelia
+      tags: ['authelia', 'sso']
+
+  post_tasks:
+    - name: Wait for Authelia to start
+      ansible.builtin.wait_for:
+        port: 9091
+        delay: 5
+        timeout: 60
+
+    - name: Check Authelia service status
+      ansible.builtin.systemd:
+        name: authelia
+      register: authelia_service
+
+    - name: Verify Authelia is running
+      ansible.builtin.command: /usr/local/bin/authelia --version
+      register: authelia_version
+      changed_when: false
+
+    - name: Display final status
+      ansible.builtin.debug:
+        msg: |
+          Authelia SSO Setup Complete
+
+          Host: {{ inventory_hostname }} ({{ ansible_host }})
+          Authelia Version: {{ authelia_version.stdout }}
+          Service Status: {{ authelia_service.status.ActiveState }}
+
+          NEXT STEPS:
+          1. Add DNS rewrite in AdGuard Home:
+             auth.paniland.com → {{ ansible_host }}
+
+          2. Test Authelia is accessible:
+             curl -k https://auth.paniland.com
+
+          3. Update Caddy with forward_auth for wishlist:
+             ansible-playbook playbooks/proxy.yml
+
+          4. Test authentication flow:
+             - Navigate to https://wishlist.paniland.com
+             - Should redirect to https://auth.paniland.com
+             - Login with username: peter

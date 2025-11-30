@@ -29,3 +29,11 @@ caddy_proxy_targets: []
 #     upstream: "192.168.1.130:8096"
 #   - domain: "backup.paniland.com"
 #     upstream: "192.168.1.120:9898"
+#   - domain: "wishlist.paniland.com"
+#     upstream: "192.168.1.186:3280"
+#     authelia_protected: true  # Enable forward_auth for this target
+
+# Authelia forward_auth integration
+# Set authelia_enabled to true and configure authelia_address to enable
+authelia_enabled: false
+authelia_address: "192.168.1.112:9091"

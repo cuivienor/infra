@@ -1,0 +1,82 @@
+# Authelia Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+# Server settings
+server:
+  address: 'tcp://{{ authelia_address }}:{{ authelia_port }}/'
+
+# Logging
+log:
+  level: 'info'
+  format: 'text'
+
+# TOTP Configuration
+totp:
+  issuer: '{{ authelia_totp_issuer }}'
+  period: {{ authelia_totp_period }}
+  digits: {{ authelia_totp_digits }}
+
+# Identity validation (for password resets, etc.)
+identity_validation:
+  reset_password:
+    jwt_secret: '{{ authelia_jwt_secret }}'
+
+# Authentication Backend - File based
+authentication_backend:
+  file:
+    path: '{{ authelia_config_dir }}/users.yml'
+    password:
+      algorithm: 'argon2id'
+      iterations: 3
+      memory: 65536
+      parallelism: 4
+      key_length: 32
+      salt_length: 16
+
+# Access Control
+access_control:
+  default_policy: '{{ authelia_default_policy }}'
+  rules:
+{% for rule in authelia_access_rules %}
+    - domain: '{{ rule.domain }}'
+      policy: '{{ rule.policy }}'
+{% if rule.subject is defined %}
+      subject:
+{% for subj in rule.subject %}
+        - '{{ subj }}'
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+# Session Configuration
+session:
+  secret: '{{ authelia_session_secret }}'
+  cookies:
+    - domain: '{{ authelia_domain }}'
+      authelia_url: '{{ authelia_auth_url }}'
+      default_redirection_url: '{{ authelia_default_redirect_url }}'
+      name: '{{ authelia_session_name }}'
+      expiration: '{{ authelia_session_expiration }}'
+      inactivity: '{{ authelia_session_inactivity }}'
+      remember_me: '{{ authelia_session_remember_me }}'
+
+# Storage - SQLite
+storage:
+  encryption_key: '{{ authelia_storage_encryption_key }}'
+  local:
+    path: '{{ authelia_data_dir }}/db.sqlite3'
+
+# Notifier
+notifier:
+{% if authelia_notifier_type == 'filesystem' %}
+  filesystem:
+    filename: '{{ authelia_notifier_filesystem_path }}'
+{% elif authelia_notifier_type == 'smtp' %}
+  smtp:
+    host: '{{ authelia_smtp_host }}'
+    port: {{ authelia_smtp_port }}
+    username: '{{ authelia_smtp_username }}'
+    password: '{{ authelia_smtp_password }}'
+    sender: '{{ authelia_smtp_sender }}'
+    subject: '{{ authelia_smtp_subject }}'
+{% endif %}

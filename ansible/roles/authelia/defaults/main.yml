@@ -1,0 +1,71 @@
+---
+# Authelia SSO default configuration
+
+# Authelia version
+authelia_version: "4.39.15"
+
+# Installation paths
+authelia_config_dir: "/etc/authelia"
+authelia_data_dir: "/var/lib/authelia"
+authelia_user: "authelia"
+authelia_group: "authelia"
+
+# Server configuration
+authelia_address: "0.0.0.0"
+authelia_port: 9091
+
+# Domain configuration
+authelia_domain: "paniland.com"
+authelia_auth_url: "https://auth.paniland.com"
+authelia_default_redirect_url: "https://wishlist.paniland.com"
+
+# Session configuration
+authelia_session_name: "authelia_session"
+authelia_session_expiration: "1h"
+authelia_session_inactivity: "5m"
+authelia_session_remember_me: "1M"
+
+# TOTP configuration
+authelia_totp_issuer: "Paniland Homelab"
+authelia_totp_period: 30
+authelia_totp_digits: 6
+
+# Access control default policy
+# Options: deny, one_factor, two_factor, bypass
+authelia_default_policy: "deny"
+
+# Secrets - MUST be overridden in vault
+authelia_jwt_secret: ""
+authelia_session_secret: ""
+authelia_storage_encryption_key: ""
+
+# User database - MUST be overridden in playbook/vault
+authelia_users: []
+# Example:
+# authelia_users:
+#   - username: peter
+#     displayname: Peter
+#     email: peter@example.com
+#     password_hash: "$argon2id$..."
+#     groups:
+#       - admins
+
+# Access control rules
+authelia_access_rules: []
+# Example:
+# authelia_access_rules:
+#   - domain: "wishlist.paniland.com"
+#     policy: "one_factor"
+
+# Notifier configuration
+# Options: filesystem, smtp
+authelia_notifier_type: "filesystem"
+authelia_notifier_filesystem_path: "/var/lib/authelia/notification.txt"
+
+# SMTP configuration (when authelia_notifier_type: smtp)
+authelia_smtp_host: ""
+authelia_smtp_port: 587
+authelia_smtp_username: ""
+authelia_smtp_password: ""
+authelia_smtp_sender: ""
+authelia_smtp_subject: "[Authelia] {title}"

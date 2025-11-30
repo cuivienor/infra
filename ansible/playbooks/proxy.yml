@@ -34,8 +34,15 @@
     # Set to false only after staging certificates work correctly
     caddy_acme_staging: false
 
+    # Authelia SSO integration
+    # Set to true after Authelia is deployed and DNS is configured
+    authelia_enabled: true
+    authelia_address: "192.168.1.112:9091"
+
     # Services to proxy
     caddy_proxy_targets:
+      - domain: "auth.paniland.com"
+        upstream: "192.168.1.112:9091"
       - domain: "jellyfin.paniland.com"
         upstream: "192.168.1.130:8096"
       - domain: "backrest.paniland.com"
@@ -53,6 +60,7 @@
         upstream_https: true  # Ubiquiti landing page (rarely used)
       - domain: "wishlist.paniland.com"
         upstream: "192.168.1.186:3280"
+        authelia_protected: true  # Requires authentication via Authelia
 
   pre_tasks:
     - name: Display configuration

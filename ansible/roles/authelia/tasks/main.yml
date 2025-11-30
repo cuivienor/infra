@@ -1,0 +1,127 @@
+---
+# Install and configure Authelia SSO
+
+- name: Install dependencies
+  ansible.builtin.apt:
+    name:
+      - curl
+      - ca-certificates
+    state: present
+    update_cache: true
+  become: true
+
+- name: Create authelia group
+  ansible.builtin.group:
+    name: "{{ authelia_group }}"
+    system: true
+  become: true
+
+- name: Create authelia user
+  ansible.builtin.user:
+    name: "{{ authelia_user }}"
+    group: "{{ authelia_group }}"
+    home: "{{ authelia_data_dir }}"
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: false
+  become: true
+
+- name: Create Authelia config directory
+  ansible.builtin.file:
+    path: "{{ authelia_config_dir }}"
+    state: directory
+    owner: root
+    group: "{{ authelia_group }}"
+    mode: '0750'
+  become: true
+
+- name: Create Authelia data directory
+  ansible.builtin.file:
+    path: "{{ authelia_data_dir }}"
+    state: directory
+    owner: "{{ authelia_user }}"
+    group: "{{ authelia_group }}"
+    mode: '0750'
+  become: true
+
+- name: Download Authelia binary
+  ansible.builtin.get_url:
+    url: "https://github.com/authelia/authelia/releases/download/v{{ authelia_version }}/authelia-v{{ authelia_version }}-linux-amd64.tar.gz"
+    dest: "/tmp/authelia-{{ authelia_version }}.tar.gz"
+    mode: '0644'
+  become: true
+
+- name: Create temp directory for extraction
+  ansible.builtin.file:
+    path: "/tmp/authelia-extract"
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Extract Authelia binary
+  ansible.builtin.unarchive:
+    src: "/tmp/authelia-{{ authelia_version }}.tar.gz"
+    dest: "/tmp/authelia-extract"
+    remote_src: true
+  become: true
+
+- name: Install Authelia binary
+  ansible.builtin.copy:
+    src: "/tmp/authelia-extract/authelia"
+    dest: "/usr/local/bin/authelia"
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+  notify: Restart authelia
+
+- name: Clean up downloaded files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/authelia-{{ authelia_version }}.tar.gz"
+    - "/tmp/authelia-extract"
+  become: true
+
+- name: Create Authelia configuration file
+  ansible.builtin.template:
+    src: configuration.yml.j2
+    dest: "{{ authelia_config_dir }}/configuration.yml"
+    owner: root
+    group: "{{ authelia_group }}"
+    mode: '0640'
+  notify: Restart authelia
+  become: true
+
+- name: Create Authelia users database
+  ansible.builtin.template:
+    src: users.yml.j2
+    dest: "{{ authelia_config_dir }}/users.yml"
+    owner: root
+    group: "{{ authelia_group }}"
+    mode: '0640'
+  notify: Restart authelia
+  become: true
+
+- name: Create Authelia systemd service
+  ansible.builtin.template:
+    src: authelia.service.j2
+    dest: /etc/systemd/system/authelia.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+
+- name: Start and enable Authelia
+  ansible.builtin.systemd:
+    name: authelia
+    state: started
+    enabled: true
+  become: true
