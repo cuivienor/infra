@@ -15,7 +15,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths={{ authelia_data_dir }}
+ReadWritePaths={{ authelia_data_dir }} {{ authelia_config_dir }}
 
 [Install]
 WantedBy=multi-user.target

@@ -63,8 +63,8 @@ authelia_notifier_type: "filesystem"
 authelia_notifier_filesystem_path: "/var/lib/authelia/notification.txt"
 
 # SMTP configuration (when authelia_notifier_type: smtp)
-authelia_smtp_host: ""
-authelia_smtp_port: 587
+# Address format: submissions://host:465 (implicit TLS) or submission://host:587 (STARTTLS)
+authelia_smtp_address: ""
 authelia_smtp_username: ""
 authelia_smtp_password: ""
 authelia_smtp_sender: ""

@@ -13,6 +13,7 @@
   ansible.builtin.stat:
     path: /etc/needrestart/needrestart.conf
   register: needrestart_conf
+  tags: ['needrestart', 'config']
 
 - name: Configure needrestart for automatic service restarts
   ansible.builtin.lineinfile:
