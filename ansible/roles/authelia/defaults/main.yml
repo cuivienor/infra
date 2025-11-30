@@ -76,6 +76,12 @@ authelia_oidc_hmac_secret: ""
 authelia_oidc_private_key: ""  # RSA private key in PEM format
 authelia_oidc_private_key_file: "{{ authelia_config_dir }}/oidc.pem"
 
+# Brute-force protection (regulation)
+# Ban users after failed login attempts
+authelia_regulation_max_retries: 3
+authelia_regulation_find_time: "2m"    # Window to count failures
+authelia_regulation_ban_time: "5m"     # How long to ban after max_retries
+
 # OIDC clients - list of applications that can use Authelia for authentication
 authelia_oidc_clients: []
 # Example:

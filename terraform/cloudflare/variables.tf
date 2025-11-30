@@ -23,10 +23,11 @@ variable "tunnel_name" {
 }
 
 # Caddy reverse proxy address (internal)
+# Using HTTP since this is internal traffic - Cloudflare handles external TLS
 variable "caddy_address" {
   description = "Internal address of Caddy reverse proxy"
   type        = string
-  default     = "https://192.168.1.111"
+  default     = "http://192.168.1.111"
 }
 
 # Services to expose via tunnel

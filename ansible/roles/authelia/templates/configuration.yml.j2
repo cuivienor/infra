@@ -33,6 +33,13 @@ authentication_backend:
       key_length: 32
       salt_length: 16
 
+# Brute-force protection
+# Bans users after repeated failed login attempts
+regulation:
+  max_retries: {{ authelia_regulation_max_retries }}
+  find_time: '{{ authelia_regulation_find_time }}'
+  ban_time: '{{ authelia_regulation_ban_time }}'
+
 # Access Control
 access_control:
   default_policy: '{{ authelia_default_policy }}'
