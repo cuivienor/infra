@@ -80,3 +80,34 @@ notifier:
     sender: '{{ authelia_smtp_sender }}'
     subject: '{{ authelia_smtp_subject }}'
 {% endif %}
+
+{% if authelia_oidc_enabled %}
+# OIDC Identity Provider
+identity_providers:
+  oidc:
+    hmac_secret: '{{ authelia_oidc_hmac_secret }}'
+    jwks:
+      - key_id: 'main'
+        algorithm: 'RS256'
+        use: 'sig'
+        key: |
+{{ authelia_oidc_private_key | indent(10, first=true) }}
+    clients:
+{% for client in authelia_oidc_clients %}
+      - client_id: '{{ client.client_id }}'
+        client_name: '{{ client.client_name }}'
+        client_secret: '{{ client.client_secret }}'
+        public: false
+        authorization_policy: '{{ client.authorization_policy | default("one_factor") }}'
+        redirect_uris:
+{% for uri in client.redirect_uris %}
+          - '{{ uri }}'
+{% endfor %}
+        scopes:
+{% for scope in client.scopes %}
+          - '{{ scope }}'
+{% endfor %}
+        userinfo_signed_response_alg: 'none'
+        token_endpoint_auth_method: 'client_secret_post'
+{% endfor %}
+{% endif %}

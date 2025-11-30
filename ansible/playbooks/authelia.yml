@@ -49,6 +49,24 @@
     # Override default policy to deny unauthenticated access
     authelia_default_policy: "deny"
 
+    # OIDC Identity Provider configuration
+    authelia_oidc_enabled: true
+    authelia_oidc_hmac_secret: "{{ vault_authelia_oidc_hmac_secret }}"
+    authelia_oidc_private_key: "{{ vault_authelia_oidc_private_key }}"
+
+    # OIDC clients
+    authelia_oidc_clients:
+      - client_id: wishlist
+        client_name: Wishlist
+        client_secret: "{{ vault_authelia_oidc_wishlist_client_secret }}"
+        redirect_uris:
+          - https://wishlist.paniland.com/login
+        scopes:
+          - openid
+          - profile
+          - email
+        authorization_policy: one_factor
+
   pre_tasks:
     - name: Display configuration
       ansible.builtin.debug:

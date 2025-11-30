@@ -69,3 +69,24 @@ authelia_smtp_username: ""
 authelia_smtp_password: ""
 authelia_smtp_sender: ""
 authelia_smtp_subject: "[Authelia] {title}"
+
+# OIDC provider configuration
+authelia_oidc_enabled: false
+authelia_oidc_hmac_secret: ""
+authelia_oidc_private_key: ""  # RSA private key in PEM format
+authelia_oidc_private_key_file: "{{ authelia_config_dir }}/oidc.pem"
+
+# OIDC clients - list of applications that can use Authelia for authentication
+authelia_oidc_clients: []
+# Example:
+# authelia_oidc_clients:
+#   - client_id: wishlist
+#     client_name: Wishlist
+#     client_secret: "hashed_secret"  # Use authelia hash-password to generate
+#     redirect_uris:
+#       - https://wishlist.paniland.com/auth/callback/authelia
+#     scopes:
+#       - openid
+#       - profile
+#       - email
+#     authorization_policy: one_factor
