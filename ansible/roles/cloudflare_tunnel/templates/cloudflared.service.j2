@@ -1,0 +1,23 @@
+# Cloudflare Tunnel daemon systemd service
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+[Unit]
+Description=Cloudflare Tunnel daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/cloudflared tunnel --no-autoupdate run --token {{ cloudflare_tunnel_token }}
+Restart=always
+RestartSec=5
+TimeoutStartSec=0
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

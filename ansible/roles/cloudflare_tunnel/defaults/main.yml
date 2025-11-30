@@ -1,0 +1,5 @@
+---
+# Cloudflare Tunnel default configuration
+
+# Tunnel token - MUST be provided from vault
+cloudflare_tunnel_token: ""
