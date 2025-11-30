@@ -25,3 +25,10 @@ wishlist_db_path: "{{ wishlist_data_dir }}/prod.db"
 # Build
 wishlist_build_dir: "{{ wishlist_home }}/build"
 wishlist_node_modules_dir: "{{ wishlist_home }}/node_modules"
+
+# Header-based authentication (for use with Authelia/reverse proxy)
+# When enabled, wishlist trusts headers from the reverse proxy for user identity
+wishlist_header_auth_enabled: false
+wishlist_header_username: "Remote-User"
+wishlist_header_name: "Remote-Name"
+wishlist_header_email: "Remote-Email"

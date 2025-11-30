@@ -10,6 +10,13 @@
     # Wishlist-specific overrides (if needed)
     wishlist_repo_version: "main"  # Change to tag for specific version
 
+    # Authelia authentication integration
+    # Using OIDC flow - configure OIDC provider in wishlist admin UI:
+    # - Issuer URL: https://auth.paniland.com
+    # - Client ID: wishlist
+    # - Client Secret: (see vault_authelia_oidc_wishlist_client_secret plaintext)
+    wishlist_header_auth_enabled: false
+
   pre_tasks:
     - name: Wait for container to be ready
       ansible.builtin.wait_for_connection:
@@ -73,11 +80,11 @@
           - "  - Database: /opt/wishlist/data/prod.db"
           - "  - Uploads: /opt/wishlist/uploads"
           - ""
-          - "Next steps:"
-          - "  1. Configure Caddy reverse proxy (Task 8)"
-          - "  2. Update Tailscale ACLs (Task 9)"
-          - "  3. Complete first-time setup at {{ wishlist_origin }}"
-          - "  4. Create user accounts"
+          - "Authentication:"
+          - "  - OIDC: Configure via admin UI with Authelia"
+          - "    Issuer: https://auth.paniland.com"
+          - "    Client ID: wishlist"
+          - "    Client Secret: see vault (plaintext comment)"
           - ""
           - "Logs: journalctl -u wishlist -f"
           - "========================================="
