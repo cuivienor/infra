@@ -99,9 +99,9 @@
   ansible.builtin.template:
     src: users.yml.j2
     dest: "{{ authelia_config_dir }}/users.yml"
-    owner: root
+    owner: "{{ authelia_user }}"
     group: "{{ authelia_group }}"
-    mode: '0640'
+    mode: '0600'
   notify: Restart authelia
   become: true
 

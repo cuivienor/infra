@@ -28,7 +28,7 @@ authentication_backend:
     password:
       algorithm: 'argon2id'
       iterations: 3
-      memory: 65536
+      memory: 64
       parallelism: 4
       key_length: 32
       salt_length: 16
@@ -80,8 +80,7 @@ notifier:
     filename: '{{ authelia_notifier_filesystem_path }}'
 {% elif authelia_notifier_type == 'smtp' %}
   smtp:
-    host: '{{ authelia_smtp_host }}'
-    port: {{ authelia_smtp_port }}
+    address: '{{ authelia_smtp_address }}'
     username: '{{ authelia_smtp_username }}'
     password: '{{ authelia_smtp_password }}'
     sender: '{{ authelia_smtp_sender }}'

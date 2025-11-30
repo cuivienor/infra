@@ -28,7 +28,8 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "homelab" {
         hostname = ingress_rule.value.hostname
         service  = var.caddy_address
         origin_request {
-          no_tls_verify = true # Caddy uses internal/self-signed certs
+          no_tls_verify      = true                        # Skip cert validation (internal)
+          origin_server_name = ingress_rule.value.hostname # SNI for TLS handshake
         }
       }
     }

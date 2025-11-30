@@ -67,6 +67,13 @@
           - email
         authorization_policy: one_factor
 
+    # SMTP configuration for password reset emails (via Resend)
+    authelia_notifier_type: "smtp"
+    authelia_smtp_address: "submissions://smtp.resend.com:465"
+    authelia_smtp_username: "resend"
+    authelia_smtp_password: "{{ vault_resend_api_key }}"
+    authelia_smtp_sender: "Paniland Auth <auth@paniland.com>"
+
   pre_tasks:
     - name: Display configuration
       ansible.builtin.debug:

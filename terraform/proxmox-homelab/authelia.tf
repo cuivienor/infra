@@ -52,7 +52,7 @@ resource "proxmox_virtual_environment_container" "authelia" {
   }
 
   memory {
-    dedicated = 512 # 512MB RAM (actual usage ~30-50MB)
+    dedicated = 512 # 512MB RAM (sufficient for Authelia)
     swap      = 256
   }
 

@@ -23,11 +23,10 @@ variable "tunnel_name" {
 }
 
 # Caddy reverse proxy address (internal)
-# Using HTTP since this is internal traffic - Cloudflare handles external TLS
 variable "caddy_address" {
   description = "Internal address of Caddy reverse proxy"
   type        = string
-  default     = "http://192.168.1.111"
+  default     = "https://192.168.1.111"
 }
 
 # Services to expose via tunnel
@@ -45,4 +44,10 @@ variable "tunnel_services" {
       hostname = "auth.paniland.com"
     }
   }
+}
+
+# Resend DKIM public key for email authentication
+variable "resend_dkim_value" {
+  description = "DKIM public key value from Resend dashboard"
+  type        = string
 }
