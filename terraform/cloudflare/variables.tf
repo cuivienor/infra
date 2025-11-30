@@ -40,5 +40,8 @@ variable "tunnel_services" {
     wishlist = {
       hostname = "wishlist.paniland.com"
     }
+    auth = {
+      hostname = "auth.paniland.com"
+    }
   }
 }
