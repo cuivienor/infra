@@ -1,7 +1,7 @@
 # Homelab Current State
 
-**Last Updated**: 2025-11-16  
-**Status**: Full Infrastructure as Code (Terraform + Ansible)  
+**Last Updated**: 2025-12-01
+**Status**: Full Infrastructure as Code (Terraform + Ansible)
 **Remote Access**: Tailscale subnet routing with redundant routers
 
 ---
@@ -44,8 +44,10 @@ Policy: `eppfrd` (distribute to disk with most free space)
 | 304 | transcoder | .132 | FFmpeg (Intel Arc GPU passthrough) |
 | 305 | jellyfin | .130 | Media server (dual GPU passthrough) |
 | 307 | wishlist | .186 | Self-hosted gift registry (Node.js) |
+| 308 | lldap | .114 | LLDAP directory server (LDAP) |
 | 310 | dns | .110 | Backup DNS (AdGuard Home) |
 | 311 | proxy | .111 | Caddy reverse proxy (HTTPS) |
+| 312 | authelia | .112 | SSO authentication (OIDC/LDAP) |
 
 All containers: Debian 12, privileged, IaC-managed via Terraform + Ansible
 
@@ -62,7 +64,14 @@ All containers: Debian 12, privileged, IaC-managed via Terraform + Ansible
 ### Reverse Proxy (Caddy)
 - **Host**: CT311 (192.168.1.111)
 - Automatic HTTPS via Cloudflare DNS-01
-- Proxied services: jellyfin, backup, dns, proxmox
+- Proxied services: jellyfin, backup, dns, proxmox, wishlist, auth
+
+### Authentication (Authelia + LLDAP)
+- **SSO**: CT312 (192.168.1.112) - Authelia with OIDC provider
+- **LDAP**: CT308 (192.168.1.114) - LLDAP directory server
+- **Portal**: https://auth.paniland.com
+- **Web UI**: http://192.168.1.114:17170 (LLDAP admin)
+- Protected services: wishlist.paniland.com
 
 ### Remote Access (Tailscale)
 - **Tailnet**: pigeon-piano.ts.net
@@ -90,6 +99,8 @@ Key roles:
 - `intel_gpu_passthrough`, `dual_gpu_passthrough` - GPU config
 - `restic_backup` - Automated backups
 - `wishlist` - Self-hosted gift registry application
+- `authelia` - SSO authentication with OIDC
+- `lldap` - Lightweight LDAP directory
 - `proxmox_host_setup` - Host maintenance (repos, kernel cleanup, fstrim)
 - `proxmox_container_updates` - Automated container updates
 - `proxmox_host_backup` - Host config backups

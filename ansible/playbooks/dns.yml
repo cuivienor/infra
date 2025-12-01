@@ -91,6 +91,8 @@
       # Security/infrastructure containers
       - domain: "authelia.home.arpa"
         answer: "192.168.1.112"
+      - domain: "lldap.home.arpa"
+        answer: "192.168.1.114"
 
     # ===========================================
     # AD BLOCKING CONFIGURATION
