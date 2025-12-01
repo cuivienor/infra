@@ -45,7 +45,7 @@ authelia_auth_backend: "file"
 # LDAP backend configuration (when authelia_auth_backend: ldap)
 # Use implementation: lldap for LLDAP server
 authelia_ldap_implementation: "lldap"
-authelia_ldap_address: "ldap://192.168.1.114:3890"
+authelia_ldap_address: "ldap://lldap.home.arpa:3890"
 authelia_ldap_base_dn: "dc=paniland,dc=com"
 authelia_ldap_user: ""      # DN of service account (from vault)
 authelia_ldap_password: ""  # Service account password (from vault)
