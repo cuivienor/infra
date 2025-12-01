@@ -6,9 +6,10 @@
 #
 # Features:
 # - Single Sign-On across all homelab services
-# - File-based user database with argon2id password hashing
+# - LDAP backend (LLDAP) for centralized user management
 # - SQLite storage backend
 # - TOTP 2FA support (enrollment via web UI)
+# - OIDC identity provider for OAuth applications
 #
 # Usage:
 #   ansible-playbook ansible/playbooks/authelia.yml
@@ -32,7 +33,12 @@
     authelia_session_secret: "{{ vault_authelia_session_secret }}"
     authelia_storage_encryption_key: "{{ vault_authelia_storage_encryption_key }}"
 
-    # User configuration
+    # Authentication backend: ldap (via LLDAP) or file
+    authelia_auth_backend: "ldap"
+    authelia_ldap_user: "uid=authelia,ou=people,dc=paniland,dc=com"
+    authelia_ldap_password: "{{ vault_authelia_ldap_password }}"
+
+    # File-based user config (only used when authelia_auth_backend: file)
     authelia_users:
       - username: peter
         displayname: Peter

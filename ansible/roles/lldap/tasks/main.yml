@@ -1,0 +1,173 @@
+---
+# Install and configure LLDAP
+
+- name: Install dependencies
+  ansible.builtin.apt:
+    name:
+      - curl
+      - ca-certificates
+    state: present
+    update_cache: true
+  become: true
+
+- name: Create lldap group
+  ansible.builtin.group:
+    name: "{{ lldap_group }}"
+    system: true
+  become: true
+
+- name: Create lldap user
+  ansible.builtin.user:
+    name: "{{ lldap_user }}"
+    group: "{{ lldap_group }}"
+    home: "{{ lldap_data_dir }}"
+    shell: /usr/sbin/nologin
+    system: true
+    create_home: false
+  become: true
+
+- name: Create LLDAP directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ lldap_user }}"
+    group: "{{ lldap_group }}"
+    mode: '0750'
+  loop:
+    - "{{ lldap_install_dir }}"
+    - "{{ lldap_data_dir }}"
+  become: true
+
+- name: Check if LLDAP is already installed
+  ansible.builtin.stat:
+    path: "{{ lldap_install_dir }}/lldap"
+  register: lldap_binary
+
+- name: Get installed LLDAP version
+  ansible.builtin.command:
+    cmd: "{{ lldap_install_dir }}/lldap --version"
+  register: lldap_installed_version
+  changed_when: false
+  failed_when: false
+  when: lldap_binary.stat.exists
+
+- name: Download LLDAP binary
+  ansible.builtin.get_url:
+    url: "https://github.com/lldap/lldap/releases/download/{{ lldap_version }}/amd64-lldap.tar.gz"
+    dest: "/tmp/lldap-{{ lldap_version }}.tar.gz"
+    mode: '0644'
+  when: not lldap_binary.stat.exists or (lldap_installed_version.stdout is defined and lldap_version not in lldap_installed_version.stdout)
+  become: true
+
+- name: Create temp directory for extraction
+  ansible.builtin.file:
+    path: "/tmp/lldap-extract"
+    state: directory
+    mode: '0755'
+  when: not lldap_binary.stat.exists or (lldap_installed_version.stdout is defined and lldap_version not in lldap_installed_version.stdout)
+  become: true
+
+- name: Extract LLDAP archive
+  ansible.builtin.unarchive:
+    src: "/tmp/lldap-{{ lldap_version }}.tar.gz"
+    dest: "/tmp/lldap-extract"
+    remote_src: true
+  when: not lldap_binary.stat.exists or (lldap_installed_version.stdout is defined and lldap_version not in lldap_installed_version.stdout)
+  become: true
+
+- name: Install LLDAP binary
+  ansible.builtin.copy:
+    src: "/tmp/lldap-extract/amd64-lldap/lldap"
+    dest: "{{ lldap_install_dir }}/lldap"
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0755'
+  when: not lldap_binary.stat.exists or (lldap_installed_version.stdout is defined and lldap_version not in lldap_installed_version.stdout)
+  notify: Restart lldap
+  become: true
+
+- name: Install LLDAP migration tool
+  ansible.builtin.copy:
+    src: "/tmp/lldap-extract/amd64-lldap/lldap_migration_tool"
+    dest: "{{ lldap_install_dir }}/lldap_migration_tool"
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0755'
+  when: not lldap_binary.stat.exists or (lldap_installed_version.stdout is defined and lldap_version not in lldap_installed_version.stdout)
+  become: true
+  failed_when: false  # Migration tool may not exist in all releases
+
+- name: Install LLDAP set password tool
+  ansible.builtin.copy:
+    src: "/tmp/lldap-extract/amd64-lldap/lldap_set_password"
+    dest: "{{ lldap_install_dir }}/lldap_set_password"
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0755'
+  when: not lldap_binary.stat.exists or (lldap_installed_version.stdout is defined and lldap_version not in lldap_installed_version.stdout)
+  become: true
+  failed_when: false  # Tool may not exist in all releases
+
+- name: Copy LLDAP web app files
+  ansible.builtin.copy:
+    src: "/tmp/lldap-extract/amd64-lldap/app/"
+    dest: "{{ lldap_install_dir }}/app/"
+    remote_src: true
+    owner: "{{ lldap_user }}"
+    group: "{{ lldap_group }}"
+    mode: preserve
+    directory_mode: '0755'
+  when: not lldap_binary.stat.exists or (lldap_installed_version.stdout is defined and lldap_version not in lldap_installed_version.stdout)
+  notify: Restart lldap
+  become: true
+
+- name: Ensure app directory is executable
+  ansible.builtin.file:
+    path: "{{ lldap_install_dir }}/app"
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Clean up downloaded files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/lldap-{{ lldap_version }}.tar.gz"
+    - "/tmp/lldap-extract"
+  become: true
+
+- name: Create LLDAP configuration file
+  ansible.builtin.template:
+    src: lldap_config.toml.j2
+    dest: "{{ lldap_install_dir }}/lldap_config.toml"
+    owner: "{{ lldap_user }}"
+    group: "{{ lldap_group }}"
+    mode: '0640'
+  notify: Restart lldap
+  become: true
+
+- name: Create LLDAP systemd service
+  ansible.builtin.template:
+    src: lldap.service.j2
+    dest: /etc/systemd/system/lldap.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart lldap
+  become: true
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+
+- name: Start and enable LLDAP
+  ansible.builtin.systemd:
+    name: lldap
+    state: started
+    enabled: true
+  become: true

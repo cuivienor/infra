@@ -95,15 +95,41 @@
   notify: Restart authelia
   become: true
 
-- name: Create Authelia users database
+# File-based authentication tasks (only when authelia_auth_backend == 'file')
+- name: Check if users database exists
+  ansible.builtin.stat:
+    path: "{{ authelia_config_dir }}/users.yml"
+  register: users_db
+  when: authelia_auth_backend == 'file'
+
+# Initial setup: create users.yml with default password hashes from vault
+- name: Create Authelia users database (initial setup only)
   ansible.builtin.template:
     src: users.yml.j2
     dest: "{{ authelia_config_dir }}/users.yml"
     owner: "{{ authelia_user }}"
     group: "{{ authelia_group }}"
     mode: '0600'
+  when: authelia_auth_backend == 'file' and not users_db.stat.exists
   notify: Restart authelia
   become: true
+
+# Update user metadata (email, displayname, groups) without touching passwords
+# This preserves passwords that users have changed via the UI
+- name: Update user metadata (preserving passwords)
+  ansible.builtin.script:
+    cmd: update_user_metadata.py
+    executable: python3
+  args:
+    chdir: "{{ authelia_config_dir }}"
+  environment:
+    USERS_FILE: "{{ authelia_config_dir }}/users.yml"
+    USERS_CONFIG: "{{ authelia_users | to_json }}"
+  when: authelia_auth_backend == 'file' and users_db.stat.exists
+  notify: Restart authelia
+  become: true
+  changed_when: update_metadata.rc == 0
+  register: update_metadata
 
 - name: Create Authelia systemd service
   ansible.builtin.template:

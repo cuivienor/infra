@@ -1,0 +1,52 @@
+# LLDAP Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+## Logging verbosity: trace, debug, info, warn, error
+verbose = false
+
+## LDAP server settings
+ldap_host = "0.0.0.0"
+ldap_port = {{ lldap_ldap_port }}
+
+## HTTP server settings (Web UI and API)
+http_host = "0.0.0.0"
+http_port = {{ lldap_http_port }}
+http_url = "{{ lldap_http_url }}"
+
+## LDAP Base DN
+ldap_base_dn = "{{ lldap_base_dn }}"
+
+## Admin username and email
+ldap_user_dn = "{{ lldap_admin_username }}"
+ldap_user_email = "{{ lldap_admin_email }}"
+
+## Admin password (hashed automatically on first start)
+ldap_user_pass = "{{ lldap_admin_password }}"
+
+## Database URL
+database_url = "{{ lldap_database_url }}"
+
+## Secret key for JWT tokens (min 32 characters, generate with: openssl rand -hex 32)
+jwt_secret = "{{ lldap_jwt_secret }}"
+
+## Secret seed for key generation (min 32 characters)
+key_seed = "{{ lldap_key_seed }}"
+
+## Private key file location (auto-generated if not exists)
+key_file = "{{ lldap_data_dir }}/private_key"
+
+{% if lldap_smtp_enabled %}
+## SMTP configuration for password reset emails
+[smtp_options]
+enable_password_reset = true
+server = "{{ lldap_smtp_server }}"
+port = {{ lldap_smtp_port }}
+user = "{{ lldap_smtp_user }}"
+password = "{{ lldap_smtp_password }}"
+from = "{{ lldap_smtp_from }}"
+tls_required = {{ lldap_smtp_tls_required | lower }}
+{% endif %}
+
+## LDAP options
+[ldaps_options]
+enabled = false

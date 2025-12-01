@@ -1,0 +1,22 @@
+[Unit]
+Description=LLDAP - Lightweight LDAP server
+After=network.target
+
+[Service]
+Type=simple
+User={{ lldap_user }}
+Group={{ lldap_group }}
+WorkingDirectory={{ lldap_install_dir }}
+ExecStart={{ lldap_install_dir }}/lldap run --config-file {{ lldap_install_dir }}/lldap_config.toml
+Restart=on-failure
+RestartSec=5
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths={{ lldap_data_dir }}
+
+[Install]
+WantedBy=multi-user.target
