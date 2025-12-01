@@ -21,8 +21,18 @@ identity_validation:
   reset_password:
     jwt_secret: '{{ authelia_jwt_secret }}'
 
-# Authentication Backend - File based
+# Authentication Backend
 authentication_backend:
+{% if authelia_auth_backend == 'ldap' %}
+  # LDAP backend (LLDAP)
+  ldap:
+    implementation: '{{ authelia_ldap_implementation }}'
+    address: '{{ authelia_ldap_address }}'
+    base_dn: '{{ authelia_ldap_base_dn }}'
+    user: '{{ authelia_ldap_user }}'
+    password: '{{ authelia_ldap_password }}'
+{% else %}
+  # File-based backend
   file:
     path: '{{ authelia_config_dir }}/users.yml'
     password:
@@ -32,6 +42,7 @@ authentication_backend:
       parallelism: 4
       key_length: 32
       salt_length: 16
+{% endif %}
 
 # Brute-force protection
 # Bans users after repeated failed login attempts

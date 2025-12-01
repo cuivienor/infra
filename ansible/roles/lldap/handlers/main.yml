@@ -1,0 +1,14 @@
+---
+# LLDAP handlers
+
+- name: Restart lldap
+  ansible.builtin.systemd:
+    name: lldap
+    state: restarted
+  become: true
+
+- name: Reload lldap
+  ansible.builtin.systemd:
+    name: lldap
+    state: reloaded
+  become: true

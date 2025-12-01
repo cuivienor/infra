@@ -39,7 +39,18 @@ authelia_jwt_secret: ""
 authelia_session_secret: ""
 authelia_storage_encryption_key: ""
 
-# User database - MUST be overridden in playbook/vault
+# Authentication backend type: file or ldap
+authelia_auth_backend: "file"
+
+# LDAP backend configuration (when authelia_auth_backend: ldap)
+# Use implementation: lldap for LLDAP server
+authelia_ldap_implementation: "lldap"
+authelia_ldap_address: "ldap://192.168.1.114:3890"
+authelia_ldap_base_dn: "dc=paniland,dc=com"
+authelia_ldap_user: ""      # DN of service account (from vault)
+authelia_ldap_password: ""  # Service account password (from vault)
+
+# User database - only used when authelia_auth_backend: file
 authelia_users: []
 # Example:
 # authelia_users:

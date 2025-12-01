@@ -1,0 +1,42 @@
+---
+# LLDAP default configuration
+
+# LLDAP version (GitHub release tag)
+lldap_version: "v0.6.1"
+
+# Installation paths
+lldap_install_dir: "/opt/lldap"
+lldap_data_dir: "/var/lib/lldap"
+lldap_user: "lldap"
+lldap_group: "lldap"
+
+# Server configuration
+lldap_ldap_port: 3890
+lldap_http_port: 17170
+lldap_http_url: "http://localhost:17170"
+
+# LDAP configuration
+lldap_base_dn: "dc=paniland,dc=com"
+
+# Admin user (created automatically by LLDAP)
+lldap_admin_username: "admin"
+lldap_admin_email: "admin@paniland.com"
+
+# Secrets - MUST be overridden in vault
+lldap_admin_password: ""
+lldap_jwt_secret: ""
+lldap_key_seed: ""
+
+# Database configuration (SQLite by default)
+lldap_database_url: "sqlite:///var/lib/lldap/users.db?mode=rwc"
+
+# SMTP configuration for password reset emails (optional)
+# If not set, LLDAP won't send emails directly
+# (Authelia handles password resets via its own SMTP config)
+lldap_smtp_enabled: false
+lldap_smtp_server: ""
+lldap_smtp_port: 587
+lldap_smtp_user: ""
+lldap_smtp_password: ""
+lldap_smtp_from: ""
+lldap_smtp_tls_required: true
