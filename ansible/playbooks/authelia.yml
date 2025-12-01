@@ -47,10 +47,12 @@
         groups:
           - admins
 
-    # Access control rules - wishlist only for now
+    # Access control rules
     authelia_access_rules:
       - domain: "wishlist.paniland.com"
         policy: "one_factor"
+      - domain: "lldap.paniland.com"
+        policy: "one_factor"  # LLDAP admin UI
 
     # Override default policy to deny unauthenticated access
     authelia_default_policy: "deny"

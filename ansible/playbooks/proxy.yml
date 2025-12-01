@@ -61,6 +61,9 @@
       - domain: "wishlist.paniland.com"
         upstream: "192.168.1.186:3280"
         authelia_protected: true  # Requires authentication via Authelia
+      - domain: "lldap.paniland.com"
+        upstream: "lldap.home.arpa:17170"
+        authelia_protected: true  # Admin interface - requires authentication
 
   pre_tasks:
     - name: Display configuration
