@@ -167,23 +167,28 @@ caddy_proxy_targets:
 
 Note: Using `paniland.com` subdomain instead of `.home.arpa` to get valid Let's Encrypt certificates.
 
-**Step 2: Add DNS rewrite in AdGuard**
+**Step 2: Add DNS rewrite in AdGuard (via Ansible)**
 
-Add rewrite in AdGuard Home (both Pi4 and CT310):
-- `jellyfin-internal.paniland.com` → `192.168.1.111` (Caddy proxy)
+In `ansible/playbooks/dns.yml`, add to `adguard_home_dns_rewrites` (SERVICE ENDPOINTS section):
 
-**Step 3: Apply proxy playbook**
+```yaml
+- domain: "jellyfin-internal.paniland.com"
+  answer: "192.168.1.111"  # Via Caddy proxy (internal, no auth)
+```
+
+**Step 3: Apply playbooks**
 
 ```bash
 cd ansible
-ansible-playbook playbooks/proxy.yml
+ansible-playbook playbooks/dns.yml    # Updates AdGuard DNS rewrites
+ansible-playbook playbooks/proxy.yml  # Updates Caddy routes
 ```
 
 **Step 4: Commit**
 
 ```bash
-git add ansible/playbooks/proxy.yml
-git commit -m "feat: add internal jellyfin.home.arpa route without auth"
+git add ansible/playbooks/proxy.yml ansible/playbooks/dns.yml
+git commit -m "feat: add internal jellyfin-internal.paniland.com route"
 ```
 
 ---
@@ -331,6 +336,7 @@ AdGuard and Backrest stay internal-only with service passwords. Future enhanceme
 |------|---------|
 | `terraform/cloudflare/variables.tf` | Add jellyfin to tunnel_services |
 | `ansible/playbooks/proxy.yml` | Add jellyfin.paniland.com (protected), jellyfin-internal.paniland.com (unprotected) |
+| `ansible/playbooks/dns.yml` | Add DNS rewrite for jellyfin-internal.paniland.com |
 | `ansible/playbooks/authelia.yml` | Add jellyfin access rule, proxmox OIDC client |
 | `ansible/vars/secrets.yml` | Add proxmox OIDC client secrets |
 
