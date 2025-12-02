@@ -40,9 +40,7 @@
       # Use: https://service.paniland.com in browser
       # ===========================================
       - domain: "jellyfin.paniland.com"
-        answer: "192.168.1.111"  # Via Caddy proxy for HTTPS
-      - domain: "jellyfin-internal.paniland.com"
-        answer: "192.168.1.111"  # Via Caddy proxy (internal, no auth)
+        answer: "192.168.1.111"  # Via Caddy proxy for HTTPS (internal/Tailscale only)
       - domain: "backrest.paniland.com"
         answer: "192.168.1.111"
       - domain: "dns.paniland.com"
