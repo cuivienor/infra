@@ -37,6 +37,9 @@ variable "tunnel_services" {
     hostname = string
   }))
   default = {
+    jellyfin = {
+      hostname = "jellyfin.paniland.com"
+    }
     wishlist = {
       hostname = "wishlist.paniland.com"
     }
