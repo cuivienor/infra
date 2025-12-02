@@ -46,6 +46,8 @@
       - domain: "jellyfin.paniland.com"
         upstream: "192.168.1.130:8096"
         authelia_protected: true
+      - domain: "jellyfin-internal.paniland.com"
+        upstream: "192.168.1.130:8096"
       - domain: "backrest.paniland.com"
         upstream: "192.168.1.120:9898"
       - domain: "dns.paniland.com"
