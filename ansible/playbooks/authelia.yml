@@ -47,12 +47,17 @@
         groups:
           - admins
 
-    # Access control rules
+    # Access control rules (group-based from LLDAP)
     authelia_access_rules:
       - domain: "wishlist.paniland.com"
         policy: "one_factor"
+        subject: ["group:admins", "group:wishlist_users"]
       - domain: "lldap.paniland.com"
-        policy: "one_factor"  # LLDAP admin UI
+        policy: "one_factor"
+        subject: ["group:admins"]  # LLDAP admin UI - admins only
+      - domain: "jellyfin.paniland.com"
+        policy: "one_factor"
+        subject: ["group:admins", "group:jellyfin_users"]
 
     # Override default policy to deny unauthenticated access
     authelia_default_policy: "deny"

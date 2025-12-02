@@ -12,8 +12,8 @@ variable "initial_user_password" {
   sensitive   = true
 }
 
-variable "authelia_service_password" {
-  description = "Password for the Authelia service account"
-  type        = string
+variable "service_account_passwords" {
+  description = "Passwords for service accounts, keyed by username"
+  type        = map(string)
   sensitive   = true
 }
