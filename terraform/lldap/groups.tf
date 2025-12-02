@@ -1,15 +1,21 @@
 # LLDAP Groups
+# Dynamically created from terraform/users.yaml
 
-# Custom groups for access control
-resource "lldap_group" "admins" {
-  display_name = "admins"
+locals {
+  users_config = yamldecode(file("${path.module}/../users.yaml"))
 }
 
-resource "lldap_group" "users" {
-  display_name = "users"
+# Create all groups from users.yaml (except service_accounts which is a meta-group)
+resource "lldap_group" "groups" {
+  for_each = {
+    for name, config in local.users_config.groups : name => config
+    if name != "service_accounts"
+  }
+
+  display_name = each.key
 }
 
 # Reference built-in LLDAP groups (these exist automatically)
-# lldap_admin - Full admin rights
-# lldap_password_manager - Can change user passwords
-# lldap_strict_readonly - Read-only access
+# lldap_admin (id=1) - Full admin rights
+# lldap_password_manager (id=2) - Can change user passwords
+# lldap_strict_readonly (id=3) - Read-only access

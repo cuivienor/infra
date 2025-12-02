@@ -1,0 +1,64 @@
+# Unified User Registry
+# Source of truth for users and groups across LLDAP and Tailscale
+#
+# Usage:
+#   - LLDAP (terraform/lldap/): Creates users, groups, and memberships
+#   - Tailscale (terraform/tailscale/): Extracts emails for ACL groups
+#   - Authelia: References LLDAP groups for access control
+
+groups:
+  # Meta groups (control infrastructure access)
+  admins: {}           # Full access to everything
+  tailscale: {}        # VPN access to home network
+  service_accounts: {} # System accounts (no user access)
+
+  # Service groups (control SSO access per service)
+  jellyfin_users: {}
+  wishlist_users: {}
+  immich_users: {}     # Future
+
+users:
+  # Admin - full access
+  peter:
+    email: peter@petrovs.io
+    display_name: Peter Petrov
+    groups: [admins]
+
+  # Friends with VPN access
+  william:
+    email: williamrgoldstein@gmail.com
+    display_name: William Goldstein
+    groups: [tailscale, jellyfin_users, wishlist_users]
+
+  ani:
+    email: stefanova.ani@gmail.com
+    display_name: Ani Stefanova
+    groups: [tailscale, jellyfin_users, wishlist_users]
+
+  alastair:
+    email: alastairdglennie@gmail.com
+    display_name: Ally
+    groups: [tailscale, jellyfin_users, wishlist_users]
+
+  # Friends with tunnel-only access (no VPN)
+  sarah:
+    email: sweir27@gmail.com
+    display_name: Sarah Weir
+    groups: [jellyfin_users, wishlist_users]
+
+  maria:
+    email: maria.stef.ivanova@gmail.com
+    display_name: Maria Ivanova
+    groups: [jellyfin_users, wishlist_users]
+
+  momchil:
+    email: tomov90@gmail.com
+    display_name: Momchil
+    groups: [jellyfin_users, wishlist_users]
+
+  # Service accounts
+  authelia:
+    email: authelia@paniland.com
+    display_name: Authelia Service Account
+    groups: [service_accounts]
+    is_service_account: true

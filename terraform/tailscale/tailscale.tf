@@ -1,6 +1,17 @@
 # Tailscale Infrastructure Configuration
 # Manages ACLs, DNS, and auth keys for remote access
 
+# Read unified user config from terraform/users.yaml
+locals {
+  users_config = yamldecode(file("${path.module}/../users.yaml"))
+
+  # Users with Tailscale access: in 'tailscale' group OR in 'admins' group
+  tailscale_emails = [
+    for username, user in local.users_config.users : user.email
+    if contains(user.groups, "tailscale") || contains(user.groups, "admins")
+  ]
+}
+
 # Access Control List - defines who can access what
 resource "tailscale_acl" "homelab" {
   acl = jsonencode({
@@ -10,17 +21,9 @@ resource "tailscale_acl" "homelab" {
       "tag:subnet-router" = ["autogroup:admin"]
     }
 
-    // Group definitions for access control
+    // Group definitions for access control (from users.yaml)
     groups = {
-      // Add friend emails here when you want to share
-      "group:friends" = [
-        "williamrgoldstein@gmail.com",
-        "sweir27@gmail.com",
-        "stefanova.ani@gmail.com",
-        "alastairdglennie@gmail.com",
-        "maria.stef.ivanova@gmail.com",
-        "tomov90@gmail.com"
-      ]
+      "group:tailscale" = local.tailscale_emails
     }
 
     // Access rules
@@ -31,10 +34,10 @@ resource "tailscale_acl" "homelab" {
         src    = ["autogroup:admin"]
         dst    = ["*:*"]
       },
-      // Friends can access web services only
+      // Tailscale users can access web services only
       {
         action = "accept"
-        src    = ["group:friends"]
+        src    = ["group:tailscale"]
         dst = [
           "192.168.1.102:53",     // Pi4 DNS (for resolving paniland.com)
           "192.168.1.110:53",     // CT310 DNS (backup)
