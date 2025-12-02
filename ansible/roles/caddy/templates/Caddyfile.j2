@@ -16,13 +16,62 @@
 {% for target in caddy_proxy_targets %}
 {{ target.domain }} {
 {% if authelia_enabled | default(false) and target.authelia_protected | default(false) %}
+{% if target.authelia_bypass_api | default(false) %}
+    # Bypass Authelia for API/WebSocket (needed for SPAs like Jellyfin)
+    # Security: Initial page load requires auth, subsequent API calls are direct
+    @bypass {
+        path /api/* /socket* /System/* /Users/* /Items/* /Sessions/* /Library/* /Playback/* /Videos/* /Audio/* /Images/* /web/*
+    }
+    @websocket {
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    handle @websocket {
+{% if target.upstream_https | default(false) %}
+        reverse_proxy https://{{ target.upstream }} {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
+{% else %}
+        reverse_proxy {{ target.upstream }}
+{% endif %}
+    }
+    handle @bypass {
+{% if target.upstream_https | default(false) %}
+        reverse_proxy https://{{ target.upstream }} {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
+{% else %}
+        reverse_proxy {{ target.upstream }}
+{% endif %}
+    }
+
+    # Root and unknown paths go through Authelia
+    handle {
+        forward_auth {{ authelia_address }} {
+            uri /api/authz/forward-auth
+            copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+        }
+{% if target.upstream_https | default(false) %}
+        reverse_proxy https://{{ target.upstream }} {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
+{% else %}
+        reverse_proxy {{ target.upstream }}
+{% endif %}
+    }
+{% else %}
     # Forward authentication to Authelia
     forward_auth {{ authelia_address }} {
         uri /api/authz/forward-auth
         copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
     }
 
-{% endif %}
 {% if target.upstream_https | default(false) %}
     reverse_proxy https://{{ target.upstream }} {
         transport http {
@@ -31,6 +80,18 @@
     }
 {% else %}
     reverse_proxy {{ target.upstream }}
+{% endif %}
+{% endif %}
+{% else %}
+{% if target.upstream_https | default(false) %}
+    reverse_proxy https://{{ target.upstream }} {
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
+{% else %}
+    reverse_proxy {{ target.upstream }}
+{% endif %}
 {% endif %}
 
     tls {
