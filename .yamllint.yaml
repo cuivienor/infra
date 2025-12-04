@@ -3,6 +3,11 @@
 
 extends: default
 
+# Ignore SOPS-encrypted files (they have their own format)
+ignore:
+  - "*.sops.yaml"
+  - "**/*.sops.yaml"
+
 rules:
   # Allow longer lines for infrastructure configs
   line-length:

@@ -304,14 +304,36 @@ Understanding these roles is key to making infrastructure changes:
 
 **Never commit:**
 - Terraform state files (`*.tfstate`, `*.tfstate.backup`)
-- Secrets files (`terraform.tfvars`, `.vault_pass`)
-- Ansible vault files ending in `secrets.yml` (committed encrypted only)
-- API tokens, passwords, credentials
+- Unencrypted secrets (`.vault_pass`, plain text credentials)
+- API tokens, passwords, credentials in plain text
 
 **Secrets Management:**
-- Terraform: Use `terraform.tfvars` (gitignored)
-- Ansible: Encrypt with `ansible-vault encrypt vars/<name>_secrets.yml` (from ansible/ directory)
+
+*Terraform (SOPS + age):*
+- Secrets are encrypted with SOPS and stored in `secrets.sops.yaml` files (committed)
+- Config: `terraform/.sops.yaml` defines encryption rules
+- Key location: `~/.sops/keys.txt` (never committed)
+- Key backup: Bitwarden secure note `homelab-sops-age-key`
+- Edit secrets: `sops terraform/<module>/secrets.sops.yaml`
+- Required env var: `export SOPS_AGE_KEY_FILE="$HOME/.sops/keys.txt"`
+
+*Ansible (ansible-vault):*
+- Encrypt with `ansible-vault encrypt vars/<name>_secrets.yml` (from ansible/ directory)
 - Decrypt: `ansible-vault view vars/<name>_secrets.yml` (vault password auto-loaded from ansible.cfg)
+
+**New Machine Setup:**
+```bash
+# 1. Install tools
+./scripts/setup-dev.sh
+
+# 2. Restore SOPS key from Bitwarden
+bw login
+export BW_SESSION=$(bw unlock --raw)
+./scripts/setup-dev.sh --setup-sops  # Choose option 2 to restore
+
+# 3. Add to shell profile
+echo 'export SOPS_AGE_KEY_FILE="$HOME/.sops/keys.txt"' >> ~/.bashrc
+```
 
 ## Documentation Structure
 

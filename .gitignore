@@ -2,6 +2,7 @@
 terraform/**/.terraform/
 terraform/**/*.tfstate
 terraform/**/*.tfstate.backup
+terraform/**/*.tfstate.*.backup
 terraform/**/.terraform.lock.hcl
 terraform/**/terraform.tfvars
 terraform/**/.terraform.tfstate.lock.info
@@ -22,10 +23,25 @@ ansible/.vault_pass
 # OS
 .DS_Store
 
-# Sensitive
+# Sensitive (plain text secrets)
 *secret*
 *token*
 *password*
+
+# SOPS-encrypted files are safe to commit (override *secret* pattern)
+!*.sops.yaml
+!**/*.sops.yaml
+
+# Terraform secrets.tf files are just code, not secrets (override *secret* pattern)
+!secrets.tf
+!**/secrets.tf
+
+# SOPS decrypted temp files
+*.dec.yaml
+*.dec.yml
+
+# Secrets backup (local only)
+.secrets-backup-*/
 
 # Private journal
 .private-journal/

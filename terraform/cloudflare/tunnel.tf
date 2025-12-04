@@ -10,14 +10,14 @@ resource "random_id" "tunnel_secret" {
 
 # Create the tunnel
 resource "cloudflare_zero_trust_tunnel_cloudflared" "homelab" {
-  account_id = var.cloudflare_account_id
+  account_id = local.cloudflare_account_id
   name       = var.tunnel_name
   secret     = random_id.tunnel_secret.b64_std
 }
 
 # Configure tunnel ingress rules
 resource "cloudflare_zero_trust_tunnel_cloudflared_config" "homelab" {
-  account_id = var.cloudflare_account_id
+  account_id = local.cloudflare_account_id
   tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.homelab.id
 
   config {
@@ -45,7 +45,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "homelab" {
 resource "cloudflare_record" "tunnel_services" {
   for_each = var.tunnel_services
 
-  zone_id = var.cloudflare_zone_id
+  zone_id = local.cloudflare_zone_id
   name    = split(".", each.value.hostname)[0] # Extract subdomain (e.g., "wishlist")
   type    = "CNAME"
   content = "${cloudflare_zero_trust_tunnel_cloudflared.homelab.id}.cfargotunnel.com"

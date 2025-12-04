@@ -3,7 +3,7 @@
 #
 # IMPORTANT: Human user passwords are managed with lifecycle { ignore_changes = [password] }
 # This means:
-# - Initial creation uses var.initial_user_password
+# - Initial creation uses local.initial_user_password (from SOPS)
 # - After user changes password via Authelia, Terraform won't overwrite it
 # - To force a password reset, use taint or remove from state
 
@@ -17,7 +17,7 @@ resource "lldap_user" "users" {
   username     = each.key
   email        = each.value.email
   display_name = each.value.display_name
-  password     = var.initial_user_password
+  password     = local.initial_user_password
 
   lifecycle {
     ignore_changes = [password]
@@ -34,5 +34,5 @@ resource "lldap_user" "service_accounts" {
   username     = each.key
   email        = each.value.email
   display_name = each.value.display_name
-  password     = var.service_account_passwords[each.key]
+  password     = local.service_account_passwords[each.key]
 }

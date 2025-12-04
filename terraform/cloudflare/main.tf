@@ -21,9 +21,13 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.0"
     }
+    sops = {
+      source  = "carlpett/sops"
+      version = "~> 1.1"
+    }
   }
 }
 
 provider "cloudflare" {
-  api_token = var.cloudflare_api_token
+  api_token = local.cloudflare_api_token
 }
