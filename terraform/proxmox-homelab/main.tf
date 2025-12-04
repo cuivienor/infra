@@ -8,6 +8,10 @@ terraform {
       source  = "bpg/proxmox"
       version = "~> 0.50.0"
     }
+    sops = {
+      source  = "carlpett/sops"
+      version = "~> 1.1"
+    }
   }
 }
 
@@ -16,10 +20,9 @@ provider "proxmox" {
   endpoint = var.proxmox_endpoint
   insecure = var.proxmox_insecure
 
-  # Authentication: use API token (preferred) or username/password
-  api_token = var.proxmox_api_token != "" ? var.proxmox_api_token : null
-  username  = var.proxmox_api_token == "" ? var.proxmox_username : null
-  password  = var.proxmox_api_token == "" ? var.proxmox_password : null
+  # Authentication via SOPS-encrypted secrets
+  username = local.proxmox_username
+  password = local.proxmox_password
 
   ssh {
     agent    = true

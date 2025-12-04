@@ -1,20 +1,5 @@
 # Cloudflare module variables
-
-variable "cloudflare_api_token" {
-  description = "Cloudflare API token with Zone:DNS:Edit, Account:Cloudflare Tunnel:Edit permissions"
-  type        = string
-  sensitive   = true
-}
-
-variable "cloudflare_account_id" {
-  description = "Cloudflare account ID"
-  type        = string
-}
-
-variable "cloudflare_zone_id" {
-  description = "Cloudflare zone ID for paniland.com"
-  type        = string
-}
+# Note: Secrets (api_token, account_id, zone_id) are managed via SOPS - see secrets.sops.yaml
 
 variable "tunnel_name" {
   description = "Name for the Cloudflare Tunnel"
@@ -44,10 +29,4 @@ variable "tunnel_services" {
       hostname = "auth.paniland.com"
     }
   }
-}
-
-# Resend DKIM public key for email authentication
-variable "resend_dkim_value" {
-  description = "DKIM public key value from Resend dashboard"
-  type        = string
 }

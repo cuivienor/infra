@@ -1,29 +1,10 @@
 # Terraform variables for Proxmox homelab containers
+# Note: Secrets (username/password) are managed via SOPS - see secrets.sops.yaml
 
 variable "proxmox_endpoint" {
   description = "Proxmox API endpoint"
   type        = string
   default     = "https://192.168.1.100:8006"
-}
-
-variable "proxmox_username" {
-  description = "Proxmox API username (not used if api_token is set)"
-  type        = string
-  default     = "root@pam"
-}
-
-variable "proxmox_password" {
-  description = "Proxmox API password (not used if api_token is set)"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "proxmox_api_token" {
-  description = "Proxmox API token (format: user@realm!tokenid=secret)"
-  type        = string
-  sensitive   = true
-  default     = ""
 }
 
 variable "proxmox_insecure" {

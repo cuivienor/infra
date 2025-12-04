@@ -8,11 +8,15 @@ terraform {
       source  = "tailscale/tailscale"
       version = "~> 0.16"
     }
+    sops = {
+      source  = "carlpett/sops"
+      version = "~> 1.1"
+    }
   }
 }
 
 provider "tailscale" {
-  oauth_client_id     = var.tailscale_oauth_client_id
-  oauth_client_secret = var.tailscale_oauth_client_secret
-  tailnet             = var.tailscale_tailnet
+  oauth_client_id     = local.tailscale_oauth_client_id
+  oauth_client_secret = local.tailscale_oauth_client_secret
+  tailnet             = local.tailscale_tailnet
 }
