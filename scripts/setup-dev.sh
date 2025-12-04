@@ -3,11 +3,12 @@
 #
 # Supports: Arch Linux, macOS (Homebrew)
 # Installs: shellcheck, shfmt, yamllint, ansible-lint, pre-commit, tflint (optional)
-#           sops, age, bitwarden-cli (secrets management)
+#           sops, age, bitwarden-cli, direnv (secrets management)
 #
 # Usage:
-#   ./scripts/setup-dev.sh           # Install all tools
-#   ./scripts/setup-dev.sh --check   # Check what's installed
+#   ./scripts/setup-dev.sh             # Install all tools
+#   ./scripts/setup-dev.sh --check     # Check what's installed
+#   ./scripts/setup-dev.sh --setup-secrets  # Restore secrets from Bitwarden
 
 set -e
 
@@ -80,17 +81,38 @@ check_tools() {
     print_status "sops"
     print_status "age"
     print_status "bw"
+    print_status "direnv"
 
-    if [[ -f "$HOME/.sops/keys.txt" ]]; then
-        echo -e "  ${GREEN}✓${NC} SOPS age key configured"
+    # Get script directory for relative paths
+    local script_dir
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    echo ""
+    echo "Secrets files:"
+    if [[ -f "$script_dir/../terraform/.sops-key" ]]; then
+        echo -e "  ${GREEN}✓${NC} SOPS age key (terraform/.sops-key)"
     else
-        echo -e "  ${YELLOW}!${NC} SOPS age key not found (~/.sops/keys.txt)"
+        echo -e "  ${YELLOW}!${NC} SOPS age key not found (run --setup-secrets)"
     fi
 
+    if [[ -f "$script_dir/../ansible/.vault_pass" ]]; then
+        echo -e "  ${GREEN}✓${NC} Ansible vault password (ansible/.vault_pass)"
+    else
+        echo -e "  ${YELLOW}!${NC} Ansible vault password not found (run --setup-secrets)"
+    fi
+
+    echo ""
+    echo "Environment (via direnv):"
     if [[ -n "${SOPS_AGE_KEY_FILE:-}" ]]; then
         echo -e "  ${GREEN}✓${NC} SOPS_AGE_KEY_FILE is set"
     else
-        echo -e "  ${YELLOW}!${NC} SOPS_AGE_KEY_FILE not set in environment"
+        echo -e "  ${YELLOW}!${NC} SOPS_AGE_KEY_FILE not set (run 'direnv allow')"
+    fi
+
+    if [[ -n "${ANSIBLE_VAULT_PASSWORD_FILE:-}" ]]; then
+        echo -e "  ${GREEN}✓${NC} ANSIBLE_VAULT_PASSWORD_FILE is set"
+    else
+        echo -e "  ${YELLOW}!${NC} ANSIBLE_VAULT_PASSWORD_FILE not set (run 'direnv allow')"
     fi
 }
 
@@ -108,7 +130,7 @@ install_arch() {
 
     # Secrets management tools
     echo "Installing secrets management tools..."
-    sudo pacman -S --needed --noconfirm age sops
+    sudo pacman -S --needed --noconfirm age sops direnv
 
     # Bitwarden CLI (check if available, suggest alternatives)
     if ! check_cmd bw; then
@@ -153,87 +175,67 @@ install_macos() {
 
     # Secrets management tools
     echo "Installing secrets management tools..."
-    brew install sops age bitwarden-cli
+    brew install sops age bitwarden-cli direnv
 
     # Note: ansible-lint and pre-commit available via brew on macOS
 }
 
-# Setup SOPS age key
-setup_sops_key() {
-    local key_dir="$HOME/.sops"
-    local key_file="$key_dir/keys.txt"
+# Setup secrets from Bitwarden
+setup_secrets() {
+    # Get script directory for relative paths
+    local script_dir
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local sops_key="$script_dir/../terraform/.sops-key"
+    local vault_pass="$script_dir/../ansible/.vault_pass"
 
-    if [[ -f "$key_file" ]]; then
-        echo -e "${GREEN}✓${NC} SOPS key already exists at $key_file"
-        # Show public key for reference
-        local pub_key
-        pub_key=$(grep "public key:" "$key_file" | cut -d: -f2 | tr -d ' ')
-        if [[ -n "$pub_key" ]]; then
-            echo "  Public key: $pub_key"
-        fi
-        return 0
+    # Check Bitwarden CLI
+    if ! check_cmd bw; then
+        echo -e "${RED}Error:${NC} Bitwarden CLI not installed"
+        echo "Install it first, then run this again."
+        return 1
     fi
 
-    echo "SOPS age key not found."
-    echo ""
-    echo "Options:"
-    echo "  1. Generate new key (first-time setup)"
-    echo "  2. Restore from Bitwarden (existing key)"
-    echo "  3. Skip (configure manually later)"
-    echo ""
-    read -p "Choose [1/2/3]: " -n 1 -r
-    echo
+    # Check if logged in and unlocked
+    if ! bw status 2>/dev/null | grep -q '"status":"unlocked"'; then
+        echo -e "${RED}Error:${NC} Bitwarden vault is locked."
+        echo "Run: export BW_SESSION=\$(bw unlock --raw)"
+        echo "Then run this script again."
+        return 1
+    fi
 
-    case $REPLY in
-        1)
-            mkdir -p "$key_dir"
-            age-keygen -o "$key_file" 2>&1
-            chmod 600 "$key_file"
-            echo -e "${GREEN}✓${NC} Generated new age key at $key_file"
-            echo ""
-            echo -e "${YELLOW}Important:${NC} Back up this key to Bitwarden!"
-            echo "  1. Log in: bw login"
-            echo "  2. Create secure note named 'homelab-sops-age-key'"
-            echo "  3. Paste the contents of $key_file"
-            echo ""
-            # Show the public key for .sops.yaml
-            local pub_key
-            pub_key=$(grep "public key:" "$key_file" | cut -d: -f2 | tr -d ' ')
-            echo "Public key for .sops.yaml:"
-            echo "  $pub_key"
-            ;;
-        2)
-            if ! check_cmd bw; then
-                echo -e "${RED}Error:${NC} Bitwarden CLI not installed"
-                echo "Install it first, then run this again."
-                return 1
-            fi
-            # Check if logged in
-            if ! bw status 2>/dev/null | grep -q '"status":"unlocked"'; then
-                echo "Bitwarden vault is locked. Unlocking..."
-                echo "Run: export BW_SESSION=\$(bw unlock --raw)"
-                echo "Then run this script again."
-                return 1
-            fi
-            echo "Fetching key from Bitwarden..."
-            mkdir -p "$key_dir"
-            if bw get notes "homelab-sops-age-key" > "$key_file" 2>/dev/null; then
-                chmod 600 "$key_file"
-                echo -e "${GREEN}✓${NC} Restored key from Bitwarden to $key_file"
-            else
-                echo -e "${RED}Error:${NC} Could not find 'homelab-sops-age-key' in Bitwarden"
-                echo "Make sure the secure note exists with that exact name."
-                return 1
-            fi
-            ;;
-        3)
-            echo "Skipping SOPS key setup"
-            echo "You can run './scripts/setup-dev.sh --setup-sops' later."
-            ;;
-        *)
-            echo "Invalid choice. Skipping."
-            ;;
-    esac
+    echo "Restoring secrets from Bitwarden..."
+    echo ""
+
+    # SOPS age key
+    if [[ -f "$sops_key" ]]; then
+        echo -e "${GREEN}✓${NC} SOPS age key already exists (terraform/.sops-key)"
+    else
+        echo "  Fetching SOPS age key..."
+        if bw get notes "homelab-sops-age-key" > "$sops_key" 2>/dev/null; then
+            chmod 600 "$sops_key"
+            echo -e "${GREEN}✓${NC} Restored SOPS age key to terraform/.sops-key"
+        else
+            echo -e "${RED}✗${NC} Could not find 'homelab-sops-age-key' in Bitwarden"
+        fi
+    fi
+
+    # Ansible vault password
+    if [[ -f "$vault_pass" ]]; then
+        echo -e "${GREEN}✓${NC} Ansible vault password already exists (ansible/.vault_pass)"
+    else
+        echo "  Fetching Ansible vault password..."
+        if bw get notes "homelab-ansible-vault-pass" > "$vault_pass" 2>/dev/null; then
+            chmod 600 "$vault_pass"
+            echo -e "${GREEN}✓${NC} Restored Ansible vault password to ansible/.vault_pass"
+        else
+            echo -e "${RED}✗${NC} Could not find 'homelab-ansible-vault-pass' in Bitwarden"
+        fi
+    fi
+
+    echo ""
+    echo "Next steps:"
+    echo "  1. Run 'direnv allow' to load environment variables"
+    echo "  2. Verify with './scripts/setup-dev.sh --check'"
 }
 
 # Install tflint (optional, cross-platform)
@@ -298,15 +300,14 @@ install_tools() {
 
     echo ""
     echo "Next steps:"
-    echo "  1. Run './scripts/setup-dev.sh --check' to verify installation"
-    echo "  2. Test linters manually:"
-    echo "     shellcheck scripts/**/*.sh"
-    echo "     yamllint ansible/"
-    echo "     ansible-lint ansible/playbooks/"
-    echo "     terraform fmt -check -recursive terraform/"
-    echo "  3. Add to your shell profile (~/.bashrc or ~/.zshrc):"
-    echo '     export SOPS_AGE_KEY_FILE="$HOME/.sops/keys.txt"'
-    echo "  4. Setup SOPS key: ./scripts/setup-dev.sh --setup-sops"
+    echo "  1. Add direnv hook to your shell profile (~/.bashrc or ~/.zshrc):"
+    echo '     eval "$(direnv hook bash)"  # or zsh'
+    echo "  2. Restore secrets from Bitwarden:"
+    echo "     bw login && export BW_SESSION=\$(bw unlock --raw)"
+    echo "     ./scripts/setup-dev.sh --setup-secrets"
+    echo "  3. Allow direnv in this repo:"
+    echo "     direnv allow"
+    echo "  4. Verify with './scripts/setup-dev.sh --check'"
 }
 
 # Main
@@ -314,16 +315,16 @@ case "${1:-}" in
     --check|-c)
         check_tools
         ;;
-    --setup-sops|-s)
-        setup_sops_key
+    --setup-secrets|-s)
+        setup_secrets
         ;;
     --help|-h)
-        echo "Usage: $0 [--check|--setup-sops|--help]"
+        echo "Usage: $0 [--check|--setup-secrets|--help]"
         echo ""
         echo "Options:"
-        echo "  --check, -c       Check current tool installation status"
-        echo "  --setup-sops, -s  Setup or restore SOPS age key"
-        echo "  --help, -h        Show this help message"
+        echo "  --check, -c          Check current tool installation status"
+        echo "  --setup-secrets, -s  Restore secrets from Bitwarden"
+        echo "  --help, -h           Show this help message"
         echo ""
         echo "Without arguments, installs all development tools."
         ;;
