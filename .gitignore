@@ -16,9 +16,11 @@ ansible/.vault_pass
 # Note: Encrypted vault files (backup_secrets.yml) are committed
 # Only ignore if unencrypted (shouldn't happen in practice)
 
-# Environment
-.envrc
+# Environment (secrets, not .envrc which only sets paths)
 .env
+
+# SOPS age key (private key for decryption)
+terraform/.sops-key
 
 # OS
 .DS_Store
