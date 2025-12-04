@@ -1,4 +1,4 @@
-.PHONY: build build-local deploy run-remote clean
+.PHONY: build build-local deploy run-remote clean test test-contracts test-all fmt vet
 
 # Build for Linux (production target)
 build:
@@ -26,6 +26,17 @@ clean:
 # Run tests
 test:
 	go test ./...
+
+# Run contract tests (validates bash scripts produce scanner-compatible state)
+test-contracts: bin/validate-state
+	./test/test-contracts.sh
+
+# Build state validator
+bin/validate-state:
+	go build -o bin/validate-state ./test/validate-state
+
+# Run all tests
+test-all: test test-contracts
 
 # Format code
 fmt:
