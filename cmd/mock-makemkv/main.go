@@ -75,6 +75,9 @@ func ParseArgs(args []string) (string, *Options, error) {
 		case "--skip-ffmpeg":
 			opts.SkipFFmpeg = true
 			i++
+		// Accept makemkvcon flags (ignored for compatibility)
+		case "-r", "--robot", "--noscan", "--minlength", "--messages", "--progress", "--debug", "--directio":
+			i++
 		default:
 			// Not a flag, must be command
 			goto parseCommand

@@ -1,4 +1,4 @@
-.PHONY: build build-local build-all build-mock-makemkv deploy run-remote clean test test-contracts test-e2e test-all fmt vet
+.PHONY: build build-local build-all build-mock-makemkv build-ripper deploy run-remote clean test test-contracts test-e2e test-all fmt vet
 
 # Build for Linux (production target)
 build:
@@ -12,8 +12,12 @@ build-local:
 build-mock-makemkv:
 	go build -o bin/mock-makemkv ./cmd/mock-makemkv
 
+# Build ripper CLI
+build-ripper:
+	go build -o bin/ripper ./cmd/ripper
+
 # Build all binaries for local development
-build-all: build-local build-mock-makemkv
+build-all: build-local build-mock-makemkv build-ripper
 
 # Deploy to analyzer container
 deploy: build
@@ -42,8 +46,8 @@ test-contracts: bin/validate-state
 bin/validate-state:
 	go build -o bin/validate-state ./test/validate-state
 
-# Run E2E tests (requires mock-makemkv)
-test-e2e: build-mock-makemkv
+# Run E2E tests (requires mock-makemkv and ripper)
+test-e2e: build-mock-makemkv build-ripper
 	go test ./tests/e2e/... -v
 
 # Run all tests
