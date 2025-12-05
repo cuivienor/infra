@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/petercsiba/media-pipeline/internal/model"
+	"github.com/cuivienor/media-pipeline/internal/model"
 )
 
 // renderItemDetail renders the item detail view

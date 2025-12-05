@@ -1,4 +1,4 @@
-.PHONY: build build-local deploy run-remote clean test test-contracts test-all fmt vet
+.PHONY: build build-local build-all build-mock-makemkv deploy run-remote clean test test-contracts test-e2e test-all fmt vet
 
 # Build for Linux (production target)
 build:
@@ -7,6 +7,13 @@ build:
 # Build for local machine (development)
 build-local:
 	go build -o bin/media-pipeline ./cmd/media-pipeline
+
+# Build mock-makemkv (for testing)
+build-mock-makemkv:
+	go build -o bin/mock-makemkv ./cmd/mock-makemkv
+
+# Build all binaries for local development
+build-all: build-local build-mock-makemkv
 
 # Deploy to analyzer container
 deploy: build
@@ -35,8 +42,12 @@ test-contracts: bin/validate-state
 bin/validate-state:
 	go build -o bin/validate-state ./test/validate-state
 
+# Run E2E tests (requires mock-makemkv)
+test-e2e: build-mock-makemkv
+	go test ./tests/e2e/... -v
+
 # Run all tests
-test-all: test test-contracts
+test-all: test test-contracts test-e2e
 
 # Format code
 fmt:

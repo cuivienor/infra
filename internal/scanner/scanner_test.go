@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/petercsiba/media-pipeline/internal/model"
+	"github.com/cuivienor/media-pipeline/internal/model"
 )
 
 // getTestdataPath returns absolute path to testdata directory

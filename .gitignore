@@ -1,4 +1,4 @@
-# Binaries
+# Binaries (all builds should use `make` which outputs to bin/)
 bin/
 *.exe
 

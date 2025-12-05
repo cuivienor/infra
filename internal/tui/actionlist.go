@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/petercsiba/media-pipeline/internal/model"
+	"github.com/cuivienor/media-pipeline/internal/model"
 )
 
 // renderActionNeeded renders the action needed view

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/petercsiba/media-pipeline/internal/model"
-	"github.com/petercsiba/media-pipeline/internal/scanner"
+	"github.com/cuivienor/media-pipeline/internal/model"
+	"github.com/cuivienor/media-pipeline/internal/scanner"
 )
 
 // View represents the current view

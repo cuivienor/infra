@@ -1,4 +1,4 @@
-module github.com/petercsiba/media-pipeline
+module github.com/cuivienor/media-pipeline
 
 go 1.25.4
 

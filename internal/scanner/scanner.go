@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/petercsiba/media-pipeline/internal/model"
+	"github.com/cuivienor/media-pipeline/internal/model"
 )
 
 // Config holds scanner configuration
