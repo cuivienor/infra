@@ -1,4 +1,4 @@
-.PHONY: build build-local build-all build-mock-makemkv build-ripper deploy run-remote clean test test-contracts test-e2e test-all fmt vet
+.PHONY: build build-local build-all build-mock-makemkv build-ripper deploy run-remote clean test test-contracts test-e2e test-all fmt vet deploy-dev dev
 
 # Build for Linux (production target)
 build:
@@ -60,3 +60,19 @@ fmt:
 # Vet code
 vet:
 	go vet ./...
+
+# Test container targets
+TEST_HOST := pipeline-test
+DEV_BIN := /home/media/bin/dev
+
+# Build all for Linux and deploy to test container dev directory
+deploy-dev:
+	GOOS=linux GOARCH=amd64 go build -o bin/media-pipeline ./cmd/media-pipeline
+	GOOS=linux GOARCH=amd64 go build -o bin/ripper ./cmd/ripper
+	GOOS=linux GOARCH=amd64 go build -o bin/mock-makemkv ./cmd/mock-makemkv
+	ssh $(TEST_HOST) 'mkdir -p $(DEV_BIN)'
+	scp bin/media-pipeline bin/ripper bin/mock-makemkv $(TEST_HOST):$(DEV_BIN)/
+
+# Deploy and run TUI interactively on test container
+dev: deploy-dev
+	ssh -t $(TEST_HOST) 'PATH=$(DEV_BIN):$$PATH media-pipeline'
