@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,12 +45,12 @@ type stageMetadata struct {
 	Type      string `json:"type"`
 	Name      string `json:"name"`
 	SafeName  string `json:"safe_name"`
-	Season    string `json:"season"`
-	Disc      string `json:"disc,omitempty"`
+	Season    int    `json:"season,omitempty"`
+	Disc      int    `json:"disc,omitempty"`
 	InputDir  string `json:"input_dir,omitempty"`
 	OutputDir string `json:"output_dir,omitempty"`
 	StartedAt string `json:"started_at"`
-	CRF       string `json:"crf,omitempty"`
+	CRF       int    `json:"crf,omitempty"`
 	Mode      string `json:"mode,omitempty"`
 	Database  string `json:"database,omitempty"`
 }
@@ -185,13 +186,8 @@ func (s *Scanner) parseStateDir(stateDir string, stage model.Stage) (*stageResul
 
 	// Build unique key
 	key := metadata.SafeName
-	if metadata.Type == "tv" && metadata.Season != "" {
-		// Normalize season format (S02 or Season_02)
-		season := metadata.Season
-		if strings.HasPrefix(season, "Season_") {
-			season = "S" + strings.TrimPrefix(season, "Season_")
-		}
-		key = metadata.SafeName + "_" + season
+	if metadata.Type == "tv" && metadata.Season > 0 {
+		key = fmt.Sprintf("%s_S%02d", metadata.SafeName, metadata.Season)
 	}
 
 	// Get the parent directory (the actual media item directory)
@@ -226,23 +222,10 @@ func (s *Scanner) mergeResults(results []stageResult) []model.MediaItem {
 				mediaType = model.MediaTypeTV
 			}
 
-			// Extract season from key if TV
+			// Extract season from metadata if TV
 			season := ""
-			if mediaType == model.MediaTypeTV {
-				parts := strings.Split(result.key, "_")
-				if len(parts) > 0 {
-					lastPart := parts[len(parts)-1]
-					if strings.HasPrefix(lastPart, "S") && len(lastPart) <= 4 {
-						season = lastPart
-					}
-				}
-				// Also check metadata
-				if result.metadata.Season != "" {
-					season = result.metadata.Season
-					if strings.HasPrefix(season, "Season_") {
-						season = "S" + strings.TrimPrefix(season, "Season_")
-					}
-				}
+			if mediaType == model.MediaTypeTV && result.metadata.Season > 0 {
+				season = fmt.Sprintf("S%02d", result.metadata.Season)
 			}
 
 			item = &model.MediaItem{

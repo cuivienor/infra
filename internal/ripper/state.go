@@ -50,7 +50,7 @@ func (s *DefaultStateManager) Initialize(outputDir string, request *RipRequest) 
 
 	// Add TV-specific fields
 	if request.Type == MediaTypeTV {
-		metadata["season"] = formatSeason(request.Season)
+		metadata["season"] = request.Season
 		metadata["disc"] = request.Disc
 	}
 
@@ -121,10 +121,3 @@ func (s *DefaultStateManager) Complete(outputDir string) error {
 	return nil
 }
 
-// formatSeason formats a season number as "S01", "S02", etc.
-func formatSeason(season int) string {
-	if season <= 0 {
-		return ""
-	}
-	return fmt.Sprintf("S%02d", season)
-}

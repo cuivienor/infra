@@ -152,8 +152,9 @@ func TestDefaultStateManager_Initialize_TVShow(t *testing.T) {
 	if metadata["type"] != "tv" {
 		t.Errorf("type = %v, want tv", metadata["type"])
 	}
-	if metadata["season"] != "S01" {
-		t.Errorf("season = %v, want S01", metadata["season"])
+	// Season is now stored as integer
+	if metadata["season"] != float64(1) {
+		t.Errorf("season = %v, want 1", metadata["season"])
 	}
 }
 
