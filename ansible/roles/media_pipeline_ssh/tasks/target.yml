@@ -12,6 +12,6 @@
 - name: Deploy media-pipeline public key to authorized_keys
   ansible.posix.authorized_key:
     user: media
-    key: "{{ lookup('file', 'files/ssh-keys/media-pipeline.pub') }}"
+    key: "{{ lookup('file', playbook_dir + '/../files/ssh-keys/media-pipeline.pub') }}"
     state: present
     comment: "media-pipeline"

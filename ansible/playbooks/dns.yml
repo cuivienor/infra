@@ -95,6 +95,9 @@
         answer: "192.168.1.112"
       - domain: "lldap.home.arpa"
         answer: "192.168.1.114"
+      # Test/development containers
+      - domain: "pipeline-test.home.arpa"
+        answer: "192.168.1.199"
 
     # ===========================================
     # AD BLOCKING CONFIGURATION

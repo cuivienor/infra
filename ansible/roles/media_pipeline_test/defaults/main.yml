@@ -1,0 +1,38 @@
+---
+# Default variables for media_pipeline_test role
+
+# GitHub release configuration
+media_pipeline_github_repo: "cuivienor/media-pipeline"
+media_pipeline_version: "latest"  # Use "latest" or pin to specific version like "v0.1.0"
+
+# Binaries to install from the release tarball
+media_pipeline_binaries:
+  - media-pipeline
+  - ripper
+  - mock-makemkv
+
+# Packages to install (same as production media containers)
+media_pipeline_packages:
+  - ffmpeg           # Required by mock-makemkv for synthetic MKV generation
+  - mkvtoolnix       # MKV manipulation for remuxing stage
+  - mediainfo        # Media file information
+  - jq               # JSON processing
+  - bc               # Calculator for scripts
+  - curl             # Download tool
+  - wget             # Download tool
+  - nano             # Text editor
+  - tree             # Directory visualization
+
+# Test media base path (container-local for mock testing)
+test_media_base: "/mnt/test-media"
+
+# Directory structure for test media
+test_media_directories:
+  - "{{ test_media_base }}/staging/1-ripped/movies"
+  - "{{ test_media_base }}/staging/1-ripped/tv"
+  - "{{ test_media_base }}/staging/2-remuxed/movies"
+  - "{{ test_media_base }}/staging/2-remuxed/tv"
+  - "{{ test_media_base }}/staging/3-transcoded/movies"
+  - "{{ test_media_base }}/staging/3-transcoded/tv"
+  - "{{ test_media_base }}/library/movies"
+  - "{{ test_media_base }}/library/tv"

@@ -1,0 +1,135 @@
+---
+# Pipeline Test Container Playbook
+# E2E testing environment for media-pipeline project
+
+- name: Configure pipeline test container
+  hosts: pipeline-test
+  become: true
+
+  vars:
+    # Enable media user creation (same as production)
+    media_user_enabled: true
+    # No special groups needed (no hardware passthrough)
+    media_user_groups: []
+
+    # SSH key deployment
+    ssh_authorized_keys_users:
+      - root
+      - media  # Allow direct SSH as media user
+
+  roles:
+    - role: common
+      tags: ['common']
+
+    - role: media_pipeline_test
+      tags: ['pipeline-test', 'media']
+
+# Verification tasks
+- name: Verify pipeline test container configuration
+  hosts: pipeline-test
+  become: true
+
+  tasks:
+    - name: Wait for container to be ready
+      ansible.builtin.wait_for_connection:
+        timeout: 30
+      tags: ['verify']
+
+    - name: Verify production mount exists (read-only)
+      ansible.builtin.stat:
+        path: /mnt/media/library
+      register: prod_mount
+      tags: ['verify']
+
+    - name: Display production mount status
+      ansible.builtin.debug:
+        msg: "Production mount: {{ 'mounted correctly (read-only)' if prod_mount.stat.exists else 'MISSING - check Terraform mount' }}"
+      tags: ['verify']
+
+    - name: Verify test media directories exist
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /mnt/test-media/staging/1-ripped
+        - /mnt/test-media/staging/2-remuxed
+        - /mnt/test-media/staging/3-transcoded
+        - /mnt/test-media/library
+      register: test_dir_checks
+      tags: ['verify']
+
+    - name: Display test directory status
+      ansible.builtin.debug:
+        msg: "{{ item.item }}: {{ 'OK' if item.stat.exists else 'MISSING' }}"
+      loop: "{{ test_dir_checks.results }}"
+      tags: ['verify']
+
+    - name: Verify binaries are installed
+      ansible.builtin.command: "which {{ item }}"
+      loop:
+        - media-pipeline
+        - ripper
+        - mock-makemkv
+      register: binary_checks
+      changed_when: false
+      failed_when: false
+      become_user: media
+      tags: ['verify']
+
+    - name: Display binary installation status
+      ansible.builtin.debug:
+        msg: "{{ item.item }}: {{ 'INSTALLED at ' + item.stdout if item.rc == 0 else 'MISSING' }}"
+      loop: "{{ binary_checks.results }}"
+      tags: ['verify']
+
+    - name: Test mock-makemkv info command
+      ansible.builtin.command: /home/media/bin/mock-makemkv info disc:0
+      register: mock_test
+      changed_when: false
+      failed_when: false
+      become_user: media
+      tags: ['verify']
+
+    - name: Display mock-makemkv test result
+      ansible.builtin.debug:
+        msg: "mock-makemkv: {{ 'works correctly' if mock_test.rc == 0 else 'FAILED - ' + mock_test.stderr }}"
+      tags: ['verify']
+
+    - name: Check environment variables
+      ansible.builtin.shell: |
+        source /home/media/.bashrc
+        echo "MEDIA_BASE=$MEDIA_BASE"
+        echo "MAKEMKVCON_PATH=$MAKEMKVCON_PATH"
+        echo "PATH includes bin: $(echo $PATH | grep -q '/home/media/bin' && echo 'yes' || echo 'no')"
+      args:
+        executable: /bin/bash
+      register: env_check
+      changed_when: false
+      become_user: media
+      tags: ['verify']
+
+    - name: Display environment configuration
+      ansible.builtin.debug:
+        msg: "{{ env_check.stdout_lines }}"
+      tags: ['verify']
+
+    - name: Summary of verification
+      ansible.builtin.debug:
+        msg:
+          - "==================================="
+          - "Pipeline Test Container Verification"
+          - "==================================="
+          - "Production mount: {{ 'OK (read-only)' if prod_mount.stat.exists else 'FAIL' }}"
+          - "Test directories: {{ test_dir_checks.results | selectattr('stat.exists') | list | length }}/4"
+          - "Binaries installed: {{ binary_checks.results | selectattr('rc', 'equalto', 0) | list | length }}/3"
+          - "mock-makemkv: {{ 'OK' if mock_test.rc == 0 else 'FAIL' }}"
+          - ""
+          - "Usage:"
+          - "  ssh pipeline-test  # as media user"
+          - ""
+          - "Test against production data (read-only):"
+          - "  MEDIA_BASE=/mnt/media media-pipeline"
+          - ""
+          - "Test mock ripping in isolation:"
+          - "  ripper -t movie -n 'Test Movie'"
+          - "  mock-makemkv info disc:0"
+      tags: ['verify']

@@ -1,0 +1,123 @@
+---
+# Main tasks for media_pipeline_test role
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install media pipeline packages
+  ansible.builtin.apt:
+    name: "{{ media_pipeline_packages }}"
+    state: present
+
+- name: Create test media directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: media
+    group: media
+    mode: '0755'
+  loop: "{{ test_media_directories }}"
+
+- name: Create bin directory for media user
+  ansible.builtin.file:
+    path: /home/media/bin
+    state: directory
+    owner: media
+    group: media
+    mode: '0755'
+
+- name: Get latest release version from GitHub
+  ansible.builtin.uri:
+    url: "https://api.github.com/repos/{{ media_pipeline_github_repo }}/releases/latest"
+    return_content: true
+  register: github_release
+  when: media_pipeline_version == "latest"
+
+- name: Set release version
+  ansible.builtin.set_fact:
+    release_version: "{{ github_release.json.tag_name if media_pipeline_version == 'latest' else media_pipeline_version }}"
+
+- name: Download media-pipeline release tarball
+  ansible.builtin.get_url:
+    url: "https://github.com/{{ media_pipeline_github_repo }}/releases/download/{{ release_version }}/media-pipeline-linux-amd64.tar.gz"
+    dest: /tmp/media-pipeline.tar.gz
+    mode: '0644'
+
+- name: Create temporary extraction directory
+  ansible.builtin.file:
+    path: /tmp/media-pipeline-extract
+    state: directory
+    mode: '0755'
+
+- name: Extract media-pipeline tarball
+  ansible.builtin.unarchive:
+    src: /tmp/media-pipeline.tar.gz
+    dest: /tmp/media-pipeline-extract
+    remote_src: true
+
+- name: Find extracted binaries directory
+  ansible.builtin.find:
+    paths: /tmp/media-pipeline-extract
+    file_type: directory
+    recurse: false
+  register: extract_dirs
+
+- name: Copy binaries to bin directory
+  ansible.builtin.copy:
+    src: "/tmp/media-pipeline-extract/{{ extract_dirs.files[0].path | basename }}/{{ item }}"
+    dest: "/home/media/bin/{{ item }}"
+    remote_src: true
+    owner: media
+    group: media
+    mode: '0755'
+  loop: "{{ media_pipeline_binaries }}"
+
+- name: Remove temporary files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/media-pipeline.tar.gz
+    - /tmp/media-pipeline-extract
+
+- name: Configure MEDIA_BASE environment variable (zsh)
+  ansible.builtin.lineinfile:
+    path: /home/media/.zshrc
+    line: 'export MEDIA_BASE="{{ test_media_base }}"'
+    regexp: '^export MEDIA_BASE='
+    state: present
+    owner: media
+    group: media
+    create: true
+
+- name: Configure MAKEMKVCON_PATH environment variable (zsh)
+  ansible.builtin.lineinfile:
+    path: /home/media/.zshrc
+    line: 'export MAKEMKVCON_PATH="/home/media/bin/mock-makemkv"'
+    regexp: '^export MAKEMKVCON_PATH='
+    state: present
+    owner: media
+    group: media
+
+- name: Add bin directory to PATH (zsh)
+  ansible.builtin.lineinfile:
+    path: /home/media/.zshrc
+    line: 'export PATH="/home/media/bin:$PATH"'
+    regexp: '^export PATH=.*home/media/bin'
+    state: present
+    owner: media
+    group: media
+
+- name: Verify binaries are installed
+  ansible.builtin.command: "/home/media/bin/{{ item }} --version"
+  loop: "{{ media_pipeline_binaries }}"
+  register: binary_checks
+  changed_when: false
+  failed_when: false
+
+- name: Display binary versions
+  ansible.builtin.debug:
+    msg: "{{ item.item }}: {{ item.stdout_lines[0] if item.rc == 0 else 'FAILED' }}"
+  loop: "{{ binary_checks.results }}"
