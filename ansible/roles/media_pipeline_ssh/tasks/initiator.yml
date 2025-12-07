@@ -18,15 +18,24 @@
     group: media
   no_log: true
 
-- name: Scan and add target host keys to known_hosts
-  ansible.builtin.shell: |
-    ssh-keyscan -H {{ item }} >> /home/media/.ssh/known_hosts 2>/dev/null
-  loop: "{{ media_pipeline_ssh_targets }}"
+- name: Check which hosts are already in known_hosts
+  ansible.builtin.command: ssh-keygen -F {{ item }}
   args:
-    creates: /home/media/.ssh/known_hosts
+    chdir: /home/media
+  loop: "{{ media_pipeline_ssh_targets }}"
+  register: known_hosts_check
+  failed_when: false
+  changed_when: false
   become_user: media
-  register: keyscan_result
-  changed_when: keyscan_result.rc == 0
+
+- name: Scan and add missing target host keys to known_hosts
+  ansible.builtin.shell: |
+    ssh-keyscan -H {{ item.item }} >> /home/media/.ssh/known_hosts 2>/dev/null
+  loop: "{{ known_hosts_check.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item.rc != 0
+  become_user: media
 
 - name: Ensure known_hosts has correct permissions
   ansible.builtin.file:
