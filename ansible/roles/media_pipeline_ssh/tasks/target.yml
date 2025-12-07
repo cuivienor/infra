@@ -1,0 +1,17 @@
+---
+# Configure this host to accept SSH connections from media pipeline initiators
+
+- name: Ensure media user .ssh directory exists
+  ansible.builtin.file:
+    path: /home/media/.ssh
+    state: directory
+    mode: '0700'
+    owner: media
+    group: media
+
+- name: Deploy media-pipeline public key to authorized_keys
+  ansible.posix.authorized_key:
+    user: media
+    key: "{{ lookup('file', 'files/ssh-keys/media-pipeline.pub') }}"
+    state: present
+    comment: "media-pipeline"
