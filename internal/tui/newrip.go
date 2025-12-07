@@ -3,7 +3,9 @@ package tui
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -232,25 +234,34 @@ func (a *App) dispatchRip() tea.Cmd {
 			return ripCompleteMsg{err: err}
 		}
 
-		// Build command
+		// Build command args
 		args := []string{
 			"-job-id", fmt.Sprintf("%d", job.ID),
 			"-db", a.config.DatabasePath(),
 		}
 
+		// Find ripper binary - look in same directory as current executable
+		ripperPath := "ripper"
+		if exe, err := os.Executable(); err == nil {
+			siblingPath := filepath.Join(filepath.Dir(exe), "ripper")
+			if _, err := os.Stat(siblingPath); err == nil {
+				ripperPath = siblingPath
+			}
+		}
+
 		target := a.config.DispatchTarget("rip")
 		if target == "" {
 			// Local execution
-			cmd := exec.Command("ripper", args...)
+			cmd := exec.Command(ripperPath, args...)
 			if err := cmd.Start(); err != nil {
-				return ripCompleteMsg{err: err}
+				return ripCompleteMsg{err: fmt.Errorf("failed to start ripper: %w", err)}
 			}
 		} else {
-			// SSH dispatch
+			// SSH dispatch - assume ripper is in PATH on remote
 			sshArgs := append([]string{target, "ripper"}, args...)
 			cmd := exec.Command("ssh", sshArgs...)
 			if err := cmd.Start(); err != nil {
-				return ripCompleteMsg{err: err}
+				return ripCompleteMsg{err: fmt.Errorf("failed to SSH dispatch ripper: %w", err)}
 			}
 		}
 
