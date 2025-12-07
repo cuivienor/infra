@@ -140,3 +140,10 @@ func formatDisc(disc int) string {
 	}
 	return "Disc" + string(rune('0'+disc))
 }
+
+// WithDB creates a DBFixture and returns both the environment and fixture
+func (e *Environment) WithDB(t *testing.T) (*Environment, *DBFixture) {
+	t.Helper()
+	dbFixture := NewDBFixture(t)
+	return e, dbFixture
+}
