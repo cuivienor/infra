@@ -5,6 +5,7 @@ import (
 )
 
 func TestMediaItem_UniqueKey(t *testing.T) {
+	season2 := 2
 	tests := []struct {
 		name string
 		item MediaItem
@@ -17,12 +18,12 @@ func TestMediaItem_UniqueKey(t *testing.T) {
 		},
 		{
 			name: "tv with season",
-			item: MediaItem{Type: MediaTypeTV, SafeName: "Breaking_Bad", Season: "S02"},
+			item: MediaItem{Type: MediaTypeTV, SafeName: "Breaking_Bad", Season: &season2},
 			want: "Breaking_Bad_S02",
 		},
 		{
 			name: "tv without season",
-			item: MediaItem{Type: MediaTypeTV, SafeName: "Breaking_Bad"},
+			item: MediaItem{Type: MediaTypeTV, SafeName: "Breaking_Bad", Season: nil},
 			want: "Breaking_Bad",
 		},
 	}

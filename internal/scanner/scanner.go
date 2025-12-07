@@ -223,9 +223,9 @@ func (s *Scanner) mergeResults(results []stageResult) []model.MediaItem {
 			}
 
 			// Extract season from metadata if TV
-			season := ""
+			var season *int
 			if mediaType == model.MediaTypeTV && result.metadata.Season > 0 {
-				season = fmt.Sprintf("S%02d", result.metadata.Season)
+				season = &result.metadata.Season
 			}
 
 			item = &model.MediaItem{

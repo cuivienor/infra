@@ -75,8 +75,8 @@ func (a *App) renderItemLine(item model.MediaItem, index int) string {
 
 	// Name with season for TV
 	name := item.Name
-	if item.Type == model.MediaTypeTV && item.Season != "" {
-		name = fmt.Sprintf("%s %s", item.Name, item.Season)
+	if item.Type == model.MediaTypeTV && item.Season != nil {
+		name = fmt.Sprintf("%s S%02d", item.Name, *item.Season)
 	}
 
 	// Date from most recent stage

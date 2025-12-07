@@ -75,8 +75,8 @@ func (a *App) renderActionItem(item model.MediaItem, index int, icon string) str
 
 	// Name with season for TV
 	name := item.Name
-	if item.Type == model.MediaTypeTV && item.Season != "" {
-		name = fmt.Sprintf("%s %s", item.Name, item.Season)
+	if item.Type == model.MediaTypeTV && item.Season != nil {
+		name = fmt.Sprintf("%s S%02d", item.Name, *item.Season)
 	}
 
 	// Current stage

@@ -22,7 +22,7 @@ type StateFixture struct {
 	Type      string       // "movie" or "tv"
 	Name      string       // Human-readable name
 	SafeName  string       // Filesystem-safe name
-	Season    string       // Season identifier (TV only)
+	Season    int          // Season number (TV only, 0 for movies)
 	Status    model.Status // Current status
 	StartedAt time.Time    // When the job started (optional, defaults to now)
 }
@@ -161,7 +161,7 @@ func CreateStateFixture(t *testing.T, basePath, stateDirName string, fixture Sta
 		"safe_name":  fixture.SafeName,
 		"started_at": startedAt.Format(time.RFC3339),
 	}
-	if fixture.Season != "" {
+	if fixture.Season > 0 {
 		metadata["season"] = fixture.Season
 	}
 

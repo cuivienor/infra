@@ -20,8 +20,8 @@ func (a *App) renderItemDetail() string {
 
 	// Title
 	title := item.Name
-	if item.Type == model.MediaTypeTV && item.Season != "" {
-		title = fmt.Sprintf("%s %s", item.Name, item.Season)
+	if item.Type == model.MediaTypeTV && item.Season != nil {
+		title = fmt.Sprintf("%s S%02d", item.Name, *item.Season)
 	}
 	b.WriteString(titleStyle.Render(title))
 	b.WriteString("\n\n")

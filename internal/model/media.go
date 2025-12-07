@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // Stage represents a step in the media processing pipeline
 type Stage int
@@ -112,7 +115,7 @@ type MediaItem struct {
 	Type     MediaType // "movie" or "tv"
 	Name     string    // Human-readable name like "The Lion King"
 	SafeName string    // Filesystem-safe name like "The_Lion_King"
-	Season   string    // Season identifier for TV (e.g., "S02"), empty for movies
+	Season   *int      // Season number for TV (nil for movies)
 
 	// Pipeline state
 	Stages  []StageInfo // History of all stages this item has been through
@@ -122,8 +125,8 @@ type MediaItem struct {
 
 // UniqueKey returns a string that uniquely identifies this media item
 func (m *MediaItem) UniqueKey() string {
-	if m.Type == MediaTypeTV && m.Season != "" {
-		return m.SafeName + "_" + m.Season
+	if m.Type == MediaTypeTV && m.Season != nil {
+		return fmt.Sprintf("%s_S%02d", m.SafeName, *m.Season)
 	}
 	return m.SafeName
 }
