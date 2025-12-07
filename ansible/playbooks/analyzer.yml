@@ -21,12 +21,23 @@
     # Set to true if you want automated FileBot organization
     media_analyzer_install_filebot: true
 
+  vars_files:
+    - ../vars/media_pipeline_ssh_secrets.yml
+
   roles:
     - role: common
       tags: ['common']
 
     - role: media_analyzer
       tags: ['analyzer', 'media']
+
+    - role: media_pipeline_ssh
+      vars:
+        media_pipeline_ssh_initiator: true
+        media_pipeline_ssh_targets:
+          - ripper.home.arpa
+          - transcoder.home.arpa
+      tags: ['ssh', 'pipeline']
 
 # Verification tasks
 - name: Verify analyzer container configuration
