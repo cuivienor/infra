@@ -1,12 +1,15 @@
 package ripper
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/cuivienor/media-pipeline/internal/db"
 	"github.com/cuivienor/media-pipeline/internal/model"
 )
 
@@ -119,5 +122,134 @@ func (s *DefaultStateManager) Complete(outputDir string) error {
 	os.Remove(pidPath) // Ignore error - file might not exist
 
 	return nil
+}
+
+// DualWriteStateManager writes to both database and filesystem
+// Database is the authoritative source, filesystem is for debugging/compatibility
+type DualWriteStateManager struct {
+	fs     StateManager
+	repo   db.Repository
+	jobID  int64
+	itemID int64
+}
+
+// NewDualWriteStateManager creates a new DualWriteStateManager
+func NewDualWriteStateManager(fs StateManager, repo db.Repository) *DualWriteStateManager {
+	return &DualWriteStateManager{
+		fs:   fs,
+		repo: repo,
+	}
+}
+
+// Initialize creates database records and filesystem state
+func (d *DualWriteStateManager) Initialize(outputDir string, req *RipRequest) error {
+	ctx := context.Background()
+
+	// 1. Find or create media item
+	var season *int
+	if req.Type == MediaTypeTV {
+		season = &req.Season
+	}
+
+	item, err := d.repo.GetMediaItemBySafeName(ctx, req.SafeName(), season)
+	if err != nil {
+		return fmt.Errorf("failed to lookup media item: %w", err)
+	}
+
+	if item == nil {
+		// Create new media item
+		item = &model.MediaItem{
+			Type:     model.MediaType(req.Type),
+			Name:     req.Name,
+			SafeName: req.SafeName(),
+			Season:   season,
+		}
+		if err := d.repo.CreateMediaItem(ctx, item); err != nil {
+			return fmt.Errorf("failed to create media item: %w", err)
+		}
+	}
+	d.itemID = item.ID
+
+	// 2. Create job record
+	var disc *int
+	if req.Type == MediaTypeTV && req.Disc > 0 {
+		disc = &req.Disc
+	}
+
+	now := time.Now()
+	job := &model.Job{
+		MediaItemID: item.ID,
+		Stage:       model.StageRip,
+		Status:      model.JobStatusInProgress,
+		Disc:        disc,
+		OutputDir:   outputDir,
+		WorkerID:    hostname(),
+		PID:         os.Getpid(),
+		StartedAt:   &now,
+	}
+	if err := d.repo.CreateJob(ctx, job); err != nil {
+		return fmt.Errorf("failed to create job: %w", err)
+	}
+	d.jobID = job.ID
+
+	// 3. Write filesystem state (best-effort)
+	if err := d.fs.Initialize(outputDir, req); err != nil {
+		// Log warning but don't fail - DB is authoritative
+		log.Printf("WARNING: failed to write filesystem state: %v", err)
+	}
+
+	return nil
+}
+
+// SetStatus updates filesystem status (best-effort)
+func (d *DualWriteStateManager) SetStatus(outputDir string, status model.Status) error {
+	// Update filesystem only - job status in DB is managed via Complete/SetError
+	if err := d.fs.SetStatus(outputDir, status); err != nil {
+		log.Printf("WARNING: failed to update filesystem status: %v", err)
+	}
+	return nil
+}
+
+// SetError records error in both DB and filesystem
+func (d *DualWriteStateManager) SetError(outputDir string, err error) error {
+	ctx := context.Background()
+
+	// Update job status in DB to failed
+	if updateErr := d.repo.UpdateJobStatus(ctx, d.jobID, model.JobStatusFailed, err.Error()); updateErr != nil {
+		return fmt.Errorf("failed to update job status: %w", updateErr)
+	}
+
+	// Update filesystem (best-effort)
+	if fsErr := d.fs.SetError(outputDir, err); fsErr != nil {
+		log.Printf("WARNING: failed to write filesystem error: %v", fsErr)
+	}
+
+	return nil
+}
+
+// Complete marks the operation as complete in both DB and filesystem
+func (d *DualWriteStateManager) Complete(outputDir string) error {
+	ctx := context.Background()
+
+	// Update DB first (authoritative)
+	if err := d.repo.UpdateJobStatus(ctx, d.jobID, model.JobStatusCompleted, ""); err != nil {
+		return fmt.Errorf("failed to update job status: %w", err)
+	}
+
+	// Update filesystem (best-effort)
+	if err := d.fs.Complete(outputDir); err != nil {
+		log.Printf("WARNING: failed to complete filesystem state: %v", err)
+	}
+
+	return nil
+}
+
+// hostname returns the current hostname, or "unknown" if it can't be determined
+func hostname() string {
+	name, err := os.Hostname()
+	if err != nil {
+		return "unknown"
+	}
+	return name
 }
 
