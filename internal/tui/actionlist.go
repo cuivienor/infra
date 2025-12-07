@@ -20,7 +20,7 @@ func (a *App) renderActionNeeded() string {
 
 	if len(ready) == 0 && len(inProgress) == 0 && len(failed) == 0 {
 		b.WriteString(mutedItemStyle.Render("No items need attention.\n"))
-		b.WriteString(helpStyle.Render("\n[Tab] Overview  [r] Refresh  [q] Quit"))
+		b.WriteString(helpStyle.Render("\n[Tab] Overview  [n] New Rip  [r] Refresh  [q] Quit"))
 		return b.String()
 	}
 
@@ -61,7 +61,7 @@ func (a *App) renderActionNeeded() string {
 	}
 
 	// Help
-	b.WriteString(helpStyle.Render("\n[↑/↓] Navigate  [Enter] Details  [Tab] Overview  [r] Refresh  [q] Quit"))
+	b.WriteString(helpStyle.Render("\n[↑/↓] Navigate  [Enter] Details  [Tab] Overview  [n] New Rip  [r] Refresh  [q] Quit"))
 
 	return b.String()
 }

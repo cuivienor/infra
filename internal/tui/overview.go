@@ -18,7 +18,7 @@ func (a *App) renderOverview() string {
 	totalItems := len(a.state.Items)
 	if totalItems == 0 {
 		b.WriteString(mutedItemStyle.Render("No media items found in pipeline.\n"))
-		b.WriteString(helpStyle.Render("\n[r] Refresh  [q] Quit"))
+		b.WriteString(helpStyle.Render("\n[n] New Rip  [r] Refresh  [q] Quit"))
 		return b.String()
 	}
 
@@ -124,7 +124,7 @@ func (a *App) renderOverview() string {
 	}
 
 	// Help
-	b.WriteString(helpStyle.Render("\n[↑/↓] Navigate  [Enter] Drill down  [Tab] Action view  [r] Refresh  [q] Quit"))
+	b.WriteString(helpStyle.Render("\n[↑/↓] Navigate  [Enter] Drill down  [Tab] Action view  [n] New Rip  [r] Refresh  [q] Quit"))
 
 	return b.String()
 }
