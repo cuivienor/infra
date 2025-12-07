@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cuivienor/media-pipeline/internal/db"
 	"github.com/cuivienor/media-pipeline/internal/ripper"
 )
 
@@ -44,7 +45,7 @@ func main() {
 	opts, err := ParseArgs(os.Args[1:])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Usage: ripper -t <movie|tv> -n <name> [-s <season>] [-d <disc>] [--disc-path <path>]\n")
+		fmt.Fprintf(os.Stderr, "Usage: ripper -t <movie|tv> -n <name> [-s <season>] [-d <disc>] [--disc-path <path>] [-db <path>]\n")
 		os.Exit(1)
 	}
 
@@ -52,10 +53,20 @@ func main() {
 	env := getEnvMap()
 	config := BuildConfig(opts, env)
 
+	// Build state manager (with or without DB)
+	stateManager, database, err := BuildStateManager(opts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+	if database != nil {
+		defer database.Close()
+	}
+
 	// Create ripper
 	stagingBase := filepath.Join(config.MediaBase, "staging")
 	runner := ripper.NewMakeMKVRunner(config.MakeMKVConPath)
-	r := ripper.NewRipper(stagingBase, runner, nil)
+	r := ripper.NewRipper(stagingBase, runner, stateManager)
 
 	// Build request
 	req := BuildRipRequest(opts)
@@ -70,6 +81,27 @@ func main() {
 	fmt.Printf("Rip completed successfully!\n")
 	fmt.Printf("Output: %s\n", result.OutputDir)
 	fmt.Printf("Duration: %s\n", result.Duration())
+}
+
+// BuildStateManager creates the appropriate state manager based on options
+func BuildStateManager(opts *Options) (ripper.StateManager, *db.DB, error) {
+	if opts.DBPath == "" {
+		// No DB - use filesystem-only state manager
+		return ripper.NewStateManager(), nil, nil
+	}
+
+	// Open database
+	database, err := db.Open(opts.DBPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to open database: %w", err)
+	}
+
+	// Create dual-write state manager
+	repo := db.NewSQLiteRepository(database)
+	fsManager := ripper.NewStateManager()
+	dualManager := ripper.NewDualWriteStateManager(fsManager, repo)
+
+	return dualManager, database, nil
 }
 
 // ParseArgs parses command-line arguments

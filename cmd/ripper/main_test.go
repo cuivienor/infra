@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/cuivienor/media-pipeline/internal/ripper"
@@ -334,5 +335,48 @@ func TestDetermineMode_StandaloneNoDB(t *testing.T) {
 	mode := DetermineMode(opts)
 	if mode != ModeStandaloneNoDB {
 		t.Errorf("mode = %v, want ModeStandaloneNoDB", mode)
+	}
+}
+
+func TestBuildStateManager_WithDB(t *testing.T) {
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "test.db")
+
+	opts := &Options{
+		Type:   ripper.MediaTypeMovie,
+		Name:   "Test Movie",
+		DBPath: dbPath,
+	}
+
+	sm, database, err := BuildStateManager(opts)
+	if err != nil {
+		t.Fatalf("BuildStateManager failed: %v", err)
+	}
+	defer database.Close()
+
+	if sm == nil {
+		t.Error("expected DualWriteStateManager, got nil")
+	}
+	if database == nil {
+		t.Error("expected DB, got nil")
+	}
+}
+
+func TestBuildStateManager_NoDB(t *testing.T) {
+	opts := &Options{
+		Type: ripper.MediaTypeMovie,
+		Name: "Test Movie",
+	}
+
+	sm, database, err := BuildStateManager(opts)
+	if err != nil {
+		t.Fatalf("BuildStateManager failed: %v", err)
+	}
+
+	if sm == nil {
+		t.Error("expected DefaultStateManager, got nil")
+	}
+	if database != nil {
+		t.Error("expected nil DB for no-DB mode, got non-nil")
 	}
 }
