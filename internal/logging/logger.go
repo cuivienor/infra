@@ -38,10 +38,11 @@ func (l Level) String() string {
 
 // Logger provides multi-destination logging with level filtering
 type Logger struct {
-	mu       sync.Mutex
-	stdout   io.Writer
-	file     io.Writer
-	minLevel Level
+	mu         sync.Mutex
+	stdout     io.Writer
+	file       io.Writer
+	fileCloser io.Closer
+	minLevel   Level
 
 	// For DB event logging
 	eventFn func(level, msg string)
@@ -49,19 +50,21 @@ type Logger struct {
 
 // Options configures a Logger instance
 type Options struct {
-	Stdout   io.Writer                  // nil = no stdout
-	File     io.Writer                  // nil = no file
-	MinLevel Level                      // Minimum level to log
-	EventFn  func(level, msg string)   // Called for significant events
+	Stdout     io.Writer                // nil = no stdout
+	File       io.Writer                // nil = no file
+	FileCloser io.Closer                // Optional closer for File (for cleanup)
+	MinLevel   Level                    // Minimum level to log
+	EventFn    func(level, msg string)  // Called for significant events
 }
 
 // New creates a new Logger with the given options
 func New(opts Options) *Logger {
 	return &Logger{
-		stdout:   opts.Stdout,
-		file:     opts.File,
-		minLevel: opts.MinLevel,
-		eventFn:  opts.EventFn,
+		stdout:     opts.Stdout,
+		file:       opts.File,
+		fileCloser: opts.FileCloser,
+		minLevel:   opts.MinLevel,
+		eventFn:    opts.EventFn,
 	}
 }
 
@@ -73,19 +76,22 @@ func NewForJob(logPath string, stdout bool, eventFn func(level, msg string)) (*L
 	}
 
 	var fileWriter io.Writer
+	var fileCloser io.Closer
 	if logPath != "" {
 		f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open log file: %w", err)
 		}
 		fileWriter = f
+		fileCloser = f
 	}
 
 	return New(Options{
-		Stdout:   stdoutWriter,
-		File:     fileWriter,
-		MinLevel: LevelInfo,
-		EventFn:  eventFn,
+		Stdout:     stdoutWriter,
+		File:       fileWriter,
+		FileCloser: fileCloser,
+		MinLevel:   LevelInfo,
+		EventFn:    eventFn,
 	}), nil
 }
 
@@ -159,4 +165,15 @@ func (l *Logger) Event(level Level, msg string) {
 	if l.eventFn != nil {
 		l.eventFn(level.String(), msg)
 	}
+}
+
+// Close closes any resources held by the logger (e.g., log files)
+func (l *Logger) Close() error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if l.fileCloser != nil {
+		return l.fileCloser.Close()
+	}
+	return nil
 }

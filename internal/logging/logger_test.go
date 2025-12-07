@@ -2,6 +2,8 @@ package logging
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -230,5 +232,100 @@ func TestLogger_FileOnly(t *testing.T) {
 
 	if !strings.Contains(file.String(), "test message") {
 		t.Error("file missing message")
+	}
+}
+
+func TestLogger_Close(t *testing.T) {
+	// Create a temp file for testing
+	tmpDir := t.TempDir()
+	logPath := filepath.Join(tmpDir, "test.log")
+
+	logger, err := NewForJob(logPath, false, nil)
+	if err != nil {
+		t.Fatalf("NewForJob failed: %v", err)
+	}
+
+	// Write something
+	logger.Info("test message")
+
+	// Close should succeed
+	if err := logger.Close(); err != nil {
+		t.Errorf("Close failed: %v", err)
+	}
+
+	// Verify the file was written before closing
+	content, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("Failed to read log file: %v", err)
+	}
+	if !strings.Contains(string(content), "test message") {
+		t.Error("log file missing message")
+	}
+}
+
+func TestLogger_CloseWithNilCloser(t *testing.T) {
+	logger := New(Options{
+		Stdout:   &bytes.Buffer{},
+		MinLevel: LevelInfo,
+	})
+
+	// Close should not error with nil closer
+	if err := logger.Close(); err != nil {
+		t.Errorf("Close with nil closer failed: %v", err)
+	}
+}
+
+func TestNewForJob_WithStdout(t *testing.T) {
+	tmpDir := t.TempDir()
+	logPath := filepath.Join(tmpDir, "test.log")
+
+	logger, err := NewForJob(logPath, true, nil)
+	if err != nil {
+		t.Fatalf("NewForJob failed: %v", err)
+	}
+	defer logger.Close()
+
+	// Should have stdout writer set
+	if logger.stdout == nil {
+		t.Error("stdout should be set when stdout=true")
+	}
+}
+
+func TestNewForJob_WithoutFile(t *testing.T) {
+	logger, err := NewForJob("", true, nil)
+	if err != nil {
+		t.Fatalf("NewForJob failed: %v", err)
+	}
+	defer logger.Close()
+
+	// Should not have file writer
+	if logger.file != nil {
+		t.Error("file should be nil when logPath is empty")
+	}
+}
+
+func TestNewForJob_InvalidPath(t *testing.T) {
+	// Try to create a log file in a non-existent directory
+	_, err := NewForJob("/nonexistent/dir/test.log", false, nil)
+	if err == nil {
+		t.Error("expected error for invalid path")
+	}
+}
+
+func TestNewForJob_WithEventFn(t *testing.T) {
+	var eventCalls []string
+
+	logger, err := NewForJob("", true, func(level, msg string) {
+		eventCalls = append(eventCalls, level+":"+msg)
+	})
+	if err != nil {
+		t.Fatalf("NewForJob failed: %v", err)
+	}
+	defer logger.Close()
+
+	logger.Event(LevelInfo, "test event")
+
+	if len(eventCalls) != 1 {
+		t.Errorf("expected 1 event call, got %d", len(eventCalls))
 	}
 }

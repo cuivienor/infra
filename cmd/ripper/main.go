@@ -21,7 +21,18 @@ type Options struct {
 	Season   int
 	Disc     int
 	DiscPath string
+	DBPath   string // Path to SQLite database (optional)
+	JobID    int64  // Job ID for TUI dispatch mode (optional)
 }
+
+// Mode represents the execution mode
+type Mode int
+
+const (
+	ModeStandaloneNoDB   Mode = iota // Standalone mode without DB tracking
+	ModeStandaloneWithDB             // Standalone mode with DB tracking
+	ModeJobDispatch                  // TUI dispatch mode (load job from DB)
+)
 
 // Config holds runtime configuration
 type Config struct {
@@ -69,6 +80,8 @@ func ParseArgs(args []string) (*Options, error) {
 	var name string
 	var season, disc int
 	var discPath string
+	var dbPath string
+	var jobID int64
 
 	fs.StringVar(&typeStr, "t", "", "Media type: movie or tv/show")
 	fs.StringVar(&typeStr, "type", "", "Media type: movie or tv/show")
@@ -79,12 +92,27 @@ func ParseArgs(args []string) (*Options, error) {
 	fs.IntVar(&disc, "d", 0, "Disc number (TV only)")
 	fs.IntVar(&disc, "disc", 0, "Disc number (TV only)")
 	fs.StringVar(&discPath, "disc-path", "disc:0", "Path to disc device")
+	fs.StringVar(&dbPath, "db", "", "Path to SQLite database")
+	fs.Int64Var(&jobID, "job-id", 0, "Job ID to resume (TUI dispatch mode)")
 
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
 
-	// Validate required fields
+	// Validate job-id mode
+	if jobID > 0 {
+		if dbPath == "" {
+			return nil, errors.New("-db is required when using -job-id")
+		}
+		// In job-id mode, other fields are loaded from the job
+		return &Options{
+			JobID:    jobID,
+			DBPath:   dbPath,
+			DiscPath: discPath,
+		}, nil
+	}
+
+	// Validate standalone mode required fields
 	if typeStr == "" {
 		return nil, errors.New("type (-t) is required")
 	}
@@ -119,7 +147,20 @@ func ParseArgs(args []string) (*Options, error) {
 		Season:   season,
 		Disc:     disc,
 		DiscPath: discPath,
+		DBPath:   dbPath,
+		JobID:    jobID,
 	}, nil
+}
+
+// DetermineMode returns the execution mode based on options
+func DetermineMode(opts *Options) Mode {
+	if opts.JobID > 0 {
+		return ModeJobDispatch
+	}
+	if opts.DBPath != "" {
+		return ModeStandaloneWithDB
+	}
+	return ModeStandaloneNoDB
 }
 
 // BuildConfig creates runtime configuration from options and environment

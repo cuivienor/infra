@@ -229,3 +229,110 @@ func TestBuildRipRequest(t *testing.T) {
 		t.Errorf("Disc = %d, want 3", req.Disc)
 	}
 }
+
+func TestParseArgs_DBPath(t *testing.T) {
+	args := []string{"-t", "movie", "-n", "The Matrix", "-db", "/path/to/test.db"}
+
+	opts, err := ParseArgs(args)
+	if err != nil {
+		t.Fatalf("ParseArgs failed: %v", err)
+	}
+
+	if opts.DBPath != "/path/to/test.db" {
+		t.Errorf("DBPath = %q, want '/path/to/test.db'", opts.DBPath)
+	}
+}
+
+func TestParseArgs_JobID(t *testing.T) {
+	args := []string{"-job-id", "123", "-db", "/path/to/test.db"}
+
+	opts, err := ParseArgs(args)
+	if err != nil {
+		t.Fatalf("ParseArgs failed: %v", err)
+	}
+
+	if opts.JobID != 123 {
+		t.Errorf("JobID = %d, want 123", opts.JobID)
+	}
+	if opts.DBPath != "/path/to/test.db" {
+		t.Errorf("DBPath = %q, want '/path/to/test.db'", opts.DBPath)
+	}
+}
+
+func TestParseArgs_JobIDWithoutDB(t *testing.T) {
+	args := []string{"-job-id", "123"}
+
+	_, err := ParseArgs(args)
+	if err == nil {
+		t.Error("Expected error when job-id specified without db path")
+	}
+}
+
+func TestParseArgs_JobIDMode(t *testing.T) {
+	// In job-id mode, -t and -n are not required (they come from the job)
+	args := []string{"-job-id", "123", "-db", "/path/to/test.db"}
+
+	opts, err := ParseArgs(args)
+	if err != nil {
+		t.Fatalf("ParseArgs failed: %v", err)
+	}
+
+	// Should be in job-id mode
+	if opts.JobID != 123 {
+		t.Errorf("JobID = %d, want 123", opts.JobID)
+	}
+}
+
+func TestParseArgs_StandaloneWithDB(t *testing.T) {
+	// Standalone mode with DB tracking
+	args := []string{"-t", "movie", "-n", "The Matrix", "-db", "/path/to/test.db"}
+
+	opts, err := ParseArgs(args)
+	if err != nil {
+		t.Fatalf("ParseArgs failed: %v", err)
+	}
+
+	if opts.Type != ripper.MediaTypeMovie {
+		t.Errorf("Type = %v, want movie", opts.Type)
+	}
+	if opts.DBPath != "/path/to/test.db" {
+		t.Errorf("DBPath = %q, want '/path/to/test.db'", opts.DBPath)
+	}
+}
+
+func TestDetermineMode_JobID(t *testing.T) {
+	opts := &Options{
+		JobID:  123,
+		DBPath: "/path/to/test.db",
+	}
+
+	mode := DetermineMode(opts)
+	if mode != ModeJobDispatch {
+		t.Errorf("mode = %v, want ModeJobDispatch", mode)
+	}
+}
+
+func TestDetermineMode_StandaloneWithDB(t *testing.T) {
+	opts := &Options{
+		Type:   ripper.MediaTypeMovie,
+		Name:   "The Matrix",
+		DBPath: "/path/to/test.db",
+	}
+
+	mode := DetermineMode(opts)
+	if mode != ModeStandaloneWithDB {
+		t.Errorf("mode = %v, want ModeStandaloneWithDB", mode)
+	}
+}
+
+func TestDetermineMode_StandaloneNoDB(t *testing.T) {
+	opts := &Options{
+		Type: ripper.MediaTypeMovie,
+		Name: "The Matrix",
+	}
+
+	mode := DetermineMode(opts)
+	if mode != ModeStandaloneNoDB {
+		t.Errorf("mode = %v, want ModeStandaloneNoDB", mode)
+	}
+}
