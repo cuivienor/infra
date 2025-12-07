@@ -18,6 +18,7 @@ const (
 	ViewActionNeeded
 	ViewItemDetail
 	ViewNewRip
+	ViewOrganize
 )
 
 // App is the main application model
@@ -39,6 +40,9 @@ type App struct {
 
 	// Form state
 	newRipForm *NewRipForm
+
+	// Organize view state
+	organizeView *OrganizeView
 }
 
 // NewApp creates a new application instance
@@ -89,6 +93,39 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		a.currentView = ViewOverview
 		return a, a.loadState
+
+	case organizeLoadedMsg:
+		if msg.err != nil {
+			a.err = msg.err
+			return a, nil
+		}
+		a.organizeView = &OrganizeView{
+			item:  msg.item,
+			path:  msg.path,
+			files: msg.files,
+		}
+		a.currentView = ViewOrganize
+		return a, nil
+
+	case validateMsg:
+		if msg.err != nil {
+			a.err = msg.err
+			return a, nil
+		}
+		if a.organizeView != nil {
+			a.organizeView.validation = msg.result
+		}
+		return a, nil
+
+	case organizeCompleteMsg:
+		if msg.err != nil {
+			a.err = msg.err
+			return a, nil
+		}
+		// Return to overview and refresh
+		a.currentView = ViewOverview
+		a.organizeView = nil
+		return a, a.loadState
 	}
 
 	return a, nil
@@ -99,6 +136,11 @@ func (a *App) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Route to form handler if in NewRip view
 	if a.currentView == ViewNewRip {
 		return a.handleNewRipKey(msg)
+	}
+
+	// Route to organize handler if in Organize view
+	if a.currentView == ViewOrganize {
+		return a.handleOrganizeKey(msg)
 	}
 
 	switch msg.String() {
@@ -118,6 +160,14 @@ func (a *App) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				DiscPath: "disc:0",
 			}
 			return a, nil
+		}
+
+	case "o":
+		// Organize (only from item detail view when at rip stage and completed)
+		if a.currentView == ViewItemDetail && a.selectedItem != nil {
+			if a.selectedItem.Current == model.StageRip && a.selectedItem.Status == model.StatusCompleted {
+				return a, a.loadOrganizeView(a.selectedItem)
+			}
 		}
 
 	case "tab":
@@ -145,6 +195,9 @@ func (a *App) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case ViewNewRip:
 			a.currentView = ViewOverview
 			a.cursor = 0
+		case ViewOrganize:
+			a.currentView = ViewItemDetail
+			a.organizeView = nil
 		}
 		return a, nil
 
@@ -283,6 +336,8 @@ func (a *App) View() string {
 		return a.renderItemDetail()
 	case ViewNewRip:
 		return a.renderNewRipForm()
+	case ViewOrganize:
+		return a.renderOrganizeView()
 	default:
 		return "Unknown view"
 	}

@@ -87,7 +87,12 @@ func (a *App) renderItemDetail() string {
 	}
 
 	// Help
-	b.WriteString(helpStyle.Render("[Esc] Back  [r] Refresh  [q] Quit"))
+	helpText := "[Esc] Back  [r] Refresh  [q] Quit"
+	// Show organize option if item is at rip stage and completed
+	if item.Current == model.StageRip && item.Status == model.StatusCompleted {
+		helpText = "[o] Organize  [Esc] Back  [r] Refresh  [q] Quit"
+	}
+	b.WriteString(helpStyle.Render(helpText))
 
 	return b.String()
 }
