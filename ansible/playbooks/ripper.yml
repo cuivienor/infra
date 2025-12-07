@@ -29,6 +29,11 @@
     - role: makemkv
       tags: ['makemkv']
 
+    - role: media_pipeline_ssh
+      vars:
+        media_pipeline_ssh_target: true
+      tags: ['ssh', 'pipeline']
+
   tasks:
     - name: Deploy media scripts
       ansible.builtin.copy:
