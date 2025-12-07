@@ -21,6 +21,10 @@
   roles:
     - role: common
       tags: ['common']
+    - role: media_pipeline_ssh
+      vars:
+        media_pipeline_ssh_target: true
+      tags: ['ssh', 'pipeline']
 
   tasks:
     - name: Deploy SSH keys for media user
