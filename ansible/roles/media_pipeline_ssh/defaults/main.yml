@@ -1,0 +1,11 @@
+---
+# Media Pipeline SSH Role Defaults
+
+# Whether this host initiates SSH connections to other media containers
+media_pipeline_ssh_initiator: false
+
+# Target hosts this initiator can SSH to (hostnames for known_hosts)
+media_pipeline_ssh_targets: []
+
+# Whether this host accepts SSH connections from media pipeline initiators
+media_pipeline_ssh_target: false
