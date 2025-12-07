@@ -82,21 +82,32 @@ func main() {
 		req = BuildRipRequest(opts)
 	}
 
-	// Create ripper (to get output dir for log path)
+	// Create ripper components
 	stagingBase := filepath.Join(config.MediaBase, "staging")
 	runner := ripper.NewMakeMKVRunner(config.MakeMKVConPath)
-	// Create temporary ripper just to build output dir path
-	tempRipper := ripper.NewRipper(stagingBase, runner, stateManager, nil)
-	outputDir := tempRipper.BuildOutputDir(req)
 
-	// Create output directory for logs (ripper will create it too, but we need it for the log file)
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating output directory: %v\n", err)
-		os.Exit(1)
+	// Determine log path based on mode
+	var logPath string
+	if opts.JobID > 0 {
+		// Job dispatch mode: use standard log location
+		logDir := filepath.Join(config.MediaBase, "pipeline", "logs", "jobs", fmt.Sprintf("%d", opts.JobID))
+		if err := os.MkdirAll(logDir, 0755); err != nil {
+			fmt.Fprintf(os.Stderr, "Error creating log directory: %v\n", err)
+			os.Exit(1)
+		}
+		logPath = filepath.Join(logDir, "job.log")
+	} else {
+		// Standalone mode: log to output directory
+		tempRipper := ripper.NewRipper(stagingBase, nil, nil, nil)
+		outputDir := tempRipper.BuildOutputDir(req)
+		if err := os.MkdirAll(outputDir, 0755); err != nil {
+			fmt.Fprintf(os.Stderr, "Error creating output directory: %v\n", err)
+			os.Exit(1)
+		}
+		logPath = filepath.Join(outputDir, "rip.log")
 	}
 
 	// Create logger
-	logPath := filepath.Join(outputDir, "rip.log")
 	logger, err := logging.NewForJob(logPath, true, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating logger: %v\n", err)
