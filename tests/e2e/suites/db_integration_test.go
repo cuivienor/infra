@@ -22,7 +22,7 @@ func TestRipper_E2E_DualWrite(t *testing.T) {
 		ripper.NewStateManager(),
 		dbFixture.Repo,
 	)
-	r := ripper.NewRipper(env.StagingBase, runner, stateManager)
+	r := ripper.NewRipper(env.StagingBase, runner, stateManager, nil)
 
 	req := &ripper.RipRequest{
 		Type:     ripper.MediaTypeMovie,

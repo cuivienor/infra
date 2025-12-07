@@ -55,7 +55,7 @@ func TestRipper_E2E_MovieRip(t *testing.T) {
 
 	// Create ripper with mock-makemkv
 	runner := ripper.NewMakeMKVRunner(mockPath)
-	r := ripper.NewRipper(env.StagingBase, runner, nil)
+	r := ripper.NewRipper(env.StagingBase, runner, nil, nil)
 
 	// Create request
 	req := &ripper.RipRequest{
@@ -98,7 +98,7 @@ func TestRipper_E2E_TVShowRip(t *testing.T) {
 
 	// Create ripper with mock-makemkv
 	runner := ripper.NewMakeMKVRunner(mockPath)
-	r := ripper.NewRipper(env.StagingBase, runner, nil)
+	r := ripper.NewRipper(env.StagingBase, runner, nil, nil)
 
 	// Create request
 	req := &ripper.RipRequest{
@@ -147,7 +147,7 @@ func TestRipper_E2E_MultipleTVShowDiscs(t *testing.T) {
 
 	// Create ripper with mock-makemkv
 	runner := ripper.NewMakeMKVRunner(mockPath)
-	r := ripper.NewRipper(env.StagingBase, runner, nil)
+	r := ripper.NewRipper(env.StagingBase, runner, nil, nil)
 
 	// Rip two discs of the same show
 	for disc := 1; disc <= 2; disc++ {

@@ -144,3 +144,17 @@ type StateManager interface {
 	// Complete marks the operation as complete
 	Complete(outputDir string) error
 }
+
+// Logger provides logging for ripper operations
+type Logger interface {
+	Info(msg string, args ...any)
+	Error(msg string, args ...any)
+	Progress(msg string, args ...any)
+}
+
+// NopLogger is a no-op logger that discards all messages
+type NopLogger struct{}
+
+func (NopLogger) Info(msg string, args ...any)     {}
+func (NopLogger) Error(msg string, args ...any)    {}
+func (NopLogger) Progress(msg string, args ...any) {}

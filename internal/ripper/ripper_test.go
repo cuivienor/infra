@@ -54,7 +54,7 @@ func TestRipper_Rip_CreatesOutputDirectory(t *testing.T) {
 	mockRunner := &testMakeMKVRunner{}
 	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState)
+	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -79,7 +79,7 @@ func TestRipper_Rip_InitializesState(t *testing.T) {
 	mockRunner := &testMakeMKVRunner{}
 	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState)
+	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -100,7 +100,7 @@ func TestRipper_Rip_CallsMakeMKVRunner(t *testing.T) {
 	mockRunner := &testMakeMKVRunner{}
 	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState)
+	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -121,7 +121,7 @@ func TestRipper_Rip_CompletesStateOnSuccess(t *testing.T) {
 	mockRunner := &testMakeMKVRunner{}
 	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState)
+	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -144,7 +144,7 @@ func TestRipper_Rip_SetsFailedStatusOnError(t *testing.T) {
 	}
 	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState)
+	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -169,7 +169,7 @@ func TestRipper_Rip_ReturnsRipResult(t *testing.T) {
 	mockRunner := &testMakeMKVRunner{}
 	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState)
+	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -198,7 +198,7 @@ func TestRipper_Rip_ValidatesRequest(t *testing.T) {
 	mockRunner := &testMakeMKVRunner{}
 	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState)
+	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
 
 	// Missing name
 	req := &RipRequest{
@@ -220,7 +220,7 @@ func TestRipper_Rip_SetsErrorOnFailure(t *testing.T) {
 	}
 	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState)
+	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -236,7 +236,7 @@ func TestRipper_Rip_SetsErrorOnFailure(t *testing.T) {
 }
 
 func TestNewRipper_DefaultStateManager(t *testing.T) {
-	ripper := NewRipper("/tmp", nil, nil)
+	ripper := NewRipper("/tmp", nil, nil, nil)
 
 	// Should have default state manager
 	if ripper.state == nil {
@@ -250,7 +250,7 @@ func TestRipper_Rip_CreatesOrganizationScaffolding(t *testing.T) {
 	mockRunner := &testMakeMKVRunner{}
 	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState)
+	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,

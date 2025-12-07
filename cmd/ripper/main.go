@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/cuivienor/media-pipeline/internal/db"
+	"github.com/cuivienor/media-pipeline/internal/logging"
 	"github.com/cuivienor/media-pipeline/internal/ripper"
 )
 
@@ -63,12 +64,7 @@ func main() {
 		defer database.Close()
 	}
 
-	// Create ripper
-	stagingBase := filepath.Join(config.MediaBase, "staging")
-	runner := ripper.NewMakeMKVRunner(config.MakeMKVConPath)
-	r := ripper.NewRipper(stagingBase, runner, stateManager)
-
-	// Build request
+	// Build request first (we need it to determine log path)
 	var req *ripper.RipRequest
 	if opts.JobID > 0 {
 		// Job-id mode: load request from database
@@ -86,6 +82,31 @@ func main() {
 		req = BuildRipRequest(opts)
 	}
 
+	// Create ripper (to get output dir for log path)
+	stagingBase := filepath.Join(config.MediaBase, "staging")
+	runner := ripper.NewMakeMKVRunner(config.MakeMKVConPath)
+	// Create temporary ripper just to build output dir path
+	tempRipper := ripper.NewRipper(stagingBase, runner, stateManager, nil)
+	outputDir := tempRipper.BuildOutputDir(req)
+
+	// Create output directory for logs (ripper will create it too, but we need it for the log file)
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating output directory: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Create logger
+	logPath := filepath.Join(outputDir, "rip.log")
+	logger, err := logging.NewForJob(logPath, true, nil)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating logger: %v\n", err)
+		os.Exit(1)
+	}
+	defer logger.Close()
+
+	// Create ripper with logger
+	r := ripper.NewRipper(stagingBase, runner, stateManager, &loggerAdapter{logger})
+
 	// Run the rip
 	result, err := r.Rip(context.Background(), req)
 	if err != nil {
@@ -96,6 +117,11 @@ func main() {
 	fmt.Printf("Rip completed successfully!\n")
 	fmt.Printf("Output: %s\n", result.OutputDir)
 	fmt.Printf("Duration: %s\n", result.Duration())
+}
+
+// loggerAdapter adapts logging.Logger to ripper.Logger interface
+type loggerAdapter struct {
+	*logging.Logger
 }
 
 // BuildStateManager creates the appropriate state manager based on options
