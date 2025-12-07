@@ -1,0 +1,10 @@
+---
+# Media Pipeline SSH - Inter-container SSH setup
+
+- name: Configure SSH initiator (can SSH to other containers)
+  ansible.builtin.include_tasks: initiator.yml
+  when: media_pipeline_ssh_initiator | bool
+
+- name: Configure SSH target (accepts SSH from initiators)
+  ansible.builtin.include_tasks: target.yml
+  when: media_pipeline_ssh_target | bool

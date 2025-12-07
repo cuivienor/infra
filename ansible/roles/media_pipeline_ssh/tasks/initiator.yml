@@ -1,0 +1,37 @@
+---
+# Configure this host to initiate SSH connections to other media containers
+
+- name: Ensure media user .ssh directory exists
+  ansible.builtin.file:
+    path: /home/media/.ssh
+    state: directory
+    mode: '0700'
+    owner: media
+    group: media
+
+- name: Deploy media-pipeline private key
+  ansible.builtin.copy:
+    content: "{{ media_pipeline_ssh_private_key }}"
+    dest: /home/media/.ssh/id_ed25519
+    mode: '0600'
+    owner: media
+    group: media
+  no_log: true
+
+- name: Scan and add target host keys to known_hosts
+  ansible.builtin.shell: |
+    ssh-keyscan -H {{ item }} >> /home/media/.ssh/known_hosts 2>/dev/null
+  loop: "{{ media_pipeline_ssh_targets }}"
+  args:
+    creates: /home/media/.ssh/known_hosts
+  become_user: media
+  register: keyscan_result
+  changed_when: keyscan_result.rc == 0
+
+- name: Ensure known_hosts has correct permissions
+  ansible.builtin.file:
+    path: /home/media/.ssh/known_hosts
+    mode: '0644'
+    owner: media
+    group: media
+  when: media_pipeline_ssh_targets | length > 0
