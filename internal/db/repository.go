@@ -28,6 +28,17 @@ type Repository interface {
 
 	// Disc progress (TV shows)
 	GetDiscProgress(ctx context.Context, mediaItemID int64) ([]model.DiscProgress, error)
+
+	// Seasons
+	CreateSeason(ctx context.Context, season *model.Season) error
+	GetSeason(ctx context.Context, id int64) (*model.Season, error)
+	ListSeasonsForItem(ctx context.Context, itemID int64) ([]model.Season, error)
+	UpdateSeason(ctx context.Context, season *model.Season) error
+	UpdateSeasonStage(ctx context.Context, id int64, stage model.Stage, status model.Status) error
+
+	// Updated item methods
+	UpdateMediaItemStatus(ctx context.Context, id int64, status model.ItemStatus) error
+	ListActiveItems(ctx context.Context) ([]model.MediaItem, error)
 }
 
 // ListOptions configures media item listing

@@ -731,3 +731,202 @@ func parseStage(s string) model.Stage {
 		return model.StageRip
 	}
 }
+
+// CreateSeason creates a new season
+func (r *SQLiteRepository) CreateSeason(ctx context.Context, season *model.Season) error {
+	query := `
+		INSERT INTO seasons (item_id, number, current_stage, stage_status, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`
+	now := time.Now().UTC().Format(time.RFC3339)
+	result, err := r.db.db.ExecContext(ctx, query,
+		season.ItemID,
+		season.Number,
+		season.CurrentStage.String(),
+		season.StageStatus,
+		now,
+		now,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to insert season: %w", err)
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get last insert id: %w", err)
+	}
+	season.ID = id
+	return nil
+}
+
+// GetSeason retrieves a season by ID
+func (r *SQLiteRepository) GetSeason(ctx context.Context, id int64) (*model.Season, error) {
+	query := `
+		SELECT id, item_id, number, current_stage, stage_status, created_at, updated_at
+		FROM seasons
+		WHERE id = ?
+	`
+	var season model.Season
+	var stageStr, statusStr string
+	var createdAt, updatedAt string
+
+	err := r.db.db.QueryRowContext(ctx, query, id).Scan(
+		&season.ID,
+		&season.ItemID,
+		&season.Number,
+		&stageStr,
+		&statusStr,
+		&createdAt,
+		&updatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get season: %w", err)
+	}
+
+	season.CurrentStage = parseStage(stageStr)
+	season.StageStatus = model.Status(statusStr)
+	season.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+	season.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+
+	return &season, nil
+}
+
+// ListSeasonsForItem lists all seasons for a TV show item
+func (r *SQLiteRepository) ListSeasonsForItem(ctx context.Context, itemID int64) ([]model.Season, error) {
+	query := `
+		SELECT id, item_id, number, current_stage, stage_status, created_at, updated_at
+		FROM seasons
+		WHERE item_id = ?
+		ORDER BY number ASC
+	`
+	rows, err := r.db.db.QueryContext(ctx, query, itemID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list seasons: %w", err)
+	}
+	defer rows.Close()
+
+	var seasons []model.Season
+	for rows.Next() {
+		var season model.Season
+		var stageStr, statusStr string
+		var createdAt, updatedAt string
+
+		err := rows.Scan(
+			&season.ID,
+			&season.ItemID,
+			&season.Number,
+			&stageStr,
+			&statusStr,
+			&createdAt,
+			&updatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan season: %w", err)
+		}
+
+		season.CurrentStage = parseStage(stageStr)
+		season.StageStatus = model.Status(statusStr)
+		season.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+		season.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+
+		seasons = append(seasons, season)
+	}
+
+	return seasons, rows.Err()
+}
+
+// UpdateSeason updates a season
+func (r *SQLiteRepository) UpdateSeason(ctx context.Context, season *model.Season) error {
+	query := `
+		UPDATE seasons
+		SET current_stage = ?, stage_status = ?, updated_at = ?
+		WHERE id = ?
+	`
+	now := time.Now().UTC().Format(time.RFC3339)
+	_, err := r.db.db.ExecContext(ctx, query,
+		season.CurrentStage.String(),
+		season.StageStatus,
+		now,
+		season.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update season: %w", err)
+	}
+	return nil
+}
+
+// UpdateSeasonStage updates a season's stage and status
+func (r *SQLiteRepository) UpdateSeasonStage(ctx context.Context, id int64, stage model.Stage, status model.Status) error {
+	query := `
+		UPDATE seasons
+		SET current_stage = ?, stage_status = ?, updated_at = ?
+		WHERE id = ?
+	`
+	now := time.Now().UTC().Format(time.RFC3339)
+	_, err := r.db.db.ExecContext(ctx, query, stage.String(), status, now, id)
+	if err != nil {
+		return fmt.Errorf("failed to update season stage: %w", err)
+	}
+	return nil
+}
+
+// UpdateMediaItemStatus updates an item's overall status
+func (r *SQLiteRepository) UpdateMediaItemStatus(ctx context.Context, id int64, status model.ItemStatus) error {
+	query := `UPDATE media_items SET status = ?, updated_at = ? WHERE id = ?`
+	now := time.Now().UTC().Format(time.RFC3339)
+	_, err := r.db.db.ExecContext(ctx, query, status, now, id)
+	if err != nil {
+		return fmt.Errorf("failed to update media item status: %w", err)
+	}
+	return nil
+}
+
+// ListActiveItems lists all items that are not completed
+func (r *SQLiteRepository) ListActiveItems(ctx context.Context) ([]model.MediaItem, error) {
+	query := `
+		SELECT id, type, name, safe_name, status, current_stage, stage_status, created_at, updated_at
+		FROM media_items
+		WHERE status != 'completed'
+		ORDER BY updated_at DESC
+	`
+	rows, err := r.db.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list active items: %w", err)
+	}
+	defer rows.Close()
+
+	var items []model.MediaItem
+	for rows.Next() {
+		var item model.MediaItem
+		var stageStr, stageStatusStr sql.NullString
+		var createdAt, updatedAt string
+
+		err := rows.Scan(
+			&item.ID,
+			&item.Type,
+			&item.Name,
+			&item.SafeName,
+			&item.ItemStatus,
+			&stageStr,
+			&stageStatusStr,
+			&createdAt,
+			&updatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan media item: %w", err)
+		}
+
+		if stageStr.Valid {
+			item.CurrentStage = parseStage(stageStr.String)
+		}
+		if stageStatusStr.Valid {
+			item.StageStatus = model.Status(stageStatusStr.String)
+		}
+
+		items = append(items, item)
+	}
+
+	return items, rows.Err()
+}
