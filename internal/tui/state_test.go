@@ -238,13 +238,13 @@ func TestUpdateItemFromJob_StatusMapping(t *testing.T) {
 				SafeName: "Test",
 			}
 
-			job := model.Job{
+			jobs := []model.Job{{
 				MediaItemID: 1,
 				Stage:       tt.stage,
 				Status:      tt.jobStatus,
-			}
+			}}
 
-			state.updateItemFromJob(item, job)
+			state.updateItemFromJobs(item, jobs)
 
 			if item.Status != tt.expectedStatus {
 				t.Errorf("Status = %v, want %v", item.Status, tt.expectedStatus)
@@ -252,6 +252,11 @@ func TestUpdateItemFromJob_StatusMapping(t *testing.T) {
 
 			if item.Current != tt.stage {
 				t.Errorf("Current = %v, want %v", item.Current, tt.stage)
+			}
+
+			// Verify Stages is populated
+			if len(item.Stages) != 1 {
+				t.Errorf("Stages length = %d, want 1", len(item.Stages))
 			}
 		})
 	}

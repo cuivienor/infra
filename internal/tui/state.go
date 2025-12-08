@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/cuivienor/media-pipeline/internal/db"
 	"github.com/cuivienor/media-pipeline/internal/model"
@@ -41,28 +42,57 @@ func LoadState(repo db.Repository) (*PipelineState, error) {
 		}
 		state.Jobs[items[i].ID] = jobs
 
-		// Update item's current stage/status from latest job
-		if len(jobs) > 0 {
-			latestJob := jobs[len(jobs)-1]
-			state.updateItemFromJob(&items[i], latestJob)
-		}
+		// Update item's current stage/status and stages from jobs
+		state.updateItemFromJobs(&items[i], jobs)
 	}
 
 	return state, nil
 }
 
-// updateItemFromJob updates a MediaItem's Current/Status from its latest job
-func (s *PipelineState) updateItemFromJob(item *model.MediaItem, job model.Job) {
-	item.Current = job.Stage
-	switch job.Status {
+// updateItemFromJobs updates a MediaItem's Current/Status and Stages from its jobs
+func (s *PipelineState) updateItemFromJobs(item *model.MediaItem, jobs []model.Job) {
+	if len(jobs) == 0 {
+		return
+	}
+
+	// Build Stages from job history
+	item.Stages = make([]model.StageInfo, 0, len(jobs))
+	for _, job := range jobs {
+		var startedAt, completedAt time.Time
+		if job.StartedAt != nil {
+			startedAt = *job.StartedAt
+		}
+		if job.CompletedAt != nil {
+			completedAt = *job.CompletedAt
+		}
+
+		stageInfo := model.StageInfo{
+			Stage:       job.Stage,
+			Status:      jobStatusToStatus(job.Status),
+			StartedAt:   startedAt,
+			CompletedAt: completedAt,
+			Path:        job.OutputDir,
+		}
+		item.Stages = append(item.Stages, stageInfo)
+	}
+
+	// Set current stage/status from latest job
+	latestJob := jobs[len(jobs)-1]
+	item.Current = latestJob.Stage
+	item.Status = jobStatusToStatus(latestJob.Status)
+}
+
+// jobStatusToStatus converts JobStatus to Status
+func jobStatusToStatus(js model.JobStatus) model.Status {
+	switch js {
 	case model.JobStatusCompleted:
-		item.Status = model.StatusCompleted
+		return model.StatusCompleted
 	case model.JobStatusInProgress:
-		item.Status = model.StatusInProgress
+		return model.StatusInProgress
 	case model.JobStatusFailed:
-		item.Status = model.StatusFailed
+		return model.StatusFailed
 	default:
-		item.Status = model.StatusPending
+		return model.StatusPending
 	}
 }
 
