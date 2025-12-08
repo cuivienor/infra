@@ -70,7 +70,10 @@ func run(jobID int64, dbPath string) error {
 	}
 
 	// Determine output directory
-	outputDir := buildOutputPath(cfg, item, job)
+	outputDir, err := buildOutputPath(ctx, repo, cfg, item, job)
+	if err != nil {
+		return fmt.Errorf("failed to build output path: %w", err)
+	}
 
 	// Update job to in_progress with input/output paths
 	job.Status = model.JobStatusInProgress
@@ -94,7 +97,9 @@ func run(jobID int64, dbPath string) error {
 	results, err := remuxer.RemuxDirectory(ctx, inputDir, outputDir, isTV)
 	if err != nil {
 		// Mark job as failed
-		repo.UpdateJobStatus(ctx, jobID, model.JobStatusFailed, err.Error())
+		if updateErr := repo.UpdateJobStatus(ctx, jobID, model.JobStatusFailed, err.Error()); updateErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to update job status: %v\n", updateErr)
+		}
 		return err
 	}
 
@@ -143,7 +148,7 @@ func findOrganizeOutput(ctx context.Context, repo db.Repository, job *model.Job)
 }
 
 // buildOutputPath constructs the output directory for remuxed files
-func buildOutputPath(cfg *config.Config, item *model.MediaItem, job *model.Job) string {
+func buildOutputPath(ctx context.Context, repo db.Repository, cfg *config.Config, item *model.MediaItem, job *model.Job) (string, error) {
 	// Output goes to staging/2-remuxed/{movies,tv}/{safe_name}
 	mediaTypeDir := "movies"
 	if item.Type == model.MediaTypeTV {
@@ -153,9 +158,12 @@ func buildOutputPath(cfg *config.Config, item *model.MediaItem, job *model.Job) 
 	baseName := item.SafeName
 	if item.Type == model.MediaTypeTV && job.SeasonID != nil {
 		// Include season in path for TV
-		// TODO: Look up season number from SeasonID
-		baseName = fmt.Sprintf("%s/Season_XX", item.SafeName)
+		season, err := repo.GetSeason(ctx, *job.SeasonID)
+		if err != nil {
+			return "", fmt.Errorf("failed to get season: %w", err)
+		}
+		baseName = fmt.Sprintf("%s/Season_%02d", item.SafeName, season.Number)
 	}
 
-	return filepath.Join(cfg.StagingBase, "2-remuxed", mediaTypeDir, baseName)
+	return filepath.Join(cfg.StagingBase, "2-remuxed", mediaTypeDir, baseName), nil
 }
