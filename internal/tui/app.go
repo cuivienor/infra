@@ -13,12 +13,11 @@ import (
 type View int
 
 const (
-	ViewItemList View = iota  // NEW: Main view
-	ViewItemDetail            // NEW: Movie or TV show detail
-	ViewSeasonDetail          // NEW: Season detail for TV
-	ViewOrganize
-	ViewNewItem // Renamed from ViewNewRip
-	// Removed: ViewOverview, ViewStageList, ViewActionNeeded
+	ViewItemList     View = iota // Main view showing all items
+	ViewItemDetail               // Movie or TV show detail
+	ViewSeasonDetail             // Season detail for TV
+	ViewOrganize                 // File organization view
+	ViewNewItem                  // Create new item form
 )
 
 // App is the main application model
@@ -30,7 +29,6 @@ type App struct {
 
 	// Navigation state
 	currentView    View
-	selectedStage  model.Stage
 	selectedItem   *model.MediaItem
 	selectedSeason *model.Season
 	cursor         int
@@ -41,7 +39,6 @@ type App struct {
 
 	// Form state
 	newItemForm *NewItemForm
-	newRipForm  *NewRipForm // DEPRECATED: Will be removed in Task 10
 
 	// Organize view state
 	organizeView *OrganizeView
@@ -88,13 +85,6 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.state = msg.state
 		a.err = msg.err
 		return a, nil
-
-	case ripCompleteMsg:
-		if msg.err != nil {
-			a.err = msg.err
-		}
-		a.currentView = ViewItemList
-		return a, a.loadState
 
 	case itemCreatedMsg:
 		if msg.err != nil {
@@ -277,33 +267,6 @@ func (a *App) handleEnter() (tea.Model, tea.Cmd) {
 	}
 
 	return a, nil
-}
-
-// getActionNeededItem returns the item at the given index in the action needed list
-func (a *App) getActionNeededItem(index int) *model.MediaItem {
-	if a.state == nil {
-		return nil
-	}
-
-	ready := a.state.ItemsReadyForNextStage()
-	inProgress := a.state.ItemsInProgress()
-	failed := a.state.ItemsFailed()
-
-	if index < len(ready) {
-		return &ready[index]
-	}
-	index -= len(ready)
-
-	if index < len(inProgress) {
-		return &inProgress[index]
-	}
-	index -= len(inProgress)
-
-	if index < len(failed) {
-		return &failed[index]
-	}
-
-	return nil
 }
 
 // View implements tea.Model

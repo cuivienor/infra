@@ -2,149 +2,146 @@ package tui
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/cuivienor/media-pipeline/internal/model"
 )
 
-// renderItemDetail renders the item detail view
+// renderItemDetail renders the detail view for a movie or TV show
 func (a *App) renderItemDetail() string {
 	if a.selectedItem == nil {
 		return "No item selected"
 	}
 
 	item := a.selectedItem
+
+	if item.Type == model.MediaTypeTV {
+		return a.renderTVShowDetail(item)
+	}
+	return a.renderMovieDetail(item)
+}
+
+// renderMovieDetail renders detail view for a movie
+func (a *App) renderMovieDetail(item *model.MediaItem) string {
 	var b strings.Builder
 
 	// Title
-	title := item.Name
-	if item.Type == model.MediaTypeTV && item.Season != nil {
-		title = fmt.Sprintf("%s S%02d", item.Name, *item.Season)
-	}
-	b.WriteString(titleStyle.Render(title))
+	b.WriteString(titleStyle.Render(item.Name))
+	b.WriteString("\n")
+	b.WriteString(mutedItemStyle.Render("Movie"))
 	b.WriteString("\n\n")
 
-	// Basic info
-	b.WriteString(sectionHeaderStyle.Render("INFO"))
-	b.WriteString("\n")
-	b.WriteString(fmt.Sprintf("  Type:          %s\n", item.Type))
-	b.WriteString(fmt.Sprintf("  Current Stage: %s (%s)\n", item.Current.DisplayName(), item.Status))
-	if item.IsReadyForNextStage() {
-		b.WriteString(fmt.Sprintf("  Next Action:   %s\n", item.Current.NextAction()))
-	}
+	// Current State
+	b.WriteString(sectionHeaderStyle.Render("CURRENT STATE"))
 	b.WriteString("\n")
 
-	// Pipeline history
-	b.WriteString(sectionHeaderStyle.Render("HISTORY"))
-	b.WriteString("\n")
-
-	// Define all stages in order
-	allStages := []model.Stage{
-		model.StageRip,
-		model.StageOrganize,
-		model.StageRemux,
-		model.StageTranscode,
-		model.StagePublish,
+	stageStyle := lipgloss.NewStyle()
+	switch item.StageStatus {
+	case model.StatusCompleted:
+		stageStyle = stageStyle.Foreground(colorSuccess)
+	case model.StatusInProgress:
+		stageStyle = stageStyle.Foreground(colorWarning)
+	case model.StatusFailed:
+		stageStyle = stageStyle.Foreground(colorError)
 	}
 
-	for _, stage := range allStages {
-		stageInfo := item.GetStageInfo(stage)
-		if stageInfo != nil {
-			// Stage exists
-			icon := StatusIcon(string(stageInfo.Status))
-			date := ""
-			if !stageInfo.StartedAt.IsZero() {
-				date = stageInfo.StartedAt.Format("2006-01-02 15:04")
+	b.WriteString(fmt.Sprintf("  Stage: %s\n", item.CurrentStage.DisplayName()))
+	b.WriteString(fmt.Sprintf("  Status: %s\n", stageStyle.Render(string(item.StageStatus))))
+	b.WriteString("\n")
+
+	// Next Action
+	if item.StageStatus == model.StatusCompleted && item.CurrentStage != model.StagePublish {
+		b.WriteString(sectionHeaderStyle.Render("NEXT ACTION"))
+		b.WriteString("\n")
+		nextStage := item.CurrentStage.NextStage()
+		b.WriteString(fmt.Sprintf("  Press [Enter] to %s\n", nextStage.String()))
+		b.WriteString("\n")
+	} else if item.StageStatus == model.StatusFailed {
+		b.WriteString(sectionHeaderStyle.Render("NEXT ACTION"))
+		b.WriteString("\n")
+		b.WriteString("  Press [Enter] to retry\n")
+		b.WriteString("\n")
+	}
+
+	// Job History (collapsible in future)
+	jobs := a.state.Jobs[item.ID]
+	if len(jobs) > 0 {
+		b.WriteString(sectionHeaderStyle.Render("HISTORY"))
+		b.WriteString("\n")
+		for _, job := range jobs {
+			statusIcon := "○"
+			switch job.Status {
+			case model.JobStatusCompleted:
+				statusIcon = "✓"
+			case model.JobStatusInProgress:
+				statusIcon = "◐"
+			case model.JobStatusFailed:
+				statusIcon = "✗"
 			}
-			b.WriteString(fmt.Sprintf("  %s %-12s %s\n", icon, stage.String(), date))
-			if stageInfo.Path != "" {
-				b.WriteString(fmt.Sprintf("    %s\n", mutedItemStyle.Render(stageInfo.Path)))
-			}
-		} else if stage <= item.Current {
-			// Stage should have happened but we don't have info
-			b.WriteString(fmt.Sprintf("  %s %-12s (no data)\n", statusPending.String(), stage.String()))
-		} else {
-			// Stage is in the future
-			b.WriteString(fmt.Sprintf("  %s %-12s pending\n", statusPending.String(), stage.String()))
+			b.WriteString(fmt.Sprintf("  %s %s\n", statusIcon, job.Stage.DisplayName()))
 		}
-	}
-	b.WriteString("\n")
-
-	// Files (for the current stage path)
-	currentStageInfo := item.GetStageInfo(item.Current)
-	if currentStageInfo != nil && currentStageInfo.Path != "" {
-		files := listMediaFiles(currentStageInfo.Path)
-		if len(files) > 0 {
-			b.WriteString(sectionHeaderStyle.Render("FILES"))
-			b.WriteString("\n")
-			for _, file := range files {
-				b.WriteString(fmt.Sprintf("  • %s\n", file))
-			}
-			b.WriteString("\n")
-		}
+		b.WriteString("\n")
 	}
 
 	// Help
-	helpText := "[Esc] Back  [r] Refresh  [q] Quit"
-	// Show organize option if item is at rip stage and completed
-	if item.Current == model.StageRip && item.Status == model.StatusCompleted {
-		helpText = "[o] Organize  [Esc] Back  [r] Refresh  [q] Quit"
+	helpText := "[Enter] Next Action  [l] View Logs  [f] View Files  [Esc] Back  [q] Quit"
+	if item.CurrentStage == model.StageRip && item.StageStatus == model.StatusCompleted {
+		helpText = "[o] Organize  [l] View Logs  [f] View Files  [Esc] Back  [q] Quit"
 	}
 	b.WriteString(helpStyle.Render(helpText))
 
 	return b.String()
 }
 
-// listMediaFiles returns a list of media files in a directory
-func listMediaFiles(dir string) []string {
-	var files []string
+// renderTVShowDetail renders detail view for a TV show
+func (a *App) renderTVShowDetail(item *model.MediaItem) string {
+	var b strings.Builder
 
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return nil
-		}
+	// Title
+	b.WriteString(titleStyle.Render(item.Name))
+	b.WriteString("\n")
+	b.WriteString(mutedItemStyle.Render("TV Show"))
+	b.WriteString("\n\n")
 
-		// Skip hidden directories except the state directories
-		if info.IsDir() {
-			if strings.HasPrefix(info.Name(), ".") {
-				return filepath.SkipDir
+	// Seasons list
+	b.WriteString(sectionHeaderStyle.Render("SEASONS"))
+	b.WriteString("\n")
+
+	if len(item.Seasons) == 0 {
+		b.WriteString(mutedItemStyle.Render("  No seasons. Press [a] to add a season."))
+		b.WriteString("\n")
+	} else {
+		for i, season := range item.Seasons {
+			selected := i == a.cursor
+			prefix := "  "
+			if selected {
+				prefix = "> "
 			}
-			return nil
-		}
 
-		// Only include video files
-		ext := strings.ToLower(filepath.Ext(path))
-		if ext == ".mkv" || ext == ".mp4" || ext == ".avi" || ext == ".m4v" {
-			// Make path relative to dir
-			relPath, _ := filepath.Rel(dir, path)
-
-			// Get file size
-			sizeStr := ""
-			if info.Size() > 0 {
-				sizeGB := float64(info.Size()) / (1024 * 1024 * 1024)
-				if sizeGB >= 1 {
-					sizeStr = fmt.Sprintf(" (%.1f GB)", sizeGB)
+			statusIcon := "○"
+			switch season.StageStatus {
+			case model.StatusCompleted:
+				if season.CurrentStage == model.StagePublish {
+					statusIcon = "✓"
 				} else {
-					sizeMB := float64(info.Size()) / (1024 * 1024)
-					sizeStr = fmt.Sprintf(" (%.0f MB)", sizeMB)
+					statusIcon = "●"
 				}
+			case model.StatusInProgress:
+				statusIcon = "◐"
+			case model.StatusFailed:
+				statusIcon = "✗"
 			}
 
-			files = append(files, relPath+sizeStr)
+			stageName := season.CurrentStage.DisplayName()
+			b.WriteString(fmt.Sprintf("%s%s Season %d - %s (%s)\n",
+				prefix, statusIcon, season.Number, stageName, season.StageStatus))
 		}
-		return nil
-	})
-
-	if err != nil {
-		return nil
 	}
+	b.WriteString("\n")
 
-	// Limit to 10 files
-	if len(files) > 10 {
-		files = append(files[:10], fmt.Sprintf("... and %d more", len(files)-10))
-	}
+	// Help
+	b.WriteString(helpStyle.Render("[Enter] View Season  [a] Add Season  [r] Start Rip  [Esc] Back  [q] Quit"))
 
-	return files
+	return b.String()
 }
