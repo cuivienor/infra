@@ -53,6 +53,17 @@ func (d *DB) Close() error {
 
 // migrate runs all SQL migrations
 func (d *DB) migrate() error {
+	// Create migrations tracking table if it doesn't exist
+	_, err := d.db.Exec(`
+		CREATE TABLE IF NOT EXISTS schema_migrations (
+			version TEXT PRIMARY KEY,
+			applied_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to create migrations table: %w", err)
+	}
+
 	entries, err := fs.ReadDir(migrations, "migrations")
 	if err != nil {
 		return fmt.Errorf("failed to read migrations: %w", err)
@@ -68,6 +79,17 @@ func (d *DB) migrate() error {
 	sort.Strings(files)
 
 	for _, file := range files {
+		// Check if migration has already been applied
+		var count int
+		err := d.db.QueryRow("SELECT COUNT(*) FROM schema_migrations WHERE version = ?", file).Scan(&count)
+		if err != nil {
+			return fmt.Errorf("failed to check migration status for %s: %w", file, err)
+		}
+		if count > 0 {
+			// Migration already applied, skip
+			continue
+		}
+
 		content, err := fs.ReadFile(migrations, "migrations/"+file)
 		if err != nil {
 			return fmt.Errorf("failed to read %s: %w", file, err)
@@ -75,6 +97,12 @@ func (d *DB) migrate() error {
 
 		if _, err := d.db.Exec(string(content)); err != nil {
 			return fmt.Errorf("failed to execute %s: %w", file, err)
+		}
+
+		// Record that migration was applied
+		_, err = d.db.Exec("INSERT INTO schema_migrations (version) VALUES (?)", file)
+		if err != nil {
+			return fmt.Errorf("failed to record migration %s: %w", file, err)
 		}
 	}
 
