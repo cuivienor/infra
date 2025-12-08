@@ -70,6 +70,11 @@ dispatch:
   remux: ""
   transcode: ""
   publish: ""
+
+remux:
+  languages:
+    - eng
+    - bul
 EOF
 
     echo "Created config"
@@ -133,6 +138,11 @@ dispatch:
   remux: ""
   transcode: ""
   publish: ""
+
+remux:
+  languages:
+    - eng
+    - bul
 EOF
 
 echo "Created directory structure"
