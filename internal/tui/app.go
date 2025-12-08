@@ -40,7 +40,8 @@ type App struct {
 	height int
 
 	// Form state
-	newRipForm *NewRipForm
+	newItemForm *NewItemForm
+	newRipForm  *NewRipForm // DEPRECATED: Will be removed in Task 10
 
 	// Organize view state
 	organizeView *OrganizeView
@@ -95,6 +96,15 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.currentView = ViewItemList
 		return a, a.loadState
 
+	case itemCreatedMsg:
+		if msg.err != nil {
+			a.err = msg.err
+			return a, nil
+		}
+		a.currentView = ViewItemList
+		a.newItemForm = nil
+		return a, a.loadState
+
 	case organizeLoadedMsg:
 		if msg.err != nil {
 			a.err = msg.err
@@ -135,8 +145,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // handleKeyPress handles keyboard input
 func (a *App) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Route to form handler if in NewItem view
-	if a.currentView == ViewNewItem {
-		return a.handleNewRipKey(msg)
+	if a.currentView == ViewNewItem && a.newItemForm != nil {
+		return a.handleNewItemKey(msg)
 	}
 
 	// Route to organize handler if in Organize view
@@ -156,9 +166,8 @@ func (a *App) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// New item (only from item list view)
 		if a.currentView == ViewItemList {
 			a.currentView = ViewNewItem
-			a.newRipForm = &NewRipForm{
-				Type:     "movie",
-				DiscPath: "disc:0",
+			a.newItemForm = &NewItemForm{
+				Type: "movie",
 			}
 			return a, nil
 		}
@@ -315,7 +324,7 @@ func (a *App) View() string {
 	case ViewSeasonDetail:
 		return a.renderSeasonDetail()
 	case ViewNewItem:
-		return a.renderNewRipForm()
+		return a.renderNewItemForm()
 	case ViewOrganize:
 		return a.renderOrganizeView()
 	default:
