@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -29,6 +30,12 @@ func main() {
 
 	// Create repository
 	repo := db.NewSQLiteRepository(database)
+
+	// Run data migration for existing TV shows
+	if err := repo.MigrateToItemCentric(context.Background()); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: data migration failed: %v\n", err)
+		// Continue anyway - this isn't fatal
+	}
 
 	// Create the app
 	app := tui.NewApp(cfg, repo)
