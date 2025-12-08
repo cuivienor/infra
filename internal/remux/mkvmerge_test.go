@@ -93,6 +93,38 @@ func TestFilterTracks(t *testing.T) {
 	}
 }
 
+func TestFilterTracks_EmptyLanguages(t *testing.T) {
+	info := &TrackInfo{
+		Video: []Track{{ID: 0, Type: "video"}},
+		Audio: []Track{
+			{ID: 1, Type: "audio", Language: "eng", Title: "English"},
+			{ID: 2, Type: "audio", Language: "bul", Title: "Bulgarian"},
+		},
+		Subtitles: []Track{
+			{ID: 3, Type: "subtitles", Language: "eng", Title: "English"},
+			{ID: 4, Type: "subtitles", Language: "bul", Title: "Bulgarian"},
+		},
+	}
+
+	// Filter with empty languages list
+	filtered := FilterTracks(info, []string{})
+
+	// Video tracks should be kept
+	if len(filtered.Video) != 1 {
+		t.Errorf("Filtered video = %d, want 1", len(filtered.Video))
+	}
+
+	// No audio tracks should remain
+	if len(filtered.Audio) != 0 {
+		t.Errorf("Filtered audio = %d, want 0", len(filtered.Audio))
+	}
+
+	// No subtitle tracks should remain
+	if len(filtered.Subtitles) != 0 {
+		t.Errorf("Filtered subtitles = %d, want 0", len(filtered.Subtitles))
+	}
+}
+
 func TestBuildMkvmergeArgs(t *testing.T) {
 	tracks := &TrackInfo{
 		Video: []Track{

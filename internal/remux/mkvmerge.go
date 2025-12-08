@@ -95,7 +95,7 @@ func FilterTracks(info *TrackInfo, languages []string) *TrackInfo {
 	}
 
 	filtered := &TrackInfo{
-		Video: info.Video, // Keep all video tracks
+		Video: append([]Track{}, info.Video...), // Keep all video tracks
 	}
 
 	for _, track := range info.Audio {
