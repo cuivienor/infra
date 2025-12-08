@@ -109,6 +109,15 @@ func (a *App) renderOrganizeView() string {
 // handleOrganizeKey handles key presses in the organize view
 func (a *App) handleOrganizeKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
+	case "q", "ctrl+c":
+		return a, tea.Quit
+
+	case "esc":
+		// Go back to item detail
+		a.currentView = ViewItemDetail
+		a.organizeView = nil
+		return a, nil
+
 	case "v":
 		// Validate organization
 		return a, a.validateOrganization()
