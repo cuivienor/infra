@@ -23,8 +23,8 @@ func NewSQLiteRepository(db *DB) *SQLiteRepository {
 // CreateMediaItem creates a new media item
 func (r *SQLiteRepository) CreateMediaItem(ctx context.Context, item *model.MediaItem) error {
 	query := `
-		INSERT INTO media_items (type, name, safe_name, season, status, current_stage, stage_status, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO media_items (type, name, safe_name, season, tmdb_id, tvdb_id, status, current_stage, stage_status, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	// Set defaults if not provided
@@ -44,6 +44,8 @@ func (r *SQLiteRepository) CreateMediaItem(ctx context.Context, item *model.Medi
 		item.Name,
 		item.SafeName,
 		item.Season,
+		item.TmdbID,
+		item.TvdbID,
 		itemStatus,
 		item.CurrentStage.String(),
 		stageStatus,
@@ -66,13 +68,13 @@ func (r *SQLiteRepository) CreateMediaItem(ctx context.Context, item *model.Medi
 // GetMediaItem retrieves a media item by ID
 func (r *SQLiteRepository) GetMediaItem(ctx context.Context, id int64) (*model.MediaItem, error) {
 	query := `
-		SELECT id, type, name, safe_name, season, created_at, updated_at
+		SELECT id, type, name, safe_name, season, tmdb_id, tvdb_id, created_at, updated_at
 		FROM media_items
 		WHERE id = ?
 	`
 
 	var item model.MediaItem
-	var season sql.NullInt64
+	var season, tmdbID, tvdbID sql.NullInt64
 	var createdAt, updatedAt string
 
 	err := r.db.db.QueryRowContext(ctx, query, id).Scan(
@@ -81,6 +83,8 @@ func (r *SQLiteRepository) GetMediaItem(ctx context.Context, id int64) (*model.M
 		&item.Name,
 		&item.SafeName,
 		&season,
+		&tmdbID,
+		&tvdbID,
 		&createdAt,
 		&updatedAt,
 	)
@@ -95,6 +99,14 @@ func (r *SQLiteRepository) GetMediaItem(ctx context.Context, id int64) (*model.M
 		s := int(season.Int64)
 		item.Season = &s
 	}
+	if tmdbID.Valid {
+		id := int(tmdbID.Int64)
+		item.TmdbID = &id
+	}
+	if tvdbID.Valid {
+		id := int(tvdbID.Int64)
+		item.TvdbID = &id
+	}
 
 	return &item, nil
 }
@@ -102,13 +114,13 @@ func (r *SQLiteRepository) GetMediaItem(ctx context.Context, id int64) (*model.M
 // GetMediaItemBySafeName retrieves a media item by safe name and season
 func (r *SQLiteRepository) GetMediaItemBySafeName(ctx context.Context, safeName string, season *int) (*model.MediaItem, error) {
 	query := `
-		SELECT id, type, name, safe_name, season, created_at, updated_at
+		SELECT id, type, name, safe_name, season, tmdb_id, tvdb_id, created_at, updated_at
 		FROM media_items
 		WHERE safe_name = ? AND (? IS NULL AND season IS NULL OR season = ?)
 	`
 
 	var item model.MediaItem
-	var dbSeason sql.NullInt64
+	var dbSeason, tmdbID, tvdbID sql.NullInt64
 	var createdAt, updatedAt string
 
 	var seasonVal interface{}
@@ -122,6 +134,8 @@ func (r *SQLiteRepository) GetMediaItemBySafeName(ctx context.Context, safeName 
 		&item.Name,
 		&item.SafeName,
 		&dbSeason,
+		&tmdbID,
+		&tvdbID,
 		&createdAt,
 		&updatedAt,
 	)
@@ -136,6 +150,14 @@ func (r *SQLiteRepository) GetMediaItemBySafeName(ctx context.Context, safeName 
 		s := int(dbSeason.Int64)
 		item.Season = &s
 	}
+	if tmdbID.Valid {
+		id := int(tmdbID.Int64)
+		item.TmdbID = &id
+	}
+	if tvdbID.Valid {
+		id := int(tvdbID.Int64)
+		item.TvdbID = &id
+	}
 
 	return &item, nil
 }
@@ -143,7 +165,7 @@ func (r *SQLiteRepository) GetMediaItemBySafeName(ctx context.Context, safeName 
 // ListMediaItems lists media items with optional filters
 func (r *SQLiteRepository) ListMediaItems(ctx context.Context, opts ListOptions) ([]model.MediaItem, error) {
 	query := `
-		SELECT id, type, name, safe_name, season, created_at, updated_at
+		SELECT id, type, name, safe_name, season, tmdb_id, tvdb_id, created_at, updated_at
 		FROM media_items
 		WHERE 1=1
 	`
@@ -184,7 +206,7 @@ func (r *SQLiteRepository) ListMediaItems(ctx context.Context, opts ListOptions)
 	var items []model.MediaItem
 	for rows.Next() {
 		var item model.MediaItem
-		var season sql.NullInt64
+		var season, tmdbID, tvdbID sql.NullInt64
 		var createdAt, updatedAt string
 
 		err := rows.Scan(
@@ -193,6 +215,8 @@ func (r *SQLiteRepository) ListMediaItems(ctx context.Context, opts ListOptions)
 			&item.Name,
 			&item.SafeName,
 			&season,
+			&tmdbID,
+			&tvdbID,
 			&createdAt,
 			&updatedAt,
 		)
@@ -203,6 +227,14 @@ func (r *SQLiteRepository) ListMediaItems(ctx context.Context, opts ListOptions)
 		if season.Valid {
 			s := int(season.Int64)
 			item.Season = &s
+		}
+		if tmdbID.Valid {
+			id := int(tmdbID.Int64)
+			item.TmdbID = &id
+		}
+		if tvdbID.Valid {
+			id := int(tvdbID.Int64)
+			item.TvdbID = &id
 		}
 
 		items = append(items, item)
@@ -923,7 +955,7 @@ func (r *SQLiteRepository) UpdateMediaItemStage(ctx context.Context, id int64, s
 // ListActiveItems lists all items that are not completed
 func (r *SQLiteRepository) ListActiveItems(ctx context.Context) ([]model.MediaItem, error) {
 	query := `
-		SELECT id, type, name, safe_name, status, current_stage, stage_status, created_at, updated_at
+		SELECT id, type, name, safe_name, tmdb_id, tvdb_id, status, current_stage, stage_status, created_at, updated_at
 		FROM media_items
 		WHERE status != 'completed'
 		ORDER BY updated_at DESC
@@ -937,6 +969,7 @@ func (r *SQLiteRepository) ListActiveItems(ctx context.Context) ([]model.MediaIt
 	var items []model.MediaItem
 	for rows.Next() {
 		var item model.MediaItem
+		var tmdbID, tvdbID sql.NullInt64
 		var stageStr, stageStatusStr sql.NullString
 		var createdAt, updatedAt string
 
@@ -945,6 +978,8 @@ func (r *SQLiteRepository) ListActiveItems(ctx context.Context) ([]model.MediaIt
 			&item.Type,
 			&item.Name,
 			&item.SafeName,
+			&tmdbID,
+			&tvdbID,
 			&item.ItemStatus,
 			&stageStr,
 			&stageStatusStr,
@@ -955,6 +990,14 @@ func (r *SQLiteRepository) ListActiveItems(ctx context.Context) ([]model.MediaIt
 			return nil, fmt.Errorf("failed to scan media item: %w", err)
 		}
 
+		if tmdbID.Valid {
+			id := int(tmdbID.Int64)
+			item.TmdbID = &id
+		}
+		if tvdbID.Valid {
+			id := int(tvdbID.Int64)
+			item.TvdbID = &id
+		}
 		if stageStr.Valid {
 			item.CurrentStage = parseStage(stageStr.String)
 		}

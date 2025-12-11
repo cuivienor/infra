@@ -1410,3 +1410,92 @@ func TestSQLiteRepository_JobOptions(t *testing.T) {
 		t.Errorf("crf = %v, want 18", opts["crf"])
 	}
 }
+
+func TestSQLiteRepository_MediaItemDatabaseIDs(t *testing.T) {
+	db, err := OpenInMemory()
+	if err != nil {
+		t.Fatalf("OpenInMemory() error = %v", err)
+	}
+	defer db.Close()
+
+	repo := NewSQLiteRepository(db)
+	ctx := context.Background()
+
+	t.Run("create and retrieve movie with tmdb_id", func(t *testing.T) {
+		tmdbID := 12345
+		item := &model.MediaItem{
+			Type:     model.MediaTypeMovie,
+			Name:     "Test Movie",
+			SafeName: "Test_Movie",
+			TmdbID:   &tmdbID,
+		}
+
+		err := repo.CreateMediaItem(ctx, item)
+		if err != nil {
+			t.Fatalf("CreateMediaItem() error = %v", err)
+		}
+
+		loaded, err := repo.GetMediaItem(ctx, item.ID)
+		if err != nil {
+			t.Fatalf("GetMediaItem() error = %v", err)
+		}
+		if loaded.TmdbID == nil {
+			t.Fatal("expected TmdbID to be set, got nil")
+		}
+		if *loaded.TmdbID != 12345 {
+			t.Errorf("TmdbID = %d, want 12345", *loaded.TmdbID)
+		}
+	})
+
+	t.Run("create and retrieve TV show with tvdb_id", func(t *testing.T) {
+		tvdbID := 67890
+		season := 1
+		item := &model.MediaItem{
+			Type:     model.MediaTypeTV,
+			Name:     "Test Show",
+			SafeName: "Test_Show",
+			Season:   &season,
+			TvdbID:   &tvdbID,
+		}
+
+		err := repo.CreateMediaItem(ctx, item)
+		if err != nil {
+			t.Fatalf("CreateMediaItem() error = %v", err)
+		}
+
+		loaded, err := repo.GetMediaItem(ctx, item.ID)
+		if err != nil {
+			t.Fatalf("GetMediaItem() error = %v", err)
+		}
+		if loaded.TvdbID == nil {
+			t.Fatal("expected TvdbID to be set, got nil")
+		}
+		if *loaded.TvdbID != 67890 {
+			t.Errorf("TvdbID = %d, want 67890", *loaded.TvdbID)
+		}
+	})
+
+	t.Run("create item without database IDs", func(t *testing.T) {
+		item := &model.MediaItem{
+			Type:     model.MediaTypeMovie,
+			Name:     "Movie Without ID",
+			SafeName: "Movie_Without_ID",
+		}
+
+		err := repo.CreateMediaItem(ctx, item)
+		if err != nil {
+			t.Fatalf("CreateMediaItem() error = %v", err)
+		}
+
+		loaded, err := repo.GetMediaItem(ctx, item.ID)
+		if err != nil {
+			t.Fatalf("GetMediaItem() error = %v", err)
+		}
+		if loaded.TmdbID != nil {
+			t.Errorf("expected TmdbID to be nil, got %v", loaded.TmdbID)
+		}
+		if loaded.TvdbID != nil {
+			t.Errorf("expected TvdbID to be nil, got %v", loaded.TvdbID)
+		}
+	})
+}
