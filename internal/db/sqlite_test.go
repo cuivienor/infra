@@ -1244,3 +1244,169 @@ func TestSQLiteRepository_ListActiveItems(t *testing.T) {
 		}
 	})
 }
+
+func TestSQLiteRepository_TranscodeFiles(t *testing.T) {
+	db, err := OpenInMemory()
+	if err != nil {
+		t.Fatalf("OpenInMemory() error = %v", err)
+	}
+	defer db.Close()
+
+	repo := NewSQLiteRepository(db)
+	ctx := context.Background()
+
+	// Create media item and job
+	item := &model.MediaItem{
+		Type:     model.MediaTypeMovie,
+		Name:     "Test Movie",
+		SafeName: "Test_Movie",
+	}
+	if err := repo.CreateMediaItem(ctx, item); err != nil {
+		t.Fatalf("failed to create media item: %v", err)
+	}
+
+	job := &model.Job{
+		MediaItemID: item.ID,
+		Stage:       model.StageTranscode,
+		Status:      model.JobStatusInProgress,
+	}
+	if err := repo.CreateJob(ctx, job); err != nil {
+		t.Fatalf("failed to create job: %v", err)
+	}
+
+	// Test CreateTranscodeFile
+	file := &model.TranscodeFile{
+		JobID:        job.ID,
+		RelativePath: "_main/movie.mkv",
+		Status:       model.TranscodeFileStatusPending,
+		InputSize:    1024 * 1024 * 1024, // 1GB
+		DurationSecs: 7200.5,
+	}
+	if err := repo.CreateTranscodeFile(ctx, file); err != nil {
+		t.Fatalf("CreateTranscodeFile failed: %v", err)
+	}
+	if file.ID == 0 {
+		t.Error("expected file ID to be set")
+	}
+
+	// Test GetTranscodeFile
+	got, err := repo.GetTranscodeFile(ctx, file.ID)
+	if err != nil {
+		t.Fatalf("GetTranscodeFile failed: %v", err)
+	}
+	if got.RelativePath != "_main/movie.mkv" {
+		t.Errorf("RelativePath = %q, want %q", got.RelativePath, "_main/movie.mkv")
+	}
+	if got.InputSize != 1024*1024*1024 {
+		t.Errorf("InputSize = %d, want %d", got.InputSize, 1024*1024*1024)
+	}
+
+	// Test UpdateTranscodeFileProgress
+	if err := repo.UpdateTranscodeFileProgress(ctx, file.ID, 50); err != nil {
+		t.Fatalf("UpdateTranscodeFileProgress failed: %v", err)
+	}
+	got, _ = repo.GetTranscodeFile(ctx, file.ID)
+	if got.Progress != 50 {
+		t.Errorf("Progress = %d, want 50", got.Progress)
+	}
+
+	// Test UpdateTranscodeFileStatus
+	if err := repo.UpdateTranscodeFileStatus(ctx, file.ID, model.TranscodeFileStatusInProgress, ""); err != nil {
+		t.Fatalf("UpdateTranscodeFileStatus failed: %v", err)
+	}
+	got, _ = repo.GetTranscodeFile(ctx, file.ID)
+	if got.Status != model.TranscodeFileStatusInProgress {
+		t.Errorf("Status = %v, want in_progress", got.Status)
+	}
+	if got.StartedAt == nil {
+		t.Error("expected StartedAt to be set")
+	}
+
+	// Test ListTranscodeFiles
+	file2 := &model.TranscodeFile{
+		JobID:        job.ID,
+		RelativePath: "_extras/extra.mkv",
+		Status:       model.TranscodeFileStatusPending,
+		InputSize:    500 * 1024 * 1024,
+		DurationSecs: 1800.0,
+	}
+	repo.CreateTranscodeFile(ctx, file2)
+
+	files, err := repo.ListTranscodeFiles(ctx, job.ID)
+	if err != nil {
+		t.Fatalf("ListTranscodeFiles failed: %v", err)
+	}
+	if len(files) != 2 {
+		t.Errorf("got %d files, want 2", len(files))
+	}
+
+	// Test UpdateTranscodeFile (full update)
+	file.Status = model.TranscodeFileStatusCompleted
+	file.OutputSize = 500 * 1024 * 1024 // 500MB
+	file.Progress = 100
+	now := time.Now()
+	file.CompletedAt = &now
+	if err := repo.UpdateTranscodeFile(ctx, file); err != nil {
+		t.Fatalf("UpdateTranscodeFile failed: %v", err)
+	}
+	got, _ = repo.GetTranscodeFile(ctx, file.ID)
+	if got.OutputSize != 500*1024*1024 {
+		t.Errorf("OutputSize = %d, want %d", got.OutputSize, 500*1024*1024)
+	}
+}
+
+func TestSQLiteRepository_JobOptions(t *testing.T) {
+	db, err := OpenInMemory()
+	if err != nil {
+		t.Fatalf("OpenInMemory() error = %v", err)
+	}
+	defer db.Close()
+
+	repo := NewSQLiteRepository(db)
+	ctx := context.Background()
+
+	// Create media item and job
+	item := &model.MediaItem{
+		Type:     model.MediaTypeMovie,
+		Name:     "Test Movie",
+		SafeName: "Test_Movie",
+	}
+	repo.CreateMediaItem(ctx, item)
+
+	job := &model.Job{
+		MediaItemID: item.ID,
+		Stage:       model.StageTranscode,
+		Status:      model.JobStatusPending,
+	}
+	repo.CreateJob(ctx, job)
+
+	// Test GetJobOptions (initially nil)
+	opts, err := repo.GetJobOptions(ctx, job.ID)
+	if err != nil {
+		t.Fatalf("GetJobOptions failed: %v", err)
+	}
+	if opts != nil {
+		t.Errorf("expected nil options, got %v", opts)
+	}
+
+	// Test SetJobOptions
+	options := map[string]interface{}{
+		"crf":  float64(18),
+		"mode": "hardware",
+	}
+	if err := repo.SetJobOptions(ctx, job.ID, options); err != nil {
+		t.Fatalf("SetJobOptions failed: %v", err)
+	}
+
+	// Verify
+	opts, err = repo.GetJobOptions(ctx, job.ID)
+	if err != nil {
+		t.Fatalf("GetJobOptions failed: %v", err)
+	}
+	if opts["mode"] != "hardware" {
+		t.Errorf("mode = %v, want hardware", opts["mode"])
+	}
+	if opts["crf"] != float64(18) {
+		t.Errorf("crf = %v, want 18", opts["crf"])
+	}
+}
