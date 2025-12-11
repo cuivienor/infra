@@ -3,6 +3,7 @@ package transcode
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -193,7 +194,9 @@ func (t *Transcoder) buildQueue(ctx context.Context, jobID int64, inputDir strin
 				Status:       model.TranscodeFileStatusSkipped, // Extras are copied, not transcoded
 				InputSize:    info.Size(),
 			}
-			t.repo.CreateTranscodeFile(ctx, file)
+			if err := t.repo.CreateTranscodeFile(ctx, file); err != nil {
+				t.logger.Error("Failed to track extras file: %v", err)
+			}
 			return nil
 		})
 	}
@@ -259,6 +262,7 @@ func (t *Transcoder) transcodeFile(ctx context.Context, file *model.TranscodeFil
 func (t *Transcoder) logSummary(ctx context.Context, jobID int64) {
 	files, err := t.repo.ListTranscodeFiles(ctx, jobID)
 	if err != nil {
+		t.logger.Error("Failed to get summary: %v", err)
 		return
 	}
 
@@ -333,9 +337,18 @@ func copyDirectory(src, dst string) error {
 }
 
 func copyFile(src, dst string) error {
-	data, err := os.ReadFile(src)
+	in, err := os.Open(src)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(dst, data, 0644)
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	return err
 }
