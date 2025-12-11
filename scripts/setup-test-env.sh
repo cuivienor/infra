@@ -75,6 +75,11 @@ remux:
   languages:
     - eng
     - bul
+
+transcode:
+  crf: 20
+  mode: software
+  preset: ultrafast
 EOF
 
     echo "Created config"
@@ -143,6 +148,11 @@ remux:
   languages:
     - eng
     - bul
+
+transcode:
+  crf: 20
+  mode: software
+  preset: ultrafast
 EOF
 
 echo "Created directory structure"
