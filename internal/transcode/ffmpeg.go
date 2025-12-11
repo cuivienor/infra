@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -29,8 +30,8 @@ var timeRegex = regexp.MustCompile(`time=(\d{2}):(\d{2}):(\d{2})\.(\d{2})`)
 // TranscodeFile transcodes a single file using ffmpeg
 func TranscodeFile(ctx context.Context, inputPath, outputPath string, opts TranscodeOptions, onProgress ProgressCallback) error {
 	// Ensure output directory exists
-	if err := os.MkdirAll(outputPath[:len(outputPath)-len("/"+inputPath[strings.LastIndex(inputPath, "/")+1:])], 0755); err != nil {
-		// Ignore - will fail on ffmpeg if dir doesn't exist
+	if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
 	args := buildFFmpegArgs(inputPath, outputPath, opts)
@@ -60,6 +61,10 @@ func TranscodeFile(ctx context.Context, inputPath, outputPath string, opts Trans
 				onProgress(percent)
 			}
 		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		// Continue - we'll rely on cmd.Wait() for actual errors
 	}
 
 	if err := cmd.Wait(); err != nil {
@@ -92,6 +97,9 @@ func buildFFmpegArgs(inputPath, outputPath string, opts TranscodeOptions) []stri
 			"-hwaccel", "qsv",
 			"-hwaccel_output_format", "qsv",
 			"-i", inputPath,
+			"-map", "0:v:0",
+			"-map", "0:a",
+			"-map", "0:s?",
 			"-c:v", "hevc_qsv",
 			"-preset", opts.HWPreset,
 			"-global_quality", strconv.Itoa(opts.CRF),
