@@ -126,6 +126,10 @@ type MediaItem struct {
 	Name     string    // Human-readable name like "The Lion King"
 	SafeName string    // Filesystem-safe name like "The_Lion_King"
 
+	// Database IDs for FileBot matching
+	TmdbID *int // TheMovieDB ID (for movies)
+	TvdbID *int // TheTVDB ID (for TV shows)
+
 	// Item-level status
 	ItemStatus ItemStatus
 
@@ -149,6 +153,17 @@ func (m *MediaItem) UniqueKey() string {
 		return fmt.Sprintf("%s_S%02d", m.SafeName, *m.Season)
 	}
 	return m.SafeName
+}
+
+// DatabaseID returns the appropriate database ID for this item type
+func (m *MediaItem) DatabaseID() int {
+	if m.Type == MediaTypeMovie && m.TmdbID != nil {
+		return *m.TmdbID
+	}
+	if m.Type == MediaTypeTV && m.TvdbID != nil {
+		return *m.TvdbID
+	}
+	return 0
 }
 
 // IsReadyForNextStage returns true if the item has completed its current stage

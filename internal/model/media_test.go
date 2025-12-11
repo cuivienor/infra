@@ -132,3 +132,17 @@ func TestPipelineState_FilterMethods(t *testing.T) {
 		t.Errorf("ItemsFailed() = %v, want [Failed]", failed)
 	}
 }
+
+func TestMediaItem_DatabaseID(t *testing.T) {
+	movie := MediaItem{Type: MediaTypeMovie, TmdbID: ptr(12345)}
+	if movie.DatabaseID() != 12345 {
+		t.Errorf("expected 12345, got %d", movie.DatabaseID())
+	}
+
+	show := MediaItem{Type: MediaTypeTV, TvdbID: ptr(67890)}
+	if show.DatabaseID() != 67890 {
+		t.Errorf("expected 67890, got %d", show.DatabaseID())
+	}
+}
+
+func ptr[T any](v T) *T { return &v }
