@@ -130,21 +130,6 @@ type MakeMKVRunner interface {
 	RipTitles(ctx context.Context, discPath, outputDir string, titleIndices []int, progress ProgressCallback) error
 }
 
-// StateManager handles state directory operations (.rip/, .remux/, etc.)
-type StateManager interface {
-	// Initialize creates state directory and sets status to in_progress
-	Initialize(outputDir string, request *RipRequest) error
-
-	// SetStatus updates the status file
-	SetStatus(outputDir string, status model.Status) error
-
-	// SetError records an error in the state directory
-	SetError(outputDir string, err error) error
-
-	// Complete marks the operation as complete
-	Complete(outputDir string) error
-}
-
 // Logger provides logging for ripper operations
 type Logger interface {
 	Info(msg string, args ...any)

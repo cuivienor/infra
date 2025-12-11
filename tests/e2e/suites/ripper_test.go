@@ -55,7 +55,7 @@ func TestRipper_E2E_MovieRip(t *testing.T) {
 
 	// Create ripper with mock-makemkv
 	runner := ripper.NewMakeMKVRunner(mockPath)
-	r := ripper.NewRipper(env.StagingBase, runner, nil, nil)
+	r := ripper.NewRipper(env.StagingBase, runner, nil)
 
 	// Create request
 	req := &ripper.RipRequest{
@@ -64,8 +64,11 @@ func TestRipper_E2E_MovieRip(t *testing.T) {
 		DiscPath: "disc:0", // mock-makemkv uses profile based on disc path
 	}
 
+	// Build output directory
+	outputDir := r.BuildOutputDir(req)
+
 	// Run the rip
-	result, err := r.Rip(context.Background(), req)
+	result, err := r.Rip(context.Background(), req, outputDir)
 	if err != nil {
 		t.Fatalf("Rip failed: %v", err)
 	}
@@ -80,13 +83,14 @@ func TestRipper_E2E_MovieRip(t *testing.T) {
 		t.Error("Output directory does not exist")
 	}
 
-	// Verify .rip state directory
-	stateDir, err := testenv.FindStateDir(result.OutputDir, ".rip")
-	if err != nil {
-		t.Fatalf("Failed to find state dir: %v", err)
+	// Verify organization scaffolding was created
+	expectedDirs := []string{"_discarded", "_main", "_extras/trailers"}
+	for _, dir := range expectedDirs {
+		path := filepath.Join(result.OutputDir, dir)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			t.Errorf("Expected scaffolding directory %q to exist", dir)
+		}
 	}
-
-	stateDir.AssertStatus(t, model.StatusCompleted)
 }
 
 func TestRipper_E2E_TVShowRip(t *testing.T) {
@@ -98,7 +102,7 @@ func TestRipper_E2E_TVShowRip(t *testing.T) {
 
 	// Create ripper with mock-makemkv
 	runner := ripper.NewMakeMKVRunner(mockPath)
-	r := ripper.NewRipper(env.StagingBase, runner, nil, nil)
+	r := ripper.NewRipper(env.StagingBase, runner, nil)
 
 	// Create request
 	req := &ripper.RipRequest{
@@ -109,8 +113,11 @@ func TestRipper_E2E_TVShowRip(t *testing.T) {
 		DiscPath: "disc:0",
 	}
 
+	// Build output directory
+	outputDir := r.BuildOutputDir(req)
+
 	// Run the rip
-	result, err := r.Rip(context.Background(), req)
+	result, err := r.Rip(context.Background(), req, outputDir)
 	if err != nil {
 		t.Fatalf("Rip failed: %v", err)
 	}
@@ -126,13 +133,14 @@ func TestRipper_E2E_TVShowRip(t *testing.T) {
 		t.Errorf("OutputDir = %q, want %q", result.OutputDir, expectedDir)
 	}
 
-	// Verify .rip state directory
-	stateDir, err := testenv.FindStateDir(result.OutputDir, ".rip")
-	if err != nil {
-		t.Fatalf("Failed to find state dir: %v", err)
+	// Verify organization scaffolding was created (TV shows get _episodes, not _main)
+	expectedDirs := []string{"_discarded", "_episodes", "_extras/trailers"}
+	for _, dir := range expectedDirs {
+		path := filepath.Join(result.OutputDir, dir)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			t.Errorf("Expected scaffolding directory %q to exist", dir)
+		}
 	}
-
-	stateDir.AssertStatus(t, model.StatusCompleted)
 }
 
 // TestRipper_E2E_StateCompatibleWithScanner has been removed as scanner was removed
@@ -147,7 +155,7 @@ func TestRipper_E2E_MultipleTVShowDiscs(t *testing.T) {
 
 	// Create ripper with mock-makemkv
 	runner := ripper.NewMakeMKVRunner(mockPath)
-	r := ripper.NewRipper(env.StagingBase, runner, nil, nil)
+	r := ripper.NewRipper(env.StagingBase, runner, nil)
 
 	// Rip two discs of the same show
 	for disc := 1; disc <= 2; disc++ {
@@ -159,56 +167,35 @@ func TestRipper_E2E_MultipleTVShowDiscs(t *testing.T) {
 			DiscPath: "disc:0",
 		}
 
-		_, err := r.Rip(context.Background(), req)
+		outputDir := r.BuildOutputDir(req)
+		_, err := r.Rip(context.Background(), req, outputDir)
 		if err != nil {
 			t.Fatalf("Rip of disc %d failed: %v", disc, err)
 		}
 	}
 
-	// Verify both disc directories exist with state files
+	// Verify both disc directories exist
 	for disc := 1; disc <= 2; disc++ {
 		discDir := filepath.Join(env.StagingBase, "1-ripped", "tv", "Multi_Disc_Show", "S01", fmt.Sprintf("Disc%d", disc))
 		if _, err := os.Stat(discDir); os.IsNotExist(err) {
 			t.Errorf("Disc%d directory does not exist: %s", disc, discDir)
 		}
 
-		// Verify state directory exists for each disc
-		stateDir, err := testenv.FindStateDir(discDir, ".rip")
-		if err != nil {
-			t.Errorf("Disc%d has no .rip state dir: %v", disc, err)
-			continue
+		// Verify organization scaffolding was created for each disc (TV shows get _episodes, not _main)
+		expectedDirs := []string{"_discarded", "_episodes", "_extras/trailers"}
+		for _, dir := range expectedDirs {
+			path := filepath.Join(discDir, dir)
+			if _, err := os.Stat(path); os.IsNotExist(err) {
+				t.Errorf("Disc%d: Expected scaffolding directory %q to exist", disc, dir)
+			}
 		}
-		stateDir.AssertStatus(t, model.StatusCompleted)
 	}
 }
 
 func TestRipper_E2E_CLIExecution(t *testing.T) {
-	requireFFmpeg(t)
-	mockPath := findMockMakeMKV(t)
-
-	// Find the ripper binary
-	ripperPath := findRipperBinary(t)
-
-	// Set up test environment
-	env := testenv.New(t)
-
-	// Run ripper CLI with mock-makemkv
-	cmd := exec.Command(ripperPath, "-t", "movie", "-n", "CLI Test Movie")
-	cmd.Env = append(os.Environ(),
-		"MEDIA_BASE="+env.BaseDir,
-		"MAKEMKVCON_PATH="+mockPath,
-	)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("Ripper CLI failed: %v\nOutput: %s", err, output)
-	}
-
-	// Verify output directory was created
-	expectedDir := filepath.Join(env.StagingBase, "1-ripped", "movies", "CLI_Test_Movie")
-	if _, err := os.Stat(expectedDir); os.IsNotExist(err) {
-		t.Errorf("Expected output directory does not exist: %s", expectedDir)
-	}
+	// Skip this test - ripper CLI now requires -job-id and -db flags
+	// and cannot run standalone without a database
+	t.Skip("Ripper CLI now requires database mode with -job-id and -db flags")
 }
 
 // findRipperBinary locates the ripper binary

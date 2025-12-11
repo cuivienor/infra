@@ -52,9 +52,8 @@ func TestRipper_Rip_CreatesOutputDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	mockRunner := &testMakeMKVRunner{}
-	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
+	ripper := NewRipper(tmpDir, mockRunner, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -62,35 +61,14 @@ func TestRipper_Rip_CreatesOutputDirectory(t *testing.T) {
 		DiscPath: "disc:0",
 	}
 
-	_, err := ripper.Rip(context.Background(), req)
+	outputDir := filepath.Join(tmpDir, "1-ripped", "movies", "Test_Movie")
+	_, err := ripper.Rip(context.Background(), req, outputDir)
 	if err != nil {
 		t.Fatalf("Rip failed: %v", err)
 	}
 
-	expectedDir := filepath.Join(tmpDir, "1-ripped", "movies", "Test_Movie")
-	if _, err := os.Stat(expectedDir); os.IsNotExist(err) {
+	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
 		t.Error("Output directory was not created")
-	}
-}
-
-func TestRipper_Rip_InitializesState(t *testing.T) {
-	tmpDir := t.TempDir()
-
-	mockRunner := &testMakeMKVRunner{}
-	mockState := &testStateManager{}
-
-	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
-
-	req := &RipRequest{
-		Type:     MediaTypeMovie,
-		Name:     "Test Movie",
-		DiscPath: "disc:0",
-	}
-
-	ripper.Rip(context.Background(), req)
-
-	if !mockState.initializeCalled {
-		t.Error("StateManager.Initialize was not called")
 	}
 }
 
@@ -98,9 +76,8 @@ func TestRipper_Rip_CallsMakeMKVRunner(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	mockRunner := &testMakeMKVRunner{}
-	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
+	ripper := NewRipper(tmpDir, mockRunner, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -108,20 +85,20 @@ func TestRipper_Rip_CallsMakeMKVRunner(t *testing.T) {
 		DiscPath: "disc:0",
 	}
 
-	ripper.Rip(context.Background(), req)
+	outputDir := filepath.Join(tmpDir, "1-ripped", "movies", "Test_Movie")
+	ripper.Rip(context.Background(), req, outputDir)
 
 	if !mockRunner.ripTitlesCalled {
 		t.Error("MakeMKVRunner.RipTitles was not called")
 	}
 }
 
-func TestRipper_Rip_CompletesStateOnSuccess(t *testing.T) {
+func TestRipper_Rip_ReturnsCompletedStatusOnSuccess(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	mockRunner := &testMakeMKVRunner{}
-	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
+	ripper := NewRipper(tmpDir, mockRunner, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -129,22 +106,25 @@ func TestRipper_Rip_CompletesStateOnSuccess(t *testing.T) {
 		DiscPath: "disc:0",
 	}
 
-	ripper.Rip(context.Background(), req)
+	outputDir := filepath.Join(tmpDir, "1-ripped", "movies", "Test_Movie")
+	result, err := ripper.Rip(context.Background(), req, outputDir)
+	if err != nil {
+		t.Fatalf("Rip failed: %v", err)
+	}
 
-	if !mockState.completeCalled {
-		t.Error("StateManager.Complete was not called")
+	if result.Status != model.StatusCompleted {
+		t.Errorf("Status = %v, want %v", result.Status, model.StatusCompleted)
 	}
 }
 
-func TestRipper_Rip_SetsFailedStatusOnError(t *testing.T) {
+func TestRipper_Rip_ReturnsFailedStatusOnError(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	mockRunner := &testMakeMKVRunner{
 		ripError: errors.New("rip failed"),
 	}
-	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
+	ripper := NewRipper(tmpDir, mockRunner, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -152,14 +132,15 @@ func TestRipper_Rip_SetsFailedStatusOnError(t *testing.T) {
 		DiscPath: "disc:0",
 	}
 
-	_, err := ripper.Rip(context.Background(), req)
+	outputDir := filepath.Join(tmpDir, "1-ripped", "movies", "Test_Movie")
+	result, err := ripper.Rip(context.Background(), req, outputDir)
 
 	if err == nil {
 		t.Error("Expected error from Rip")
 	}
 
-	if mockState.lastStatus != model.StatusFailed {
-		t.Errorf("lastStatus = %v, want %v", mockState.lastStatus, model.StatusFailed)
+	if result.Status != model.StatusFailed {
+		t.Errorf("Status = %v, want %v", result.Status, model.StatusFailed)
 	}
 }
 
@@ -167,9 +148,8 @@ func TestRipper_Rip_ReturnsRipResult(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	mockRunner := &testMakeMKVRunner{}
-	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
+	ripper := NewRipper(tmpDir, mockRunner, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -177,7 +157,8 @@ func TestRipper_Rip_ReturnsRipResult(t *testing.T) {
 		DiscPath: "disc:0",
 	}
 
-	result, err := ripper.Rip(context.Background(), req)
+	outputDir := filepath.Join(tmpDir, "1-ripped", "movies", "Test_Movie")
+	result, err := ripper.Rip(context.Background(), req, outputDir)
 	if err != nil {
 		t.Fatalf("Rip failed: %v", err)
 	}
@@ -186,9 +167,8 @@ func TestRipper_Rip_ReturnsRipResult(t *testing.T) {
 		t.Errorf("Status = %v, want %v", result.Status, model.StatusCompleted)
 	}
 
-	expectedDir := filepath.Join(tmpDir, "1-ripped", "movies", "Test_Movie")
-	if result.OutputDir != expectedDir {
-		t.Errorf("OutputDir = %q, want %q", result.OutputDir, expectedDir)
+	if result.OutputDir != outputDir {
+		t.Errorf("OutputDir = %q, want %q", result.OutputDir, outputDir)
 	}
 }
 
@@ -196,9 +176,8 @@ func TestRipper_Rip_ValidatesRequest(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	mockRunner := &testMakeMKVRunner{}
-	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
+	ripper := NewRipper(tmpDir, mockRunner, nil)
 
 	// Missing name
 	req := &RipRequest{
@@ -206,41 +185,19 @@ func TestRipper_Rip_ValidatesRequest(t *testing.T) {
 		DiscPath: "disc:0",
 	}
 
-	_, err := ripper.Rip(context.Background(), req)
+	outputDir := filepath.Join(tmpDir, "1-ripped", "movies", "")
+	_, err := ripper.Rip(context.Background(), req, outputDir)
 	if err == nil {
 		t.Error("Expected validation error for missing name")
 	}
 }
 
-func TestRipper_Rip_SetsErrorOnFailure(t *testing.T) {
-	tmpDir := t.TempDir()
+func TestNewRipper_DefaultRunner(t *testing.T) {
+	ripper := NewRipper("/tmp", nil, nil)
 
-	mockRunner := &testMakeMKVRunner{
-		ripError: errors.New("makemkv crashed"),
-	}
-	mockState := &testStateManager{}
-
-	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
-
-	req := &RipRequest{
-		Type:     MediaTypeMovie,
-		Name:     "Test Movie",
-		DiscPath: "disc:0",
-	}
-
-	ripper.Rip(context.Background(), req)
-
-	if !mockState.setErrorCalled {
-		t.Error("StateManager.SetError was not called")
-	}
-}
-
-func TestNewRipper_DefaultStateManager(t *testing.T) {
-	ripper := NewRipper("/tmp", nil, nil, nil)
-
-	// Should have default state manager
-	if ripper.state == nil {
-		t.Error("state should not be nil with default")
+	// Should have default runner
+	if ripper.runner == nil {
+		t.Error("runner should not be nil with default")
 	}
 }
 
@@ -248,9 +205,8 @@ func TestRipper_Rip_CreatesOrganizationScaffolding(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	mockRunner := &testMakeMKVRunner{}
-	mockState := &testStateManager{}
 
-	ripper := NewRipper(tmpDir, mockRunner, mockState, nil)
+	ripper := NewRipper(tmpDir, mockRunner, nil)
 
 	req := &RipRequest{
 		Type:     MediaTypeMovie,
@@ -258,12 +214,11 @@ func TestRipper_Rip_CreatesOrganizationScaffolding(t *testing.T) {
 		DiscPath: "disc:0",
 	}
 
-	_, err := ripper.Rip(context.Background(), req)
+	outputDir := filepath.Join(tmpDir, "1-ripped", "movies", "Test_Movie")
+	_, err := ripper.Rip(context.Background(), req, outputDir)
 	if err != nil {
 		t.Fatalf("Rip failed: %v", err)
 	}
-
-	outputDir := filepath.Join(tmpDir, "1-ripped", "movies", "Test_Movie")
 
 	// Check scaffolding was created
 	expectedDirs := []string{"_discarded", "_main", "_extras/trailers"}
@@ -304,31 +259,4 @@ func (m *testMakeMKVRunner) GetDiscInfo(ctx context.Context, discPath string) (*
 func (m *testMakeMKVRunner) RipTitles(ctx context.Context, discPath, outputDir string, titleIndices []int, progress ProgressCallback) error {
 	m.ripTitlesCalled = true
 	return m.ripError
-}
-
-type testStateManager struct {
-	initializeCalled bool
-	completeCalled   bool
-	setErrorCalled   bool
-	lastStatus       model.Status
-}
-
-func (s *testStateManager) Initialize(outputDir string, request *RipRequest) error {
-	s.initializeCalled = true
-	return nil
-}
-
-func (s *testStateManager) SetStatus(outputDir string, status model.Status) error {
-	s.lastStatus = status
-	return nil
-}
-
-func (s *testStateManager) SetError(outputDir string, err error) error {
-	s.setErrorCalled = true
-	return nil
-}
-
-func (s *testStateManager) Complete(outputDir string) error {
-	s.completeCalled = true
-	return nil
 }

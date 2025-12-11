@@ -129,10 +129,6 @@ func TestMakeMKVRunner_Interface(t *testing.T) {
 	var _ MakeMKVRunner = (*mockRunner)(nil)
 }
 
-func TestStateManager_Interface(t *testing.T) {
-	var _ StateManager = (*mockStateManager)(nil)
-}
-
 // Mock implementations for interface testing
 type mockRunner struct{}
 
@@ -141,23 +137,5 @@ func (m *mockRunner) GetDiscInfo(ctx context.Context, discPath string) (*DiscInf
 }
 
 func (m *mockRunner) RipTitles(ctx context.Context, discPath, outputDir string, titleIndices []int, progress ProgressCallback) error {
-	return nil
-}
-
-type mockStateManager struct{}
-
-func (m *mockStateManager) Initialize(outputDir string, request *RipRequest) error {
-	return nil
-}
-
-func (m *mockStateManager) SetStatus(outputDir string, status model.Status) error {
-	return nil
-}
-
-func (m *mockStateManager) SetError(outputDir string, err error) error {
-	return nil
-}
-
-func (m *mockStateManager) Complete(outputDir string) error {
 	return nil
 }

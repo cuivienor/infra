@@ -118,19 +118,25 @@ func run(jobID int64, dbPath string, discPath string) error {
 		return fmt.Errorf("failed to update job status: %w", err)
 	}
 
-	// Create ripper components
+	// Create ripper and run
 	runner := ripper.NewMakeMKVRunner(makeMKVConPath)
-	stateManager := ripper.NewDualWriteStateManager(ripper.NewStateManager(), repo)
-	stateManager.WithJobID(jobID)
+	r := ripper.NewRipper(stagingBase, runner, &loggerAdapter{logger})
 
-	r := ripper.NewRipper(stagingBase, runner, stateManager, &loggerAdapter{logger})
-
-	// Run the rip
-	result, err := r.Rip(ctx, req)
+	result, err := r.Rip(ctx, req, outputDir)
 	if err != nil {
 		logger.Error("Rip failed: %v", err)
-		// Note: r.Rip already marks job as failed via StateManager.SetError
+		markFailed(err.Error())
 		return err
+	}
+
+	// Mark job as complete
+	if err := repo.UpdateJobStatus(ctx, jobID, model.JobStatusCompleted, ""); err != nil {
+		return fmt.Errorf("failed to update job status: %w", err)
+	}
+
+	// Update media item stage
+	if err := repo.UpdateMediaItemStage(ctx, item.ID, model.StageRip, model.StatusCompleted); err != nil {
+		return fmt.Errorf("failed to update item stage: %w", err)
 	}
 
 	logger.Info("Rip finished successfully in %s", result.Duration())

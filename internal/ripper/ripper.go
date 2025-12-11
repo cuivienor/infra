@@ -14,20 +14,15 @@ import (
 type Ripper struct {
 	stagingBase string
 	runner      MakeMKVRunner
-	state       StateManager
 	logger      Logger
 }
 
 // NewRipper creates a new Ripper instance
 // If runner is nil, creates a DefaultMakeMKVRunner
-// If state is nil, creates a DefaultStateManager
 // If logger is nil, creates a NopLogger
-func NewRipper(stagingBase string, runner MakeMKVRunner, state StateManager, logger Logger) *Ripper {
+func NewRipper(stagingBase string, runner MakeMKVRunner, logger Logger) *Ripper {
 	if runner == nil {
 		runner = NewMakeMKVRunner("")
-	}
-	if state == nil {
-		state = NewStateManager()
 	}
 	if logger == nil {
 		logger = NopLogger{}
@@ -35,31 +30,23 @@ func NewRipper(stagingBase string, runner MakeMKVRunner, state StateManager, log
 	return &Ripper{
 		stagingBase: stagingBase,
 		runner:      runner,
-		state:       state,
 		logger:      logger,
 	}
 }
 
 // Rip performs the disc ripping operation
-func (r *Ripper) Rip(ctx context.Context, req *RipRequest) (*RipResult, error) {
+func (r *Ripper) Rip(ctx context.Context, req *RipRequest, outputDir string) (*RipResult, error) {
 	// Validate request
 	if err := req.Validate(); err != nil {
 		r.logger.Error("Invalid request: %v", err)
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	r.logger.Info("Starting rip: type=%s name=%q", req.Type, req.Name)
-	if req.Type == MediaTypeTV {
-		r.logger.Info("TV show: season=%d disc=%d", req.Season, req.Disc)
-	}
-
 	result := &RipResult{
 		StartedAt: time.Now(),
+		OutputDir: outputDir,
 	}
 
-	// Build output directory
-	outputDir := r.BuildOutputDir(req)
-	result.OutputDir = outputDir
 	r.logger.Info("Output directory: %s", outputDir)
 
 	// Create output directory
@@ -68,21 +55,11 @@ func (r *Ripper) Rip(ctx context.Context, req *RipRequest) (*RipResult, error) {
 		return nil, fmt.Errorf("failed to create output directory: %w", err)
 	}
 
-	// Initialize state
-	r.logger.Info("Initializing state...")
-	if err := r.state.Initialize(outputDir, req); err != nil {
-		r.logger.Error("Failed to initialize state: %v", err)
-		return nil, fmt.Errorf("failed to initialize state: %w", err)
-	}
-
 	// Run ripping
 	r.logger.Info("Starting MakeMKV rip from %s", req.DiscPath)
 	err := r.runner.RipTitles(ctx, req.DiscPath, outputDir, nil, nil)
 	if err != nil {
-		// Record failure
 		r.logger.Error("Rip failed: %v", err)
-		r.state.SetStatus(outputDir, model.StatusFailed)
-		r.state.SetError(outputDir, err)
 		result.Status = model.StatusFailed
 		result.Error = err
 		result.CompletedAt = time.Now()
@@ -93,17 +70,7 @@ func (r *Ripper) Rip(ctx context.Context, req *RipRequest) (*RipResult, error) {
 	// Create organization scaffolding for manual review
 	if err := CreateOrganizationScaffolding(outputDir, req); err != nil {
 		r.logger.Error("Failed to create organization scaffolding: %v", err)
-		r.state.SetStatus(outputDir, model.StatusFailed)
-		r.state.SetError(outputDir, err)
 		return nil, fmt.Errorf("failed to create organization scaffolding: %w", err)
-	}
-
-	// Complete state
-	r.logger.Info("Marking rip as complete...")
-	if err := r.state.Complete(outputDir); err != nil {
-		r.logger.Error("Failed to complete state: %v", err)
-		r.state.SetError(outputDir, err)
-		return nil, fmt.Errorf("failed to complete state: %w", err)
 	}
 
 	result.Status = model.StatusCompleted
