@@ -116,3 +116,43 @@ func parseFilebotDestination(output string) string {
 	}
 	return ""
 }
+
+// copyExtras copies extras directories to the library destination
+func (p *Publisher) copyExtras(extras []ExtraDir, libraryDest string) (int, error) {
+	copied := 0
+
+	for _, extra := range extras {
+		destDir := filepath.Join(libraryDest, extra.Type)
+		if err := os.MkdirAll(destDir, 0755); err != nil {
+			return copied, fmt.Errorf("failed to create extras dir %s: %w", destDir, err)
+		}
+
+		for _, srcFile := range extra.Files {
+			dstFile := filepath.Join(destDir, filepath.Base(srcFile))
+			if err := copyFile(srcFile, dstFile); err != nil {
+				return copied, fmt.Errorf("failed to copy %s: %w", srcFile, err)
+			}
+			copied++
+		}
+	}
+
+	return copied, nil
+}
+
+// copyFile copies a single file
+func copyFile(src, dst string) error {
+	srcF, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcF.Close()
+
+	dstF, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer dstF.Close()
+
+	_, err = dstF.ReadFrom(srcF)
+	return err
+}

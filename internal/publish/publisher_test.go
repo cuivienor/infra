@@ -90,3 +90,33 @@ func TestPublisher_RunFilebot_ParsesOutput(t *testing.T) {
 		t.Errorf("expected %q, got %q", expected, dest)
 	}
 }
+
+func TestPublisher_CopyExtras(t *testing.T) {
+	srcDir := t.TempDir()
+	dstDir := t.TempDir()
+
+	// Create source extras
+	os.MkdirAll(filepath.Join(srcDir, "featurettes"), 0755)
+	os.WriteFile(filepath.Join(srcDir, "featurettes", "making_of.mkv"), []byte("test"), 0644)
+
+	p := NewPublisher(nil, nil, PublishOptions{})
+	extras := []ExtraDir{{
+		Type:  "featurettes",
+		Path:  filepath.Join(srcDir, "featurettes"),
+		Files: []string{filepath.Join(srcDir, "featurettes", "making_of.mkv")},
+	}}
+
+	copied, err := p.copyExtras(extras, dstDir)
+	if err != nil {
+		t.Errorf("copyExtras failed: %v", err)
+	}
+	if copied != 1 {
+		t.Errorf("expected 1 copied file, got %d", copied)
+	}
+
+	// Verify file exists in destination
+	destFile := filepath.Join(dstDir, "featurettes", "making_of.mkv")
+	if _, err := os.Stat(destFile); err != nil {
+		t.Errorf("expected file at %s, but got error: %v", destFile, err)
+	}
+}
