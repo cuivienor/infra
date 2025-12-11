@@ -156,3 +156,27 @@ func copyFile(src, dst string) error {
 	_, err = dstF.ReadFrom(srcF)
 	return err
 }
+
+// verifyFiles checks that files exist in the destination directory
+func (p *Publisher) verifyFiles(destDir string) error {
+	files, err := filepath.Glob(filepath.Join(destDir, "*.mkv"))
+	if err != nil {
+		return fmt.Errorf("failed to glob destination: %w", err)
+	}
+
+	if len(files) == 0 {
+		return fmt.Errorf("no MKV files found in destination %s", destDir)
+	}
+
+	for _, f := range files {
+		info, err := os.Stat(f)
+		if err != nil {
+			return fmt.Errorf("file not accessible: %s: %w", f, err)
+		}
+		if info.Size() == 0 {
+			return fmt.Errorf("file is empty: %s", f)
+		}
+	}
+
+	return nil
+}

@@ -120,3 +120,20 @@ func TestPublisher_CopyExtras(t *testing.T) {
 		t.Errorf("expected file at %s, but got error: %v", destFile, err)
 	}
 }
+
+func TestPublisher_VerifyFiles(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "movie.mkv"), []byte("test"), 0644)
+
+	p := NewPublisher(nil, nil, PublishOptions{})
+
+	err := p.verifyFiles(dir)
+	if err != nil {
+		t.Errorf("verifyFiles should pass with valid directory: %v", err)
+	}
+
+	err = p.verifyFiles("/nonexistent")
+	if err == nil {
+		t.Error("verifyFiles should fail with nonexistent directory")
+	}
+}
