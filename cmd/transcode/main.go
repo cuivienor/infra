@@ -147,12 +147,6 @@ func run(jobID int64, dbPath string) error {
 		return err
 	}
 
-	// Copy extras
-	if err := transcoder.CopyExtras(inputDir, outputDir); err != nil {
-		logger.Error("Failed to copy extras: %v", err)
-		// Non-fatal - continue
-	}
-
 	// Mark job as complete
 	if err := repo.UpdateJobStatus(ctx, jobID, model.JobStatusCompleted, ""); err != nil {
 		return fmt.Errorf("failed to update job status: %w", err)

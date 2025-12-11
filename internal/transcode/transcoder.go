@@ -3,7 +3,6 @@ package transcode
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -111,19 +110,10 @@ func (t *Transcoder) buildQueue(ctx context.Context, jobID int64, inputDir strin
 		existingMap[existing[i].RelativePath] = &existing[i]
 	}
 
-	// Determine source subdirectory
-	var srcSubdir string
-	if isTV {
-		srcSubdir = "_episodes"
-	} else {
-		srcSubdir = "_main"
-	}
-	srcDir := filepath.Join(inputDir, srcSubdir)
-
-	// Find MKV files
+	// Find all MKV files in input directory (main content and extras)
 	var files []model.TranscodeFile
 
-	err = filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(inputDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -168,37 +158,6 @@ func (t *Transcoder) buildQueue(ctx context.Context, jobID int64, inputDir strin
 
 	if err != nil {
 		return nil, err
-	}
-
-	// Also check for extras (but don't transcode them - just copy)
-	extrasDir := filepath.Join(inputDir, "_extras")
-	if _, err := os.Stat(extrasDir); err == nil {
-		// Mark extras as skipped (will be copied)
-		err = filepath.Walk(extrasDir, func(path string, info os.FileInfo, err error) error {
-			if err != nil || info.IsDir() {
-				return err
-			}
-			if !strings.HasSuffix(strings.ToLower(info.Name()), ".mkv") {
-				return nil
-			}
-
-			relPath, _ := filepath.Rel(inputDir, path)
-
-			if _, ok := existingMap[relPath]; ok {
-				return nil
-			}
-
-			file := &model.TranscodeFile{
-				JobID:        jobID,
-				RelativePath: relPath,
-				Status:       model.TranscodeFileStatusSkipped, // Extras are copied, not transcoded
-				InputSize:    info.Size(),
-			}
-			if err := t.repo.CreateTranscodeFile(ctx, file); err != nil {
-				t.logger.Error("Failed to track extras file: %v", err)
-			}
-			return nil
-		})
 	}
 
 	return files, nil
@@ -294,61 +253,3 @@ func (t *Transcoder) logSummary(ctx context.Context, jobID int64) {
 	}
 }
 
-// CopyExtras copies the _extras directory without transcoding
-func (t *Transcoder) CopyExtras(inputDir, outputDir string) error {
-	extrasIn := filepath.Join(inputDir, "_extras")
-	extrasOut := filepath.Join(outputDir, "_extras")
-
-	if _, err := os.Stat(extrasIn); os.IsNotExist(err) {
-		return nil // No extras to copy
-	}
-
-	t.logger.Info("Copying extras...")
-	return copyDirectory(extrasIn, extrasOut)
-}
-
-// copyDirectory copies a directory recursively
-func copyDirectory(src, dst string) error {
-	if err := os.MkdirAll(dst, 0755); err != nil {
-		return err
-	}
-
-	entries, err := os.ReadDir(src)
-	if err != nil {
-		return err
-	}
-
-	for _, entry := range entries {
-		srcPath := filepath.Join(src, entry.Name())
-		dstPath := filepath.Join(dst, entry.Name())
-
-		if entry.IsDir() {
-			if err := copyDirectory(srcPath, dstPath); err != nil {
-				return err
-			}
-		} else {
-			if err := copyFile(srcPath, dstPath); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func copyFile(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, in)
-	return err
-}
