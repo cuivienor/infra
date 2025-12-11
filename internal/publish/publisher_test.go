@@ -1,10 +1,22 @@
 package publish
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/cuivienor/media-pipeline/internal/model"
+)
+
+// Aliases for readability in tests
+type MediaItem = model.MediaItem
+type MediaType = model.MediaType
+
+const (
+	MediaTypeMovie = model.MediaTypeMovie
+	MediaTypeTV    = model.MediaTypeTV
 )
 
 func TestNewPublisher(t *testing.T) {
@@ -136,4 +148,39 @@ func TestPublisher_VerifyFiles(t *testing.T) {
 	if err == nil {
 		t.Error("verifyFiles should fail with nonexistent directory")
 	}
+}
+
+func TestPublisher_Publish_RequiresDatabaseID(t *testing.T) {
+	p := NewPublisher(nil, nil, PublishOptions{})
+
+	item := &MediaItem{
+		Type:     MediaTypeMovie,
+		Name:     "Test Movie",
+		SafeName: "Test_Movie",
+		// No TmdbID set
+	}
+
+	result, err := p.Publish(context.Background(), item, "/input")
+	if err == nil {
+		t.Error("expected error for missing database ID")
+	}
+	if err != nil && !contains(err.Error(), "database ID") {
+		t.Errorf("expected error to mention 'database ID', got: %v", err)
+	}
+	if result != nil {
+		t.Error("expected nil result on error")
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && containsAt(s, substr))
+}
+
+func containsAt(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }

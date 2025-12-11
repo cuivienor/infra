@@ -1,14 +1,17 @@
 package publish
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/cuivienor/media-pipeline/internal/db"
 	"github.com/cuivienor/media-pipeline/internal/logging"
+	"github.com/cuivienor/media-pipeline/internal/model"
 )
 
 // Jellyfin-supported extras types
@@ -179,4 +182,67 @@ func (p *Publisher) verifyFiles(destDir string) error {
 	}
 
 	return nil
+}
+
+// PublishResult contains the results of a publish operation
+type PublishResult struct {
+	LibraryPath   string // Where main content was copied
+	MainFiles     int    // Number of main content files copied
+	ExtrasFiles   int    // Number of extras files copied
+	FilebotOutput string // Raw FileBot output
+}
+
+// Publish copies media to the library using FileBot
+func (p *Publisher) Publish(ctx context.Context, item *model.MediaItem, inputDir string) (*PublishResult, error) {
+	dbID := item.DatabaseID()
+	if dbID == 0 {
+		return nil, fmt.Errorf("media item requires a database ID (tmdb_id for movies, tvdb_id for TV)")
+	}
+
+	mediaType := string(item.Type)
+
+	// Run FileBot
+	args := p.buildFilebotArgs(inputDir, mediaType, dbID)
+	if p.logger != nil {
+		p.logger.Info("Running FileBot: filebot %s", strings.Join(args, " "))
+	}
+
+	output, err := p.runFilebot(args)
+	if err != nil {
+		return nil, fmt.Errorf("filebot failed: %w\nOutput: %s", err, output)
+	}
+
+	// Parse destination from output
+	libraryDest := parseFilebotDestination(output)
+	if libraryDest == "" {
+		return nil, fmt.Errorf("failed to determine library destination from FileBot output")
+	}
+
+	// Count main files copied
+	mainCount := strings.Count(output, "[COPY]")
+
+	// Find and copy extras
+	extras := p.findExtras(inputDir)
+	extrasCount := 0
+	if len(extras) > 0 {
+		if p.logger != nil {
+			p.logger.Info("Found %d extras directories", len(extras))
+		}
+		extrasCount, err = p.copyExtras(extras, libraryDest)
+		if err != nil {
+			return nil, fmt.Errorf("failed to copy extras: %w", err)
+		}
+	}
+
+	// Verify files exist
+	if err := p.verifyFiles(libraryDest); err != nil {
+		return nil, fmt.Errorf("verification failed: %w", err)
+	}
+
+	return &PublishResult{
+		LibraryPath:   libraryDest,
+		MainFiles:     mainCount,
+		ExtrasFiles:   extrasCount,
+		FilebotOutput: output,
+	}, nil
 }
