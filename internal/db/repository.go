@@ -40,6 +40,18 @@ type Repository interface {
 	UpdateMediaItemStatus(ctx context.Context, id int64, status model.ItemStatus) error
 	UpdateMediaItemStage(ctx context.Context, id int64, stage model.Stage, status model.Status) error
 	ListActiveItems(ctx context.Context) ([]model.MediaItem, error)
+
+	// Transcode files
+	CreateTranscodeFile(ctx context.Context, file *model.TranscodeFile) error
+	GetTranscodeFile(ctx context.Context, id int64) (*model.TranscodeFile, error)
+	ListTranscodeFiles(ctx context.Context, jobID int64) ([]model.TranscodeFile, error)
+	UpdateTranscodeFile(ctx context.Context, file *model.TranscodeFile) error
+	UpdateTranscodeFileProgress(ctx context.Context, id int64, progress int) error
+	UpdateTranscodeFileStatus(ctx context.Context, id int64, status model.TranscodeFileStatus, errorMsg string) error
+
+	// Job options
+	GetJobOptions(ctx context.Context, jobID int64) (map[string]interface{}, error)
+	SetJobOptions(ctx context.Context, jobID int64, options map[string]interface{}) error
 }
 
 // ListOptions configures media item listing

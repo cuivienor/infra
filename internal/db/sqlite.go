@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -965,4 +966,253 @@ func (r *SQLiteRepository) ListActiveItems(ctx context.Context) ([]model.MediaIt
 	}
 
 	return items, rows.Err()
+}
+
+// CreateTranscodeFile creates a new transcode file record
+func (r *SQLiteRepository) CreateTranscodeFile(ctx context.Context, file *model.TranscodeFile) error {
+	query := `
+		INSERT INTO transcode_files (job_id, relative_path, status, input_size, duration_secs)
+		VALUES (?, ?, ?, ?, ?)
+	`
+	result, err := r.db.db.ExecContext(ctx, query,
+		file.JobID,
+		file.RelativePath,
+		file.Status,
+		file.InputSize,
+		file.DurationSecs,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create transcode file: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get last insert id: %w", err)
+	}
+	file.ID = id
+	return nil
+}
+
+// GetTranscodeFile retrieves a transcode file by ID
+func (r *SQLiteRepository) GetTranscodeFile(ctx context.Context, id int64) (*model.TranscodeFile, error) {
+	query := `
+		SELECT id, job_id, relative_path, status, input_size, output_size,
+		       progress, duration_secs, started_at, completed_at, error_message
+		FROM transcode_files
+		WHERE id = ?
+	`
+	var file model.TranscodeFile
+	var startedAt, completedAt sql.NullString
+	var outputSize sql.NullInt64
+	var errorMsg sql.NullString
+
+	err := r.db.db.QueryRowContext(ctx, query, id).Scan(
+		&file.ID,
+		&file.JobID,
+		&file.RelativePath,
+		&file.Status,
+		&file.InputSize,
+		&outputSize,
+		&file.Progress,
+		&file.DurationSecs,
+		&startedAt,
+		&completedAt,
+		&errorMsg,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transcode file: %w", err)
+	}
+
+	if outputSize.Valid {
+		file.OutputSize = outputSize.Int64
+	}
+	if startedAt.Valid {
+		if t, err := time.Parse(time.RFC3339, startedAt.String); err == nil {
+			file.StartedAt = &t
+		}
+	}
+	if completedAt.Valid {
+		if t, err := time.Parse(time.RFC3339, completedAt.String); err == nil {
+			file.CompletedAt = &t
+		}
+	}
+	if errorMsg.Valid {
+		file.ErrorMessage = errorMsg.String
+	}
+
+	return &file, nil
+}
+
+// ListTranscodeFiles lists all transcode files for a job
+func (r *SQLiteRepository) ListTranscodeFiles(ctx context.Context, jobID int64) ([]model.TranscodeFile, error) {
+	query := `
+		SELECT id, job_id, relative_path, status, input_size, output_size,
+		       progress, duration_secs, started_at, completed_at, error_message
+		FROM transcode_files
+		WHERE job_id = ?
+		ORDER BY relative_path
+	`
+	rows, err := r.db.db.QueryContext(ctx, query, jobID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list transcode files: %w", err)
+	}
+	defer rows.Close()
+
+	var files []model.TranscodeFile
+	for rows.Next() {
+		var file model.TranscodeFile
+		var startedAt, completedAt sql.NullString
+		var outputSize sql.NullInt64
+		var errorMsg sql.NullString
+
+		if err := rows.Scan(
+			&file.ID,
+			&file.JobID,
+			&file.RelativePath,
+			&file.Status,
+			&file.InputSize,
+			&outputSize,
+			&file.Progress,
+			&file.DurationSecs,
+			&startedAt,
+			&completedAt,
+			&errorMsg,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan transcode file: %w", err)
+		}
+
+		if outputSize.Valid {
+			file.OutputSize = outputSize.Int64
+		}
+		if startedAt.Valid {
+			if t, err := time.Parse(time.RFC3339, startedAt.String); err == nil {
+				file.StartedAt = &t
+			}
+		}
+		if completedAt.Valid {
+			if t, err := time.Parse(time.RFC3339, completedAt.String); err == nil {
+				file.CompletedAt = &t
+			}
+		}
+		if errorMsg.Valid {
+			file.ErrorMessage = errorMsg.String
+		}
+
+		files = append(files, file)
+	}
+
+	return files, rows.Err()
+}
+
+// UpdateTranscodeFile updates a transcode file record
+func (r *SQLiteRepository) UpdateTranscodeFile(ctx context.Context, file *model.TranscodeFile) error {
+	query := `
+		UPDATE transcode_files
+		SET status = ?, input_size = ?, output_size = ?, progress = ?,
+		    duration_secs = ?, started_at = ?, completed_at = ?, error_message = ?
+		WHERE id = ?
+	`
+	var startedAt, completedAt *string
+	if file.StartedAt != nil {
+		s := file.StartedAt.UTC().Format(time.RFC3339)
+		startedAt = &s
+	}
+	if file.CompletedAt != nil {
+		s := file.CompletedAt.UTC().Format(time.RFC3339)
+		completedAt = &s
+	}
+
+	_, err := r.db.db.ExecContext(ctx, query,
+		file.Status,
+		file.InputSize,
+		file.OutputSize,
+		file.Progress,
+		file.DurationSecs,
+		startedAt,
+		completedAt,
+		file.ErrorMessage,
+		file.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update transcode file: %w", err)
+	}
+	return nil
+}
+
+// UpdateTranscodeFileProgress updates just the progress percentage
+func (r *SQLiteRepository) UpdateTranscodeFileProgress(ctx context.Context, id int64, progress int) error {
+	query := `UPDATE transcode_files SET progress = ? WHERE id = ?`
+	_, err := r.db.db.ExecContext(ctx, query, progress, id)
+	if err != nil {
+		return fmt.Errorf("failed to update transcode file progress: %w", err)
+	}
+	return nil
+}
+
+// UpdateTranscodeFileStatus updates status and optionally error message
+func (r *SQLiteRepository) UpdateTranscodeFileStatus(ctx context.Context, id int64, status model.TranscodeFileStatus, errorMsg string) error {
+	now := time.Now().UTC().Format(time.RFC3339)
+
+	var query string
+	var args []interface{}
+
+	if status == model.TranscodeFileStatusInProgress {
+		query = `UPDATE transcode_files SET status = ?, started_at = ? WHERE id = ?`
+		args = []interface{}{status, now, id}
+	} else if status == model.TranscodeFileStatusCompleted || status == model.TranscodeFileStatusFailed {
+		query = `UPDATE transcode_files SET status = ?, completed_at = ?, error_message = ? WHERE id = ?`
+		args = []interface{}{status, now, errorMsg, id}
+	} else {
+		query = `UPDATE transcode_files SET status = ?, error_message = ? WHERE id = ?`
+		args = []interface{}{status, errorMsg, id}
+	}
+
+	_, err := r.db.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to update transcode file status: %w", err)
+	}
+	return nil
+}
+
+// GetJobOptions retrieves the JSON options for a job
+func (r *SQLiteRepository) GetJobOptions(ctx context.Context, jobID int64) (map[string]interface{}, error) {
+	query := `SELECT options FROM jobs WHERE id = ?`
+	var optionsJSON sql.NullString
+
+	err := r.db.db.QueryRowContext(ctx, query, jobID).Scan(&optionsJSON)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get job options: %w", err)
+	}
+
+	if !optionsJSON.Valid || optionsJSON.String == "" {
+		return nil, nil
+	}
+
+	var options map[string]interface{}
+	if err := json.Unmarshal([]byte(optionsJSON.String), &options); err != nil {
+		return nil, fmt.Errorf("failed to parse job options: %w", err)
+	}
+
+	return options, nil
+}
+
+// SetJobOptions sets the JSON options for a job
+func (r *SQLiteRepository) SetJobOptions(ctx context.Context, jobID int64, options map[string]interface{}) error {
+	optionsJSON, err := json.Marshal(options)
+	if err != nil {
+		return fmt.Errorf("failed to marshal job options: %w", err)
+	}
+
+	query := `UPDATE jobs SET options = ? WHERE id = ?`
+	_, err = r.db.db.ExecContext(ctx, query, string(optionsJSON), jobID)
+	if err != nil {
+		return fmt.Errorf("failed to set job options: %w", err)
+	}
+	return nil
 }
