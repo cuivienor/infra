@@ -1,6 +1,8 @@
 package publish
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 )
@@ -57,5 +59,21 @@ func TestPublisher_BuildFilebotArgs_TV(t *testing.T) {
 
 	if !reflect.DeepEqual(args, expected) {
 		t.Errorf("unexpected args:\ngot:  %v\nwant: %v", args, expected)
+	}
+}
+
+func TestPublisher_FindExtras(t *testing.T) {
+	// Create temp directory structure
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, "featurettes"), 0755)
+	os.MkdirAll(filepath.Join(dir, "deleted scenes"), 0755)
+	os.WriteFile(filepath.Join(dir, "featurettes", "making_of.mkv"), []byte{}, 0644)
+	os.WriteFile(filepath.Join(dir, "deleted scenes", "scene1.mkv"), []byte{}, 0644)
+
+	p := NewPublisher(nil, nil, PublishOptions{})
+	extras := p.findExtras(dir)
+
+	if len(extras) != 2 {
+		t.Errorf("expected 2 extras dirs, got %d", len(extras))
 	}
 }
