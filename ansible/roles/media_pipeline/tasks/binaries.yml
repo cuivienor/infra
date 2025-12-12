@@ -1,0 +1,39 @@
+---
+# Media Pipeline - Binary Installation Tasks
+
+- name: Create install directory
+  ansible.builtin.file:
+    path: "{{ media_pipeline_bin_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Download and extract release tarball
+  ansible.builtin.unarchive:
+    src: "{{ media_pipeline_download_url }}"
+    dest: "{{ media_pipeline_install_dir }}"
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+  register: tarball_extract
+
+- name: Create symlinks in /usr/local/bin
+  ansible.builtin.file:
+    src: "{{ media_pipeline_bin_dir }}/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    state: link
+    force: true
+  loop: "{{ media_pipeline_binaries }}"
+
+- name: Verify binaries are executable
+  ansible.builtin.command: "{{ item }} --help"
+  loop: "{{ media_pipeline_binaries }}"
+  changed_when: false
+  failed_when: false
+  register: binary_check
+
+- name: Report binary status
+  ansible.builtin.debug:
+    msg: "{{ item.item }}: {{ 'OK' if item.rc == 0 else 'FAILED' }}"
+  loop: "{{ binary_check.results }}"
+  loop_control:
+    label: "{{ item.item }}"

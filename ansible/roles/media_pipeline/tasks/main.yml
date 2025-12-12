@@ -1,0 +1,10 @@
+---
+# Media Pipeline Role - Main Tasks
+
+- name: Include binary installation tasks
+  ansible.builtin.include_tasks: binaries.yml
+  when: media_pipeline_binaries | length > 0
+
+- name: Include config deployment tasks
+  ansible.builtin.include_tasks: config.yml
+  when: media_pipeline_deploy_config | bool

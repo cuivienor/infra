@@ -1,0 +1,15 @@
+---
+# Media Pipeline - Config Deployment Tasks
+
+- name: Ensure pipeline directory exists
+  ansible.builtin.file:
+    path: "{{ media_pipeline_config_path | dirname }}"
+    state: directory
+    mode: '0755'
+
+- name: Deploy config.yaml
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ media_pipeline_config_path }}"
+    mode: '0644'
+    backup: true
