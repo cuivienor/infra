@@ -1,0 +1,25 @@
+# Media Pipeline Configuration
+# Managed by Ansible - do not edit manually
+
+staging_base: {{ media_pipeline_staging_base }}
+library_base: {{ media_pipeline_library_base }}
+database: {{ media_pipeline_database_path }}
+
+dispatch:
+{% for stage, target in media_pipeline_dispatch.items() %}
+{% if target %}
+  {{ stage }}: {{ target }}
+{% endif %}
+{% endfor %}
+
+remux:
+  languages:
+{% for lang in media_pipeline_remux.languages %}
+    - {{ lang }}
+{% endfor %}
+
+transcode:
+  crf: {{ media_pipeline_transcode.crf }}
+  mode: {{ media_pipeline_transcode.mode }}
+  preset: {{ media_pipeline_transcode.preset }}
+  hw_preset: {{ media_pipeline_transcode.hw_preset }}
