@@ -1,0 +1,41 @@
+---
+# Media Pipeline Role Defaults
+
+# GitHub release settings
+media_pipeline_version: "v0.2.0"
+media_pipeline_github_repo: "cuivienor/media-pipeline"
+# yamllint disable-line rule:line-length
+media_pipeline_download_url: "https://github.com/{{ media_pipeline_github_repo }}/releases/download/{{ media_pipeline_version }}/media-pipeline-linux-amd64.tar.gz"
+
+# Local paths
+media_pipeline_install_dir: /opt/media-pipeline
+media_pipeline_bin_dir: "{{ media_pipeline_install_dir }}/bin"
+
+# Binaries to install (per-host override in playbook vars)
+media_pipeline_binaries: []
+
+# Config settings (only used on analyzer)
+media_pipeline_deploy_config: false
+media_pipeline_config_path: /mnt/media/pipeline/config.yaml
+media_pipeline_database_path: /mnt/media/pipeline/pipeline.db
+
+# Path configuration (matches existing mount structure)
+media_pipeline_staging_base: /mnt/staging
+media_pipeline_library_base: /mnt/media/library
+
+# Dispatch targets for remote execution
+media_pipeline_dispatch:
+  rip: ripper.home.arpa
+  transcode: transcoder.home.arpa
+
+# Remux settings
+media_pipeline_remux:
+  languages:
+    - eng
+
+# Transcode settings
+media_pipeline_transcode:
+  crf: 20
+  mode: hardware
+  preset: slow
+  hw_preset: medium
