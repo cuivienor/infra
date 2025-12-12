@@ -15,6 +15,7 @@ type NewItemForm struct {
 	Type       string // "movie" or "tv"
 	Name       string
 	Seasons    string // For TV: "1-5" or "1,2,3" or "1"
+	DatabaseID string // TMDB ID for movies, TVDB ID for TV shows
 	focusIndex int
 	err        string
 }
@@ -22,9 +23,9 @@ type NewItemForm struct {
 // fields returns the list of field names in order
 func (f *NewItemForm) fields() []string {
 	if f.Type == "tv" {
-		return []string{"type", "name", "seasons"}
+		return []string{"type", "name", "seasons", "dbid"}
 	}
-	return []string{"type", "name"}
+	return []string{"type", "name", "dbid"}
 }
 
 // Validate returns an error message if the form is invalid
@@ -140,6 +141,14 @@ func (a *App) renderNewItemForm() string {
 			b.WriteString(fmt.Sprintf("%sSeasons: %s\n", prefix, form.Seasons))
 			b.WriteString(mutedItemStyle.Render("        (e.g., '1-5' or '1,2,3')"))
 			b.WriteString("\n")
+		case "dbid":
+			label := "TMDB ID"
+			if form.Type == "tv" {
+				label = "TVDB ID"
+			}
+			b.WriteString(fmt.Sprintf("%s%s: %s\n", prefix, label, form.DatabaseID))
+			b.WriteString(mutedItemStyle.Render("        (optional, for FileBot matching)"))
+			b.WriteString("\n")
 		}
 	}
 
@@ -200,6 +209,10 @@ func (a *App) handleNewItemKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			if len(form.Seasons) > 0 {
 				form.Seasons = form.Seasons[:len(form.Seasons)-1]
 			}
+		case "dbid":
+			if len(form.DatabaseID) > 0 {
+				form.DatabaseID = form.DatabaseID[:len(form.DatabaseID)-1]
+			}
 		}
 		return a, nil
 
@@ -219,6 +232,11 @@ func (a *App) handleNewItemKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				// Allow digits, comma, dash
 				if (char >= "0" && char <= "9") || char == "," || char == "-" {
 					form.Seasons += char
+				}
+			case "dbid":
+				// Allow digits only
+				if char >= "0" && char <= "9" {
+					form.DatabaseID += char
 				}
 			}
 		}
@@ -245,6 +263,17 @@ func (a *App) createNewItem() tea.Cmd {
 			Name:       form.Name,
 			SafeName:   safeName,
 			ItemStatus: model.ItemStatusNotStarted,
+		}
+
+		// Set database ID if provided
+		if form.DatabaseID != "" {
+			if dbID, err := strconv.Atoi(form.DatabaseID); err == nil {
+				if form.Type == "movie" {
+					item.TmdbID = &dbID
+				} else {
+					item.TvdbID = &dbID
+				}
+			}
 		}
 
 		// For movies, set initial stage
