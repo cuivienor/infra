@@ -40,15 +40,54 @@
         state: present
       tags: ['ssh-keys']
 
-    - name: Install FFmpeg and VA-API packages
+    - name: Ensure keyrings directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+      tags: ['ffmpeg']
+
+    - name: Add Jellyfin GPG key
+      ansible.builtin.apt_key:
+        url: "https://repo.jellyfin.org/debian/jellyfin_team.gpg.key"
+        state: present
+        keyring: /etc/apt/keyrings/jellyfin.gpg
+      tags: ['ffmpeg']
+
+    - name: Add Jellyfin repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/jellyfin.gpg] https://repo.jellyfin.org/debian bookworm main"
+        state: present
+        filename: jellyfin
+      tags: ['ffmpeg']
+
+    - name: Install jellyfin-ffmpeg7 and VA-API packages
       ansible.builtin.apt:
         name:
-          - ffmpeg
+          - jellyfin-ffmpeg7
           - vainfo
           - intel-media-va-driver
           - mesa-va-drivers
+          - libvpl2
+          - libmfx-gen1.2
         state: present
         update_cache: true
+      tags: ['ffmpeg']
+
+    - name: Create ffmpeg symlink to jellyfin-ffmpeg
+      ansible.builtin.file:
+        src: /usr/lib/jellyfin-ffmpeg/ffmpeg
+        dest: /usr/local/bin/ffmpeg
+        state: link
+        force: true
+      tags: ['ffmpeg']
+
+    - name: Create ffprobe symlink to jellyfin-ffmpeg
+      ansible.builtin.file:
+        src: /usr/lib/jellyfin-ffmpeg/ffprobe
+        dest: /usr/local/bin/ffprobe
+        state: link
+        force: true
       tags: ['ffmpeg']
 
     - name: Create scripts directory for media user
@@ -156,7 +195,7 @@
       tags: ['verify']
 
     - name: Verify FFmpeg can detect hardware encoders
-      ansible.builtin.shell: ffmpeg -hide_banner -encoders 2>&1 | grep -E "(h264_vaapi|hevc_vaapi)"
+      ansible.builtin.shell: ffmpeg -hide_banner -encoders 2>&1 | grep -E "(h264_vaapi|hevc_vaapi|h264_qsv|hevc_qsv)"
       register: ffmpeg_encoders
       failed_when: false
       changed_when: false
@@ -167,6 +206,23 @@
       ansible.builtin.debug:
         msg: "{{ ffmpeg_encoders.stdout_lines }}"
       when: ffmpeg_encoders.stdout_lines is defined and ffmpeg_encoders.stdout_lines | length > 0
+      tags: ['verify']
+
+    - name: Test QSV encoding
+      ansible.builtin.shell: |
+        ffmpeg -hide_banner -init_hw_device qsv=qsv:hw \
+          -f lavfi -i testsrc=duration=1:size=320x240:rate=30 \
+          -vf "format=nv12,hwupload=extra_hw_frames=64" \
+          -c:v hevc_qsv -f null - 2>&1 | tail -3
+      register: qsv_test
+      failed_when: false
+      changed_when: false
+      become_user: media
+      tags: ['verify']
+
+    - name: Display QSV test result
+      ansible.builtin.debug:
+        msg: "QSV encoding: {{ 'OK' if 'hevc_qsv' in qsv_test.stdout else 'FAILED' }}"
       tags: ['verify']
 
     - name: Verify scripts deployed
