@@ -37,7 +37,7 @@ media_pipeline_remux:
 
 # Transcode settings
 media_pipeline_transcode:
-  crf: 20
+  crf: 16
   mode: hardware
   preset: slow
   hw_preset: veryslow
