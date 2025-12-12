@@ -2,7 +2,7 @@
 # Media Pipeline Role Defaults
 
 # GitHub release settings
-media_pipeline_version: "v0.2.0"
+media_pipeline_version: "v0.2.1"
 media_pipeline_github_repo: "cuivienor/media-pipeline"
 # yamllint disable-line rule:line-length
 media_pipeline_download_url: "https://github.com/{{ media_pipeline_github_repo }}/releases/download/{{ media_pipeline_version }}/media-pipeline-linux-amd64.tar.gz"
