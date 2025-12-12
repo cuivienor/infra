@@ -109,8 +109,8 @@ func GenerateSyntheticMKVWithTracks(outputPath string, duration time.Duration, t
 		args = append(args, "-map", fmt.Sprintf("%d", i+1+len(tracks.AudioTracks)))
 	}
 
-	// Video codec
-	args = append(args, "-c:v", "libx264", "-preset", "ultrafast")
+	// Video codec - use yuv420p like real Blu-rays (required for QSV hardware decode)
+	args = append(args, "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p")
 
 	// Audio codec and metadata
 	args = append(args, "-c:a", "aac")
