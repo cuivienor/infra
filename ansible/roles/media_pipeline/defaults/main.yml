@@ -9,7 +9,8 @@ media_pipeline_download_url: "https://github.com/{{ media_pipeline_github_repo }
 
 # Local paths
 media_pipeline_install_dir: /opt/media-pipeline
-media_pipeline_bin_dir: "{{ media_pipeline_install_dir }}/bin"
+# Binaries are extracted directly to install_dir (tarball has --strip-components=1)
+media_pipeline_bin_dir: "{{ media_pipeline_install_dir }}"
 
 # Binaries to install (per-host override in playbook vars)
 media_pipeline_binaries: []

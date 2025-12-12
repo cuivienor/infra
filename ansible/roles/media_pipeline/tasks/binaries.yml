@@ -3,7 +3,7 @@
 
 - name: Create install directory
   ansible.builtin.file:
-    path: "{{ media_pipeline_bin_dir }}"
+    path: "{{ media_pipeline_install_dir }}"
     state: directory
     mode: '0755'
 
