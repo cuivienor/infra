@@ -1,6 +1,9 @@
 ---
 # Media Pipeline Role - Main Tasks
 
+- name: Include common tools installation
+  ansible.builtin.include_tasks: tools.yml
+
 - name: Include binary installation tasks
   ansible.builtin.include_tasks: binaries.yml
   when: media_pipeline_binaries | length > 0
