@@ -21,7 +21,7 @@ media_pipeline_config_path: /mnt/media/pipeline/config.yaml
 media_pipeline_database_path: /mnt/media/pipeline/pipeline.db
 
 # Path configuration (matches existing mount structure)
-media_pipeline_staging_base: /mnt/staging
+media_pipeline_staging_base: /mnt/media/staging
 media_pipeline_library_base: /mnt/media/library
 
 # Dispatch targets for remote execution
