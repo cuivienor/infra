@@ -39,6 +39,15 @@
           - transcoder.home.arpa
       tags: ['ssh', 'pipeline']
 
+    - role: media_pipeline
+      vars:
+        media_pipeline_binaries:
+          - media-pipeline
+          - remux
+          - publish
+        media_pipeline_deploy_config: true
+      tags: ['pipeline']
+
 # Verification tasks
 - name: Verify analyzer container configuration
   hosts: analyzer
