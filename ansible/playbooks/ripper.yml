@@ -34,6 +34,12 @@
         media_pipeline_ssh_target: true
       tags: ['ssh', 'pipeline']
 
+    - role: media_pipeline
+      vars:
+        media_pipeline_binaries:
+          - ripper
+      tags: ['pipeline']
+
   tasks:
     - name: Deploy media scripts
       ansible.builtin.copy:
