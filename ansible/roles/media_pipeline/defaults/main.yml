@@ -39,4 +39,4 @@ media_pipeline_transcode:
   crf: 20
   mode: hardware
   preset: slow
-  hw_preset: medium
+  hw_preset: veryslow
