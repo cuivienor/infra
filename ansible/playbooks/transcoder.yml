@@ -26,6 +26,12 @@
         media_pipeline_ssh_target: true
       tags: ['ssh', 'pipeline']
 
+    - role: media_pipeline
+      vars:
+        media_pipeline_binaries:
+          - transcode
+      tags: ['pipeline']
+
   tasks:
     - name: Deploy SSH keys for media user
       ansible.posix.authorized_key:
