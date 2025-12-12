@@ -222,7 +222,7 @@
 
     - name: Display QSV test result
       ansible.builtin.debug:
-        msg: "QSV encoding: {{ 'OK' if 'hevc_qsv' in qsv_test.stdout else 'FAILED' }}"
+        msg: "QSV encoding: {{ 'OK' if 'hevc_qsv' in (qsv_test.stdout + qsv_test.stderr) else 'FAILED' }}"
       tags: ['verify']
 
     - name: Verify scripts deployed
