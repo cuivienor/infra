@@ -1,0 +1,12 @@
+---
+# Media Pipeline - Common Tools Installation
+
+- name: Install common media tools
+  ansible.builtin.apt:
+    name:
+      - ffmpeg
+      - mkvtoolnix
+      - mediainfo
+      - jq
+    state: present
+    update_cache: true
