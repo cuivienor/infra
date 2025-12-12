@@ -33,6 +33,7 @@ media_pipeline_dispatch:
 media_pipeline_remux:
   languages:
     - eng
+    - bul
 
 # Transcode settings
 media_pipeline_transcode:
