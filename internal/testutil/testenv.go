@@ -1,11 +1,15 @@
 package testutil
 
 import (
+	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/cuivienor/media-pipeline/internal/db"
+	"github.com/cuivienor/media-pipeline/internal/model"
 )
 
 // TestEnv provides an isolated test environment with temp directories and in-memory database
@@ -72,4 +76,67 @@ func NewTestEnv(t *testing.T) *TestEnv {
 	})
 
 	return env
+}
+
+// CreateMediaItem creates a media item in the test database
+func (e *TestEnv) CreateMediaItem(safeName string, mediaType model.MediaType) *model.MediaItem {
+	e.t.Helper()
+	ctx := context.Background()
+
+	// Derive human-readable name from safe name
+	name := strings.ReplaceAll(safeName, "_", " ")
+
+	item := &model.MediaItem{
+		Type:       mediaType,
+		Name:       name,
+		SafeName:   safeName,
+		ItemStatus: model.ItemStatusActive,
+	}
+
+	if err := e.Repo.CreateMediaItem(ctx, item); err != nil {
+		e.t.Fatalf("CreateMediaItem failed: %v", err)
+	}
+
+	return item
+}
+
+// CreateJob creates a pending job for a media item
+func (e *TestEnv) CreateJob(mediaItemID int64, stage model.Stage) *model.Job {
+	e.t.Helper()
+	ctx := context.Background()
+
+	job := &model.Job{
+		MediaItemID: mediaItemID,
+		Stage:       stage,
+		Status:      model.JobStatusPending,
+	}
+
+	if err := e.Repo.CreateJob(ctx, job); err != nil {
+		e.t.Fatalf("CreateJob failed: %v", err)
+	}
+
+	return job
+}
+
+// CreateCompletedJob creates a completed job with the specified output directory
+func (e *TestEnv) CreateCompletedJob(mediaItemID int64, stage model.Stage, outputDir string) *model.Job {
+	e.t.Helper()
+	ctx := context.Background()
+
+	now := time.Now()
+	job := &model.Job{
+		MediaItemID: mediaItemID,
+		Stage:       stage,
+		Status:      model.JobStatusCompleted,
+		OutputDir:   outputDir,
+		Progress:    100,
+		StartedAt:   &now,
+		CompletedAt: &now,
+	}
+
+	if err := e.Repo.CreateJob(ctx, job); err != nil {
+		e.t.Fatalf("CreateCompletedJob failed: %v", err)
+	}
+
+	return job
 }
