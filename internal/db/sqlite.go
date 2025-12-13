@@ -252,10 +252,10 @@ func (r *SQLiteRepository) CreateJob(ctx context.Context, job *model.Job) error 
 	query := `
 		INSERT INTO jobs (
 			media_item_id, season_id, stage, status, disc, worker_id, pid,
-			input_dir, output_dir, log_path, error_message,
+			input_dir, output_dir, log_path, error_message, progress,
 			started_at, completed_at, created_at
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	now := time.Now().UTC().Format(time.RFC3339)
@@ -280,6 +280,7 @@ func (r *SQLiteRepository) CreateJob(ctx context.Context, job *model.Job) error 
 		job.OutputDir,
 		job.LogPath,
 		job.ErrorMessage,
+		job.Progress,
 		startedAt,
 		completedAt,
 		now,
@@ -301,7 +302,7 @@ func (r *SQLiteRepository) CreateJob(ctx context.Context, job *model.Job) error 
 func (r *SQLiteRepository) GetJob(ctx context.Context, id int64) (*model.Job, error) {
 	query := `
 		SELECT id, media_item_id, season_id, stage, status, disc, worker_id, pid,
-		       input_dir, output_dir, log_path, error_message,
+		       input_dir, output_dir, log_path, error_message, progress,
 		       started_at, completed_at, created_at
 		FROM jobs
 		WHERE id = ?
@@ -327,6 +328,7 @@ func (r *SQLiteRepository) GetJob(ctx context.Context, id int64) (*model.Job, er
 		&outputDir,
 		&logPath,
 		&errorMessage,
+		&job.Progress,
 		&startedAt,
 		&completedAt,
 		&createdAt,
@@ -394,7 +396,7 @@ func (r *SQLiteRepository) GetJob(ctx context.Context, id int64) (*model.Job, er
 func (r *SQLiteRepository) GetActiveJobForStage(ctx context.Context, mediaItemID int64, stage model.Stage, disc *int) (*model.Job, error) {
 	query := `
 		SELECT id, media_item_id, stage, status, disc, worker_id, pid,
-		       input_dir, output_dir, log_path, error_message,
+		       input_dir, output_dir, log_path, error_message, progress,
 		       started_at, completed_at, created_at
 		FROM jobs
 		WHERE media_item_id = ?
@@ -428,6 +430,7 @@ func (r *SQLiteRepository) GetActiveJobForStage(ctx context.Context, mediaItemID
 		&outputDir,
 		&logPath,
 		&errorMessage,
+		&job.Progress,
 		&startedAt,
 		&completedAt,
 		&createdAt,
@@ -564,7 +567,7 @@ func (r *SQLiteRepository) UpdateJobProgress(ctx context.Context, id int64, prog
 func (r *SQLiteRepository) ListJobsForMedia(ctx context.Context, mediaItemID int64) ([]model.Job, error) {
 	query := `
 		SELECT id, media_item_id, season_id, stage, status, disc, worker_id, pid,
-		       input_dir, output_dir, log_path, error_message,
+		       input_dir, output_dir, log_path, error_message, progress,
 		       started_at, completed_at, created_at
 		FROM jobs
 		WHERE media_item_id = ?
@@ -599,6 +602,7 @@ func (r *SQLiteRepository) ListJobsForMedia(ctx context.Context, mediaItemID int
 			&outputDir,
 			&logPath,
 			&errorMessage,
+			&job.Progress,
 			&startedAt,
 			&completedAt,
 			&createdAt,
