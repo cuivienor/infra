@@ -404,3 +404,82 @@ func TestPublisher_TVHappyPath(t *testing.T) {
 		}
 	}
 }
+
+func TestPublisher_ExtrasHandling(t *testing.T) {
+	// Create temp dirs
+	tmpDir := t.TempDir()
+	inputDir := filepath.Join(tmpDir, "input")
+	libraryDir := filepath.Join(tmpDir, "library", "movies")
+	os.MkdirAll(filepath.Join(inputDir, "_main"), 0755)
+	os.MkdirAll(libraryDir, 0755)
+
+	// Create main content
+	mainFile := filepath.Join(inputDir, "_main", "movie.mkv")
+	os.WriteFile(mainFile, []byte("test content"), 0644)
+
+	// Create extras directories with files
+	os.MkdirAll(filepath.Join(inputDir, "_extras", "featurettes"), 0755)
+	os.WriteFile(filepath.Join(inputDir, "_extras", "featurettes", "making_of.mkv"), []byte("featurette"), 0644)
+
+	os.MkdirAll(filepath.Join(inputDir, "_extras", "deleted scenes"), 0755)
+	os.WriteFile(filepath.Join(inputDir, "_extras", "deleted scenes", "scene1.mkv"), []byte("deleted scene 1"), 0644)
+	os.WriteFile(filepath.Join(inputDir, "_extras", "deleted scenes", "scene2.mkv"), []byte("deleted scene 2"), 0644)
+
+	// Setup database
+	database, err := db.OpenInMemory()
+	if err != nil {
+		t.Fatalf("OpenInMemory error: %v", err)
+	}
+	defer database.Close()
+	repo := db.NewSQLiteRepository(database)
+
+	// Create media item with TMDB ID
+	tmdbID := 12345
+	item := &model.MediaItem{
+		Type:     model.MediaTypeMovie,
+		Name:     "Test Movie",
+		SafeName: "Test_Movie",
+		TmdbID:   &tmdbID,
+	}
+	if err := repo.CreateMediaItem(context.Background(), item); err != nil {
+		t.Fatalf("CreateMediaItem error: %v", err)
+	}
+
+	// Create publisher with mock
+	pub := NewPublisher(repo, nil, PublishOptions{
+		LibraryMovies: libraryDir,
+		LibraryTV:     filepath.Join(tmpDir, "library", "tv"),
+	})
+	mock := &mockFilebotRunner{}
+	pub.SetFilebotRunner(mock)
+
+	// Execute publish
+	result, err := pub.Publish(context.Background(), item, inputDir)
+	if err != nil {
+		t.Fatalf("Publish error: %v", err)
+	}
+
+	// Verify result counts
+	if result.MainFiles != 1 {
+		t.Errorf("MainFiles = %d, want 1", result.MainFiles)
+	}
+	if result.ExtrasFiles != 3 {
+		t.Errorf("ExtrasFiles = %d, want 3", result.ExtrasFiles)
+	}
+
+	// Verify extras files exist in the output directory structure
+	featuretteFile := filepath.Join(mock.destDir, "featurettes", "making_of.mkv")
+	if _, err := os.Stat(featuretteFile); os.IsNotExist(err) {
+		t.Errorf("featurette file not created: %s", featuretteFile)
+	}
+
+	scene1File := filepath.Join(mock.destDir, "deleted scenes", "scene1.mkv")
+	if _, err := os.Stat(scene1File); os.IsNotExist(err) {
+		t.Errorf("deleted scene 1 file not created: %s", scene1File)
+	}
+
+	scene2File := filepath.Join(mock.destDir, "deleted scenes", "scene2.mkv")
+	if _, err := os.Stat(scene2File); os.IsNotExist(err) {
+		t.Errorf("deleted scene 2 file not created: %s", scene2File)
+	}
+}
