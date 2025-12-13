@@ -183,3 +183,35 @@ func TestTestEnv_CreateTVStructure(t *testing.T) {
 		t.Errorf("expected 3 files in _episodes, got %d", len(entries))
 	}
 }
+
+func TestAssertions_JobCompleted(t *testing.T) {
+	env := NewTestEnv(t)
+
+	item := env.CreateMediaItem("Test_Movie", model.MediaTypeMovie)
+	job := env.CreateCompletedJob(item.ID, model.StageOrganize, "/output")
+
+	// Should not panic
+	env.AssertJobCompleted(job.ID)
+}
+
+func TestAssertions_DirExists(t *testing.T) {
+	env := NewTestEnv(t)
+
+	// Create a directory
+	testDir := filepath.Join(env.BaseDir, "testdir")
+	os.MkdirAll(testDir, 0755)
+
+	// Should not panic
+	env.AssertDirExists("testdir")
+}
+
+func TestAssertions_FileExists(t *testing.T) {
+	env := NewTestEnv(t)
+
+	// Create a file
+	testFile := filepath.Join(env.BaseDir, "testfile.txt")
+	os.WriteFile(testFile, []byte("test"), 0644)
+
+	// Should not panic
+	env.AssertFileExists("testfile.txt")
+}
