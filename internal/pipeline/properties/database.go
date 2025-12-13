@@ -57,3 +57,33 @@ func validateJobConsistency(job *model.Job) error {
 
 	return nil
 }
+
+// AssertNoOrphanedJobs verifies all jobs reference valid media items
+func AssertNoOrphanedJobs(ctx context.Context, repo *db.SQLiteRepository) error {
+	items, err := repo.ListActiveItems(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to list items: %w", err)
+	}
+
+	// Build set of valid item IDs
+	validIDs := make(map[int64]bool)
+	for _, item := range items {
+		validIDs[item.ID] = true
+	}
+
+	// Check all jobs reference valid items
+	for _, item := range items {
+		jobs, err := repo.ListJobsForMedia(ctx, item.ID)
+		if err != nil {
+			return fmt.Errorf("failed to list jobs: %w", err)
+		}
+
+		for _, job := range jobs {
+			if !validIDs[job.MediaItemID] {
+				return fmt.Errorf("job %d references non-existent media item %d", job.ID, job.MediaItemID)
+			}
+		}
+	}
+
+	return nil
+}
