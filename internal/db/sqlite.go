@@ -973,6 +973,7 @@ func (r *SQLiteRepository) ListActiveItems(ctx context.Context) ([]model.MediaIt
 	query := `
 		SELECT id, type, name, safe_name, tmdb_id, tvdb_id, status, current_stage, stage_status, created_at, updated_at
 		FROM media_items
+		WHERE status IN ('active', 'not_started')
 		ORDER BY updated_at DESC
 	`
 	rows, err := r.db.db.QueryContext(ctx, query)
