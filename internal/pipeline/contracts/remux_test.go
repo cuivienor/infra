@@ -61,12 +61,18 @@ func TestRemuxContract_MovieHappyPath(t *testing.T) {
 	t.Logf("Tracks removed: %d", result.TracksRemoved)
 
 	// Mark job completed (simulating what cmd/remux would do)
+	if err := env.Repo.UpdateJobProgress(ctx, remuxJob.ID, 100); err != nil {
+		t.Fatalf("UpdateJobProgress error: %v", err)
+	}
 	if err := env.Repo.UpdateJobStatus(ctx, remuxJob.ID, model.JobStatusCompleted, ""); err != nil {
 		t.Fatalf("UpdateJobStatus error: %v", err)
 	}
 
 	// Verify job state
 	env.AssertJobCompleted(remuxJob.ID)
+
+	// Verify all invariants still hold
+	env.AssertInvariants()
 }
 
 func TestRemuxContract_TVHappyPath(t *testing.T) {
@@ -115,9 +121,15 @@ func TestRemuxContract_TVHappyPath(t *testing.T) {
 	}
 
 	// Mark job completed
+	if err := env.Repo.UpdateJobProgress(ctx, remuxJob.ID, 100); err != nil {
+		t.Fatalf("UpdateJobProgress error: %v", err)
+	}
 	if err := env.Repo.UpdateJobStatus(ctx, remuxJob.ID, model.JobStatusCompleted, ""); err != nil {
 		t.Fatalf("UpdateJobStatus error: %v", err)
 	}
 
 	env.AssertJobCompleted(remuxJob.ID)
+
+	// Verify all invariants still hold
+	env.AssertInvariants()
 }
