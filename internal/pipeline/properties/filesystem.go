@@ -62,3 +62,44 @@ func AssertOutputNotLargerThanInput(inputDir, outputDir string, maxRatio float64
 
 	return err
 }
+
+// tempFilePatterns are patterns that indicate incomplete/temporary files
+var tempFilePatterns = []string{
+	".tmp",
+	".part",
+	".partial",
+	"~",
+	".swp",
+}
+
+// AssertNoTempFiles verifies no temporary or partial files exist in the directory
+func AssertNoTempFiles(dir string) error {
+	var tempFiles []string
+
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+
+		name := info.Name()
+		for _, pattern := range tempFilePatterns {
+			if strings.HasSuffix(name, pattern) {
+				relPath, _ := filepath.Rel(dir, path)
+				tempFiles = append(tempFiles, relPath)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to walk dir: %w", err)
+	}
+
+	if len(tempFiles) > 0 {
+		return fmt.Errorf("found %d temp files: %v", len(tempFiles), tempFiles)
+	}
+
+	return nil
+}

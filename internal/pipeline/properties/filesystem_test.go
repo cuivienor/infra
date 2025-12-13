@@ -36,3 +36,35 @@ func TestAssertOutputNotLargerThanInput(t *testing.T) {
 		t.Error("expected error for larger output")
 	}
 }
+
+func TestAssertNoTempFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Clean directory should pass
+	os.MkdirAll(filepath.Join(tmpDir, "clean"), 0755)
+	os.WriteFile(filepath.Join(tmpDir, "clean", "movie.mkv"), []byte("content"), 0644)
+
+	err := AssertNoTempFiles(filepath.Join(tmpDir, "clean"))
+	if err != nil {
+		t.Errorf("clean dir should pass: %v", err)
+	}
+
+	// Directory with temp file should fail
+	os.MkdirAll(filepath.Join(tmpDir, "dirty"), 0755)
+	os.WriteFile(filepath.Join(tmpDir, "dirty", "movie.mkv"), []byte("content"), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "dirty", "movie.mkv.tmp"), []byte("partial"), 0644)
+
+	err = AssertNoTempFiles(filepath.Join(tmpDir, "dirty"))
+	if err == nil {
+		t.Error("expected error for directory with temp file")
+	}
+
+	// Directory with partial ffmpeg output should fail
+	os.MkdirAll(filepath.Join(tmpDir, "ffmpeg"), 0755)
+	os.WriteFile(filepath.Join(tmpDir, "ffmpeg", "movie.mkv.part"), []byte("partial"), 0644)
+
+	err = AssertNoTempFiles(filepath.Join(tmpDir, "ffmpeg"))
+	if err == nil {
+		t.Error("expected error for directory with .part file")
+	}
+}
