@@ -1,0 +1,68 @@
+{ config, pkgs, ... }:
+
+{
+  # Home-Manager version - matches NixOS stateVersion
+  home.stateVersion = "24.11";
+
+  # Basic home configuration
+  home.username = "cuiv";
+  home.homeDirectory = "/home/cuiv";
+
+  # Allow Home-Manager to manage itself
+  programs.home-manager.enable = true;
+
+  # Git configuration
+  programs.git = {
+    enable = true;
+    userName = "Peter Petrov";
+    userEmail = "peter@petrovs.io";
+    extraConfig = {
+      init.defaultBranch = "main";
+      pull.rebase = true;
+      push.autoSetupRemote = true;
+    };
+  };
+
+  # Shell configuration (bash for now, can switch to zsh later)
+  programs.bash = {
+    enable = true;
+    shellAliases = {
+      ll = "ls -la";
+      la = "ls -A";
+      l = "ls -CF";
+      ".." = "cd ..";
+      "..." = "cd ../..";
+    };
+  };
+
+  # Useful CLI tools
+  home.packages = with pkgs; [
+    # Development
+    nixpkgs-fmt
+    nil  # Nix LSP
+
+    # CLI utilities
+    bat
+    eza
+    fzf
+    zoxide
+  ];
+
+  # Direnv for automatic environment loading
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
+  };
+
+  # Starship prompt (optional, but nice)
+  programs.starship = {
+    enable = true;
+    settings = {
+      add_newline = false;
+      character = {
+        success_symbol = "[➜](bold green)";
+        error_symbol = "[➜](bold red)";
+      };
+    };
+  };
+}
