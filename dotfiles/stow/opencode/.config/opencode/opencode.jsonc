@@ -1,0 +1,104 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "theme": "catppuccin",
+  "autoshare": false,
+  "autoupdate": false,
+  "disabled_providers": ["openai","gemini"],
+  
+  // MCP server for Opencode source code access
+  "mcp": {
+    "opencode-source": {
+      "type": "local",
+      "command": ["npx", "@modelcontextprotocol/server-filesystem", "/Users/cuiv/src/github.com/sst/opencode"],
+      "enabled": true
+    },
+    "dev-source": {
+      "type": "local",
+      "command": ["npx", "@modelcontextprotocol/server-filesystem", "/Users/cuiv/world/trees/root/src/areas/tools/dev"],
+      "enabled": true
+    },
+    "vault-mcp": {
+      "type": "local",
+      "command": ["/opt/homebrew/bin/uvx", "shopify-mcp-bridge"],
+      "environment": {
+        "MCP_API_TOKEN": "{env:VAULT_API_TOKEN}",
+        "MCP_TARGET_URL": "https://vault.shopify.io/mcp"
+      },
+      "enabled": true
+    },
+    "gworkspace-mcp": {
+      "type": "local",
+      "command": ["/opt/homebrew/bin/uvx", "gworkspace-mcp"],
+      "enabled": true
+    },
+    "brain-notes": {
+      "type": "local",
+      "command": ["npx", "@modelcontextprotocol/server-filesystem", "/Users/cuiv/dev/brain"],
+      "enabled": true
+    }
+  },
+  
+  // Globally disable MCP tools for all agents by default
+  "tools": {
+    "opencode-source_*": false,
+    "dev-source_*": false,
+    "brain-notes_*": false,  // Disable brain-notes tools globally
+    "vault-mcp_*": true,  // Enable vault-mcp tools globally
+    "gworkspace-mcp_*": true  // Enable gworkspace-mcp tools globally
+  },
+  
+  // Agent-specific configurations
+  "agent": {
+    "opencode-config-expert": {
+      // Enable opencode-source MCP tools only for this agent
+      "tools": {
+        "opencode-source_*": true
+      }
+    },
+    "shopify-dev-expert": {
+      // Enable dev-source MCP tools only for this agent
+      "tools": {
+        "dev-source_*": true
+      }
+    },
+    "devlog-writer": {
+      // Enable brain-notes MCP tools only for this agent
+      "tools": {
+        "brain-notes_*": true
+      },
+      "model": "shopify/claude-sonnet-4"
+    }
+  },
+  
+  // Custom commands
+  "command": {
+    "devlog": {
+      "description": "Update devlog with current session work",
+      "template": "Review our conversation and create a devlog entry for the work completed. Focus on what was accomplished, not the process. Be concise but capture all important changes.",
+      "agent": "devlog-writer"
+    }
+  },
+  
+  "provider": {
+    "shopify": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Shopify",
+      "options": {
+        "baseURL": "https://proxy-shopify-ai.local.shop.dev/v1",
+        "timeout": 1800000  // 30 minutes timeout for long-running tasks
+      },
+      "models": {
+        "gpt-5": {
+          "name": "GPT-5",
+          "reasoning": false // not sure if this is required anymore
+        },
+        "claude-opus-4-1": {
+          "name": "Claude Opus 4.1"
+        },
+        "claude-sonnet-4": {
+          "name": "Claude Sonnet 4"
+        }
+      }
+    }
+  }
+}

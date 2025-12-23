@@ -1,0 +1,9 @@
+# shellcheck source=../config/.config/xdg_config.bash
+if [ -f "$HOME/.config/xdg_config.bash" ]; then
+	source "$HOME/.config/xdg_config.bash"
+fi
+
+# shellcheck source=../config/.config/path.bash
+if [ -f "$XDG_CONFIG_HOME/path.bash" ]; then
+	source "$XDG_CONFIG_HOME/path.bash"
+fi

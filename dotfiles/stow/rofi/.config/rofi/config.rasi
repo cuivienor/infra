@@ -1,0 +1,26 @@
+configuration{
+    modi: "run,drun,window";
+    icon-theme: "Papirus-Dark";
+    show-icons: true;
+    terminal: "ghostty";
+    drun-display-format: "{icon} {name}";
+    location: 0;
+    disable-history: false;
+    hide-scrollbar: true;
+    display-drun: "   Apps ";
+    display-run: "   Run ";
+    display-window: " 󰕰  Window";
+    display-Network: " 󰤨  Network";
+    sidebar-mode: true;
+    kb-remove-char-back: "BackSpace";
+    kb-remove-to-eol: "Control+Shift+k";
+    kb-accept-entry: "Control+m,Return,KP_Enter";
+    kb-mode-next: "Shift+Right,Control+Tab,Control+l";
+    kb-mode-previous: "Shift+Left,Control+ISO_Left_Tab,Control+h";
+    kb-row-up: "Up,Control+p,Control+k";
+    kb-row-down: "Down,Control+n,Control+j";
+    kb-mode-complete: "Control+y";
+}
+
+@theme "catppuccin-mocha"
+

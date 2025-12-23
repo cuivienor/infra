@@ -1,0 +1,149 @@
+{
+  "architectures": {
+    "linux": {
+      "description": "Full Linux desktop environment with window manager",
+      "packages": [
+        "zsh",
+        "starship",
+        "systemd",
+        "tmux",
+        "rofi",
+        "screenlayout",
+        "scripts",
+        "picom",
+        "nvim",
+        "ghostty",
+        "i3",
+        "npm",
+        "X11",
+        "config",
+        "cspell",
+        "claude",
+        "ccstatusline",
+        "ssh"
+      ]
+    },
+    "macos": {
+      "description": "macOS compatible packages only",
+      "packages": [
+        "zsh",
+        "starship",
+        "tmux",
+        "scripts",
+        "nvim",
+        "ghostty",
+        "aerospace",
+        "launchagents",
+        "karabiner",
+        "npm",
+        "config",
+        "cspell",
+        "claude",
+        "ccstatusline",
+        "opencode"
+      ]
+    },
+    "minimal": {
+      "description": "Minimal setup with just essential configs",
+      "packages": [
+        "zsh",
+        "tmux",
+        "nvim"
+      ]
+    }
+  },
+  "package_info": {
+    "zsh": {
+      "description": "Z shell configuration and plugins",
+      "platforms": ["linux", "macos", "minimal"]
+    },
+    "starship": {
+      "description": "Cross-shell prompt",
+      "platforms": ["linux", "macos"]
+    },
+    "systemd": {
+      "description": "Linux systemd user services",
+      "platforms": ["linux"]
+    },
+    "tmux": {
+      "description": "Terminal multiplexer configuration",
+      "platforms": ["linux", "macos", "minimal"]
+    },
+    "rofi": {
+      "description": "Application launcher and dmenu replacement",
+      "platforms": ["linux"]
+    },
+    "screenlayout": {
+      "description": "Display layout scripts",
+      "platforms": ["linux"]
+    },
+    "scripts": {
+      "description": "Utility scripts",
+      "platforms": ["linux", "macos"]
+    },
+    "picom": {
+      "description": "X11 compositor configuration",
+      "platforms": ["linux"]
+    },
+    "nvim": {
+      "description": "Neovim configuration",
+      "platforms": ["linux", "macos", "minimal"]
+    },
+    "ghostty": {
+      "description": "Ghostty terminal emulator configuration",
+      "platforms": ["linux", "macos"]
+    },
+    "i3": {
+      "description": "i3 window manager configuration",
+      "platforms": ["linux"]
+    },
+    "npm": {
+      "description": "Node.js package manager configuration",
+      "platforms": ["linux", "macos"]
+    },
+    "X11": {
+      "description": "X11 display server configuration",
+      "platforms": ["linux"]
+    },
+    "config": {
+      "description": "General configuration files",
+      "platforms": ["linux", "macos"]
+    },
+    "cspell": {
+      "description": "Code spell checker configuration",
+      "platforms": ["linux", "macos"]
+    },
+    "aerospace": {
+      "description": "AeroSpace tiling window manager for macOS",
+      "platforms": ["macos"]
+    },
+    "launchagents": {
+      "description": "macOS LaunchAgent services",
+      "platforms": ["macos"]
+    },
+    "karabiner": {
+      "description": "Karabiner-Elements keyboard customization",
+      "platforms": ["macos"]
+    },
+    "claude": {
+      "description": "Claude Code configuration and agents",
+      "platforms": ["linux", "macos"]
+    },
+    "opencode": {
+      "description": "OpenCode AI assistant configuration",
+      "platforms": ["macos"]
+    },
+    "homelab": {
+      "description": "Minimal shell environment for homelab servers (deployed via Ansible)",
+      "platforms": []
+    },
+    "ssh": {
+      "description": "SSH client configuration for homelab infrastructure",
+      "platforms": ["linux"]
+    },
+    "ccstatusline": {
+      "description": "Claude Code statusline configuration with Catppuccin Mocha theme",
+      "platforms": ["linux", "macos"]
+    }
+  }
+} 
