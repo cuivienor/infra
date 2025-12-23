@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "dictionaryDefinitions": [
+    {
+      "name": "project-words",
+      "path": "./project-words.txt",
+      "addWords": true
+    },
+    {
+      "name": "personal",
+      "path": "./personal.txt",
+      "addWords": true
+    },
+    {
+      "name": "names",
+      "path": "./names.txt",
+      "addWords": true
+    },
+    {
+      "name": "software",
+      "path": "./software.txt",
+      "addWords": true
+    }
+  ],
+  "dictionaries": ["project-words", "personal", "names", "software"],
+  "ignorePaths": ["node_modules"]
+}
+

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# batl(ast)
+# Grabs the last command run from history (zsh assumed) and runs it through a pager
+# Useful when you are looking at long man pages
+# IMPORTANT: This executes the last command again. Use with caution
+
+last_command=$(tail -n 2 ~/.zhistory | head -n 1 | sed 's/^.*;//')
+
+echo "$last_command"
+
+if [ -z "$last_command" ]; then
+  echo "Could not retrieve the previous command."
+  exit 1
+fi
+
+# Execute the command again and pipe its output to bat
+# Hard coded language for the rendered here is man since I
+# usually find myself doing this for `--help` commands
+# TODO: might be worth infering the language since this could
+# be useful for other types of command (i.e. a long json payload returned from a curl request etc.)
+eval "$last_command" | bat --paging=always --file-name "$last_command" -l man
