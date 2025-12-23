@@ -19,6 +19,7 @@
         "config",
         "cspell",
         "claude",
+        "ccstatusline",
         "ssh"
       ]
     },
@@ -38,6 +39,7 @@
         "config",
         "cspell",
         "claude",
+        "ccstatusline",
         "opencode"
       ]
     },
@@ -138,6 +140,10 @@
     "ssh": {
       "description": "SSH client configuration for homelab infrastructure",
       "platforms": ["linux"]
+    },
+    "ccstatusline": {
+      "description": "Claude Code statusline configuration with Catppuccin Mocha theme",
+      "platforms": ["linux", "macos"]
     }
   }
 } 

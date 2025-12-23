@@ -224,6 +224,11 @@ if command -v shadowenv &> /dev/null; then
 	eval "$(shadowenv init zsh)"
 fi
 
+# Initialize direnv for directory-based environment management
+if command -v direnv &> /dev/null; then
+	eval "$(direnv hook zsh)"
+fi
+
 
 # opencode - Platform-aware path configuration
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -238,3 +243,11 @@ fi
 if command -v keychain &> /dev/null; then
     eval $(keychain --eval --quiet id_ed25519)
 fi
+
+
+# bun completions
+[ -s "/home/cuiv/.bun/_bun" ] && source "/home/cuiv/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
