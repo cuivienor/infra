@@ -96,6 +96,8 @@
       - domain: "lldap.home.arpa"
         answer: "192.168.1.114"
       # Test/development containers
+      - domain: "devbox.home.arpa"
+        answer: "192.168.1.140"
       - domain: "pipeline-test.home.arpa"
         answer: "192.168.1.199"
 
