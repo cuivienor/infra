@@ -1,0 +1,12 @@
+# Binaries (all builds should use `make` which outputs to bin/)
+bin/
+*.exe
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
