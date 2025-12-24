@@ -1,0 +1,100 @@
+package ripper
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/cuivienor/media-pipeline/internal/model"
+)
+
+// Ripper orchestrates the disc ripping process
+type Ripper struct {
+	stagingBase string
+	runner      MakeMKVRunner
+	logger      Logger
+}
+
+// NewRipper creates a new Ripper instance
+// If runner is nil, creates a DefaultMakeMKVRunner
+// If logger is nil, creates a NopLogger
+func NewRipper(stagingBase string, runner MakeMKVRunner, logger Logger) *Ripper {
+	if runner == nil {
+		runner = NewMakeMKVRunner("")
+	}
+	if logger == nil {
+		logger = NopLogger{}
+	}
+	return &Ripper{
+		stagingBase: stagingBase,
+		runner:      runner,
+		logger:      logger,
+	}
+}
+
+// Rip performs the disc ripping operation
+// onLine is called with each line of MakeMKV output for logging
+// onProgress is called with progress updates (0-100)
+func (r *Ripper) Rip(ctx context.Context, req *RipRequest, outputDir string, onLine LineCallback, onProgress ProgressCallback) (*RipResult, error) {
+	// Validate request
+	if err := req.Validate(); err != nil {
+		r.logger.Error("Invalid request: %v", err)
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	result := &RipResult{
+		StartedAt: time.Now(),
+		OutputDir: outputDir,
+	}
+
+	r.logger.Info("Output directory: %s", outputDir)
+
+	// Create output directory
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		r.logger.Error("Failed to create output directory: %v", err)
+		return nil, fmt.Errorf("failed to create output directory: %w", err)
+	}
+
+	// Run ripping
+	r.logger.Info("Starting MakeMKV rip from %s", req.DiscPath)
+	err := r.runner.RipTitles(ctx, req.DiscPath, outputDir, nil, onLine, onProgress)
+	if err != nil {
+		r.logger.Error("Rip failed: %v", err)
+		result.Status = model.StatusFailed
+		result.Error = err
+		result.CompletedAt = time.Now()
+		return result, err
+	}
+
+	r.logger.Info("Rip completed, creating organization scaffolding...")
+	// Create organization scaffolding for manual review
+	if err := CreateOrganizationScaffolding(outputDir, req); err != nil {
+		r.logger.Error("Failed to create organization scaffolding: %v", err)
+		return nil, fmt.Errorf("failed to create organization scaffolding: %w", err)
+	}
+
+	result.Status = model.StatusCompleted
+	result.CompletedAt = time.Now()
+
+	r.logger.Info("Rip finished successfully in %s", result.Duration())
+	return result, nil
+}
+
+// BuildOutputDir builds the output directory path for a rip request
+func (r *Ripper) BuildOutputDir(req *RipRequest) string {
+	safeName := req.SafeName()
+
+	switch req.Type {
+	case MediaTypeMovie:
+		return filepath.Join(r.stagingBase, "1-ripped", "movies", safeName)
+	case MediaTypeTV:
+		season := fmt.Sprintf("S%02d", req.Season)
+		disc := fmt.Sprintf("Disc%d", req.Disc)
+		return filepath.Join(r.stagingBase, "1-ripped", "tv", safeName, season, disc)
+	default:
+		// Fallback for unknown type
+		return filepath.Join(r.stagingBase, "1-ripped", "other", safeName)
+	}
+}
