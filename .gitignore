@@ -45,6 +45,9 @@ terraform/.sops-key
 # Secrets backup (local only)
 .secrets-backup-*/
 
+# BFG replacements file (contains secrets to redact)
+scripts/bfg-replacements.txt
+
 # Private journal
 .private-journal/
 

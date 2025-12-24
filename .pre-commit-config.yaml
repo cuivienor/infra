@@ -1,8 +1,14 @@
-# Pre-commit hooks for homelab-notes repository
+# Pre-commit hooks for infra repository
 # Install with: pre-commit install
 # Run manually with: pre-commit run --all-files
 
 repos:
+  # Secret scanning (run first to catch leaks before commit)
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+
   # General file quality
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

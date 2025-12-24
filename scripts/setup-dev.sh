@@ -1,9 +1,10 @@
 #!/bin/bash
-# setup-dev.sh - Install development tools for homelab-notes repository
+# setup-dev.sh - Install development tools for infra repository
 #
 # Supports: Arch Linux, macOS (Homebrew)
 # Installs: shellcheck, shfmt, yamllint, ansible-lint, pre-commit, tflint (optional)
 #           sops, age, bitwarden-cli, direnv (secrets management)
+#           trufflehog, gitleaks (secret scanning)
 #
 # Usage:
 #   ./scripts/setup-dev.sh             # Install all tools
@@ -82,6 +83,10 @@ check_tools() {
     print_status "age"
     print_status "bw"
     print_status "direnv"
+    echo ""
+    echo "Secret scanning:"
+    print_status "trufflehog"
+    print_status "gitleaks"
 
     # Get script directory for relative paths
     local script_dir
@@ -132,6 +137,21 @@ install_arch() {
     echo "Installing secrets management tools..."
     sudo pacman -S --needed --noconfirm age sops direnv
 
+    # Secret scanning tools
+    echo "Installing secret scanning tools..."
+    if ! check_cmd trufflehog; then
+        echo "  Installing trufflehog..."
+        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sudo sh -s -- -b /usr/local/bin
+    else
+        echo "  trufflehog already installed"
+    fi
+
+    if ! check_cmd gitleaks; then
+        echo -e "${YELLOW}Note:${NC} gitleaks not found."
+        echo "  Install from AUR: yay -S gitleaks"
+        echo "  Or download from: https://github.com/gitleaks/gitleaks/releases"
+    fi
+
     # Bitwarden CLI (check if available, suggest alternatives)
     if ! check_cmd bw; then
         echo -e "${YELLOW}Note:${NC} Bitwarden CLI not found."
@@ -177,7 +197,9 @@ install_macos() {
     echo "Installing secrets management tools..."
     brew install sops age bitwarden-cli direnv
 
-    # Note: ansible-lint and pre-commit available via brew on macOS
+    # Secret scanning tools
+    echo "Installing secret scanning tools..."
+    brew install trufflehog gitleaks
 }
 
 # Setup secrets from Bitwarden
