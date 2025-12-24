@@ -16,6 +16,11 @@
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
+      # Allow unfree packages (terraform)
+      pkgsUnfree = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
     in
     {
       # NixOS configurations
@@ -36,8 +41,8 @@
       };
 
       # Development shell for working with this repo
-      devShells.${system}.default = pkgs.mkShell {
-        buildInputs = with pkgs; [
+      devShells.${system}.default = pkgsUnfree.mkShell {
+        buildInputs = with pkgsUnfree; [
           # Infrastructure as Code
           terraform
           ansible
