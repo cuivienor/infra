@@ -9,6 +9,43 @@ A collection of personal configuration files managed using GNU Stow.
 
 ## 🚀 Installation
 
+This dotfiles repo lives inside the [infra monorepo](https://github.com/cuivienor/infra). Choose your setup based on what you need:
+
+### Full infra clone (dev machines)
+
+For machines where you want the full infrastructure repo:
+
+```bash
+# Clone the full repo
+git clone git@github.com:cuivienor/infra.git ~/dev/infra
+
+# Symlink dotfiles to expected location
+ln -s ~/dev/infra/dotfiles ~/dotfiles
+
+# Install modules
+cd ~/dotfiles && ./install-dotfiles.bash
+```
+
+### Sparse checkout (dotfiles only)
+
+For minimal machines that only need dotfiles (no Terraform/Ansible/Nix):
+
+```bash
+# Clone with sparse checkout
+git clone --filter=blob:none --sparse git@github.com:cuivienor/infra.git ~/dotfiles
+cd ~/dotfiles
+git sparse-checkout set dotfiles
+
+# Move contents up and clean up
+mv dotfiles/* dotfiles/.* . 2>/dev/null
+rmdir dotfiles
+
+# Install modules
+./install-dotfiles.bash
+```
+
+### Quick reference
+
 ```bash
 # Install all modules
 ./install-dotfiles.bash
@@ -154,7 +191,7 @@ This module provides:
    - `rubocop_lsp_<project>` - Uses project's `bin/rubocop` (includes custom cops)
    - `sorbet_lsp_<project>` - Uses shadowenv's srb (if `sorbet/config` exists)
 
-3. **Smart Formatting**: 
+3. **Smart Formatting**:
    - Diagnostics from LSP servers (real-time)
    - Formatting via conform.nvim with LSP preference (`lsp_format = "first"`)
    - Falls back to command-line formatters for non-shadowenv projects
@@ -231,7 +268,7 @@ Once configured, you'll have:
 
 - **File Type Detection**: Automatic detection for `.smd`, `.shtml`, `.ziggy`, and `.ziggy-schema` files
 - **Syntax Highlighting**: Full Treesitter-based highlighting for all Zine languages
-- **LSP Support**: 
+- **LSP Support**:
   - Ziggy LSP for `.ziggy` files
   - Ziggy Schema LSP for `.ziggy-schema` files
   - SuperHTML LSP for `.shtml` and `.html` files
