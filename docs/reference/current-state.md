@@ -1,6 +1,6 @@
 # Homelab Current State
 
-**Last Updated**: 2025-12-01
+**Last Updated**: 2025-12-24
 **Status**: Full Infrastructure as Code (Terraform + Ansible)
 **Remote Access**: Tailscale subnet routing with redundant routers
 
@@ -48,8 +48,9 @@ Policy: `eppfrd` (distribute to disk with most free space)
 | 310 | dns | .110 | Backup DNS (AdGuard Home) |
 | 311 | proxy | .111 | Caddy reverse proxy (HTTPS) |
 | 312 | authelia | .112 | SSO authentication (OIDC/LDAP) |
+| 320 | devbox | .140 | NixOS dev environment (flake-managed) |
 
-All containers: Debian 12, privileged, IaC-managed via Terraform + Ansible
+All containers: Debian 12 (privileged) or NixOS, IaC-managed via Terraform + Ansible/Nix
 
 ---
 
@@ -88,6 +89,11 @@ All containers: Debian 12, privileged, IaC-managed via Terraform + Ansible
 - Proxmox containers (BPG provider ~0.50.0)
 - Tailscale ACLs, DNS, auth keys (~0.16)
 - All container definitions in separate `.tf` files
+
+### NixOS (`nixos/`, `home/`, `flake.nix`)
+- Flake-based NixOS configuration for devbox container
+- Home-Manager for user environment (cuiv)
+- Deploy: `nixos-rebuild switch --flake .#devbox` (from devbox)
 
 ### Ansible (`ansible/`)
 Key roles:
