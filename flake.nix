@@ -63,6 +63,10 @@
             yq-go
             shellcheck
             pre-commit
+
+            # Secret scanning
+            trufflehog
+            gitleaks
           ];
 
           shellHook = ''
