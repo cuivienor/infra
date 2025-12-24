@@ -40,35 +40,68 @@
         };
       };
 
-      # Development shell for working with this repo
-      devShells.${system}.default = pkgsUnfree.mkShell {
-        buildInputs = with pkgsUnfree; [
-          # Infrastructure as Code
-          terraform
-          ansible
-          ansible-lint
+      # Development shells
+      devShells.${system} = {
+        # Default: infrastructure work (terraform, ansible, etc.)
+        default = pkgsUnfree.mkShell {
+          buildInputs = with pkgsUnfree; [
+            # Infrastructure as Code
+            terraform
+            ansible
+            ansible-lint
 
-          # Secrets management
-          sops
-          age
+            # Secrets management
+            sops
+            age
 
-          # Nix tooling
-          nixpkgs-fmt
-          nil # Nix LSP
+            # Nix tooling
+            nixpkgs-fmt
+            nil # Nix LSP
 
-          # Utilities
-          jq
-          yq-go
-          shellcheck
-          pre-commit
-        ];
+            # Utilities
+            jq
+            yq-go
+            shellcheck
+            pre-commit
+          ];
 
-        shellHook = ''
-          echo "🏗️  Infra devShell loaded"
-          echo "   Terraform: $(terraform version -json | jq -r '.terraform_version')"
-          echo "   Ansible:   $(ansible --version | head -1)"
-          echo ""
-        '';
+          shellHook = ''
+            echo "🏗️  Infra devShell loaded"
+            echo "   Terraform: $(terraform version -json | jq -r '.terraform_version')"
+            echo "   Ansible:   $(ansible --version | head -1)"
+            echo ""
+          '';
+        };
+
+        # Go development for media-pipeline
+        media-pipeline = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            go
+            gopls
+            gotools
+            go-tools # staticcheck
+          ];
+
+          shellHook = ''
+            echo "🎬 Media Pipeline devShell loaded"
+            echo "   Go: $(go version | cut -d' ' -f3)"
+            echo ""
+          '';
+        };
+
+        # Bash development for session-manager
+        session-manager = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            bash
+            shellcheck
+            shfmt
+          ];
+
+          shellHook = ''
+            echo "📺 Session Manager devShell loaded"
+            echo ""
+          '';
+        };
       };
     };
 }

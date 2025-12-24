@@ -44,4 +44,4 @@ tail -f ~/active-jobs/*/*.log  # Follow logs
 
 ## See Also
 
-- [Ripping Guide](../../docs/guides/ripping-guide.md)
+- [Ripping Guide](../../../docs/guides/ripping-guide.md)

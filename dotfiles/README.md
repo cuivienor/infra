@@ -31,12 +31,12 @@ cd ~/dotfiles && ./install-dotfiles.bash
 For minimal machines that only need dotfiles (no Terraform/Ansible/Nix):
 
 ```bash
-# Clone with sparse checkout
+# Clone with sparse checkout (includes apps/session-manager for t script)
 git clone --filter=blob:none --sparse git@github.com:cuivienor/infra.git ~/dotfiles
 cd ~/dotfiles
-git sparse-checkout set dotfiles
+git sparse-checkout set dotfiles apps/session-manager
 
-# Move contents up and clean up
+# Move dotfiles contents up and clean up
 mv dotfiles/* dotfiles/.* . 2>/dev/null
 rmdir dotfiles
 

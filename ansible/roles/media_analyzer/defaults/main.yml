@@ -21,8 +21,8 @@ media_analyzer_packages:
 
 # Scripts to deploy from repository (per ripping-guide.md)
 media_analyzer_scripts:
-  - { src: "scripts/media/production/remux.sh", dest: "remux.sh" }
-  - { src: "scripts/media/production/filebot.sh", dest: "filebot.sh" }
+  - { src: "apps/media-pipeline/scripts/remux.sh", dest: "remux.sh" }
+  - { src: "apps/media-pipeline/scripts/filebot.sh", dest: "filebot.sh" }
 
 # Staging base path (where media pipeline directories are mounted)
 staging_base_path: "/mnt/staging"

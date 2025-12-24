@@ -49,7 +49,7 @@
         group: media
         mode: '0755'
       loop:
-        - { src: "../../scripts/media/production/rip-disc.sh", dest: "rip-disc.sh" }
+        - { src: "../../apps/media-pipeline/scripts/rip-disc.sh", dest: "rip-disc.sh" }
       tags: ['scripts']
 
 # Optical drive passthrough must run on the Proxmox host
