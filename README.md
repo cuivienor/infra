@@ -10,6 +10,7 @@ Personal infrastructure monorepo - homelab, dotfiles, and NixOS configurations.
 ## Structure
 
 ```
+apps/          # Personal applications (media-pipeline, session-manager)
 terraform/     # Proxmox containers, Tailscale ACLs
 ansible/       # Debian container configuration
 nixos/         # NixOS system configurations (flake-based)

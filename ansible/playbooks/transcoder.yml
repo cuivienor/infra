@@ -107,7 +107,7 @@
         group: media
         mode: '0755'
       loop:
-        - { src: "../../scripts/media/production/transcode.sh", dest: "transcode.sh" }
+        - { src: "../../apps/media-pipeline/scripts/transcode.sh", dest: "transcode.sh" }
       tags: ['scripts']
 
     - name: Remove old STAGING_BASE environment variable
