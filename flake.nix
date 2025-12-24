@@ -38,9 +38,32 @@
       # Development shell for working with this repo
       devShells.${system}.default = pkgs.mkShell {
         buildInputs = with pkgs; [
+          # Infrastructure as Code
+          terraform
+          ansible
+          ansible-lint
+
+          # Secrets management
+          sops
+          age
+
+          # Nix tooling
           nixpkgs-fmt
-          nil  # Nix LSP
+          nil # Nix LSP
+
+          # Utilities
+          jq
+          yq-go
+          shellcheck
+          pre-commit
         ];
+
+        shellHook = ''
+          echo "🏗️  Infra devShell loaded"
+          echo "   Terraform: $(terraform version -json | jq -r '.terraform_version')"
+          echo "   Ansible:   $(ansible --version | head -1)"
+          echo ""
+        '';
       };
     };
 }
