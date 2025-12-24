@@ -9,6 +9,59 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Proxmox homelab managed entirely as Infrastructure as Code using Terraform (container provisioning) and Ansible (configuration management).
 
+## Development Environment
+
+### With Nix (Recommended)
+
+The repo includes a flake.nix with development shells for all zones:
+
+```bash
+# Auto-load via direnv (recommended)
+direnv allow
+
+# Or manually enter default shell (terraform, ansible, sops, etc.)
+nix develop
+
+# Zone-specific shells
+nix develop .#media-pipeline    # Go toolchain
+nix develop .#session-manager   # Bash/shellcheck
+```
+
+All tool versions are pinned via `flake.lock` for reproducibility.
+
+### Without Nix
+
+Install tools manually or use the setup script:
+
+```bash
+./scripts/setup-dev.sh           # Install terraform, ansible, sops, etc.
+./scripts/setup-dev.sh --check   # Verify installation
+```
+
+Required tools: terraform, ansible, sops, age, shellcheck, pre-commit
+
+Note: Tool versions may drift from flake.lock pins on non-Nix hosts.
+
+## Zone Navigation
+
+This monorepo has multiple zones with their own CLAUDE.md files for zone-specific guidance:
+
+| Zone | CLAUDE.md | When to Read |
+|------|-----------|--------------|
+| `terraform/` | Yes | Provisioning containers, managing Tailscale ACLs |
+| `ansible/` | Yes | Configuring software, managing roles/playbooks |
+| `nixos/` | Yes | Working with flake.nix, NixOS configs, Home-Manager |
+| `apps/media-pipeline/` | Yes | Developing the Go media pipeline TUI |
+| `apps/session-manager/` | Yes | Modifying the tmux sessionizer |
+| `dotfiles/` | Yes | Managing stow packages, dotfiles |
+| `scripts/` | No | Simple zone, root guidance sufficient |
+| `docs/` | No | Documentation, no special guidance needed |
+
+**Specialized Skills:** See `.claude/skills/` for workflow-specific skills:
+- `terraform-workflow.md` - Terraform plan/apply workflow
+- `ansible-workflow.md` - Ansible check/apply workflow
+- `nix-development.md` - Nix development patterns
+
 ## IaC Discipline (CRITICAL)
 
 **This infrastructure is 100% IaC. All changes MUST go through Terraform or Ansible.**
