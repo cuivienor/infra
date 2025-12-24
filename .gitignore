@@ -48,6 +48,9 @@ terraform/.sops-key
 # BFG replacements file (contains secrets to redact)
 scripts/bfg-replacements.txt
 
+# But keep the cleanup script (doesn't contain secrets, just runs BFG)
+!scripts/clean-secrets.sh
+
 # Private journal
 .private-journal/
 
