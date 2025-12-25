@@ -1,6 +1,10 @@
 { config, pkgs, ... }:
 
 {
+  imports = [
+    ./git.nix
+  ];
+
   # Home-Manager version - matches NixOS stateVersion
   home.stateVersion = "24.11";
 
@@ -10,18 +14,6 @@
 
   # Allow Home-Manager to manage itself
   programs.home-manager.enable = true;
-
-  # Git configuration
-  programs.git = {
-    enable = true;
-    userName = "Peter Petrov";
-    userEmail = "peter@petrovs.io";
-    extraConfig = {
-      init.defaultBranch = "main";
-      pull.rebase = true;
-      push.autoSetupRemote = true;
-    };
-  };
 
   # Shell configuration (bash for now, can switch to zsh later)
   programs.bash = {
@@ -46,6 +38,7 @@
     eza
     fzf
     zoxide
+    delta
   ];
 
   # Direnv for automatic environment loading
