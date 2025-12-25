@@ -11,7 +11,7 @@
       pull.rebase = true;
       push.autoSetupRemote = true;
 
-      diff.algorithm = "histogram"
+      diff.algorithm = "histogram";
 
       alias = {
         st = "status";
