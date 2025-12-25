@@ -18,7 +18,7 @@
         co = "checkout";
         br = "branch";
         ci = "commit";
-        lg = "log --oneline --graph --decorate"
+        lg = "log --oneline --graph --decorate";
       };
     };
 
@@ -28,7 +28,7 @@
         navigate = true;
         side-by-side = false;
         line-numbers = true;
-      }
-    }
-  }
+      };
+    };
+  };
 }
