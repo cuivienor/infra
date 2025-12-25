@@ -34,7 +34,7 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
-              home-manager.users.cuiv = import ./home/users/cuiv.nix;
+              home-manager.users.cuiv = import ./home/users/cuiv/default.nix;
             }
           ];
         };
