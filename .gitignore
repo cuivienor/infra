@@ -67,3 +67,5 @@ tmp/
 # MakeMKV secrets (unencrypted)
 ansible/vars/makemkv_secrets.yml
 !ansible/vars/makemkv_secrets.yml.example
+
+.direnv/
