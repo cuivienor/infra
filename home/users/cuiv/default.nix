@@ -3,6 +3,7 @@
 {
   imports = [
     ./git.nix
+    ./shell.nix
   ];
 
   # Home-Manager version - matches NixOS stateVersion
@@ -15,17 +16,8 @@
   # Allow Home-Manager to manage itself
   programs.home-manager.enable = true;
 
-  # Shell configuration (bash for now, can switch to zsh later)
-  programs.bash = {
-    enable = true;
-    shellAliases = {
-      ll = "ls -la";
-      la = "ls -A";
-      l = "ls -CF";
-      ".." = "cd ..";
-      "..." = "cd ../..";
-    };
-  };
+  # Shell configuration (Keep bash as fallback)
+  programs.bash.enable = true;
 
   # Useful CLI tools
   home.packages = with pkgs; [
