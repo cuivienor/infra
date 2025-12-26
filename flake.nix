@@ -12,7 +12,13 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }@inputs:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      home-manager,
+      ...
+    }@inputs:
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
@@ -32,9 +38,11 @@
             ./nixos/hosts/devbox/configuration.nix
             home-manager.nixosModules.home-manager
             {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.cuiv = import ./home/users/cuiv/default.nix;
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                users.cuiv = import ./home/users/cuiv/default.nix;
+              };
             }
           ];
         };
@@ -55,7 +63,9 @@
             age
 
             # Nix tooling
-            nixpkgs-fmt
+            deadnix
+            statix
+            nixfmt-rfc-style
             nil # Nix LSP
 
             # Utilities

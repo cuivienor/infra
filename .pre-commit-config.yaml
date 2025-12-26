@@ -32,6 +32,34 @@ repos:
       - id: shellcheck
         args: [--severity=warning]
 
+  # Nix linting and formatting (requires devShell - run: direnv allow)
+  - repo: local
+    hooks:
+      - id: deadnix
+        name: deadnix (remove dead code)
+        entry: deadnix --edit --no-lambda-arg --no-lambda-pattern-names
+        language: system
+        files: \.nix$
+
+      - id: statix
+        name: statix (fix antipatterns)
+        entry: bash -c 'for f in "$@"; do statix fix -- "$f" && statix check -- "$f"; done' --
+        language: system
+        files: \.nix$
+
+      - id: nixfmt
+        name: nixfmt (format)
+        entry: nixfmt
+        language: system
+        files: \.nix$
+
+      - id: nix-flake-check
+        name: nix flake check
+        entry: nix flake check
+        language: system
+        files: \.nix$
+        pass_filenames: false
+
   # Terraform formatting and linting
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.103.0
