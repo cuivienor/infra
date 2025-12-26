@@ -3,6 +3,7 @@
 {
   imports = [
     ./git.nix
+    ./tools.nix
     ./shell.nix
   ];
 
@@ -18,18 +19,4 @@
 
   # Shell configuration (Keep bash as fallback)
   programs.bash.enable = true;
-
-  # Useful CLI tools
-  home.packages = with pkgs; [
-    # Development
-    nixpkgs-fmt
-    nil  # Nix LSP
-
-    # CLI utilities
-    bat
-    eza
-    fzf
-    zoxide
-    delta
-  ];
 }
