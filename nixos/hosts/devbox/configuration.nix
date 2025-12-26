@@ -27,6 +27,8 @@
     };
   };
 
+  programs.zsh.enable = true;
+
   # Users
   users.users = {
     root.openssh.authorizedKeys.keys = [
