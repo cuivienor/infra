@@ -9,13 +9,19 @@
     hostName = "devbox";
     useDHCP = false;
     interfaces.eth0 = {
-      ipv4.addresses = [{
-        address = "192.168.1.140";
-        prefixLength = 24;
-      }];
+      ipv4.addresses = [
+        {
+          address = "192.168.1.140";
+          prefixLength = 24;
+        }
+      ];
     };
     defaultGateway = "192.168.1.1";
-    nameservers = [ "192.168.1.102" "192.168.1.110" "1.1.1.1" ];
+    nameservers = [
+      "192.168.1.102"
+      "192.168.1.110"
+      "1.1.1.1"
+    ];
   };
 
   # Enable SSH
@@ -63,8 +69,14 @@
 
   # Enable nix command and flakes
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
-    trusted-users = [ "root" "cuiv" ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
+    trusted-users = [
+      "root"
+      "cuiv"
+    ];
   };
 
   # Garbage collection

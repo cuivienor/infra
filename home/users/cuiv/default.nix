@@ -7,16 +7,16 @@
     ./shell.nix
   ];
 
-  # Home-Manager version - matches NixOS stateVersion
-  home.stateVersion = "24.11";
+  # Home-Manager version and basic configuration
+  home = {
+    stateVersion = "24.11";
+    username = "cuiv";
+    homeDirectory = "/home/cuiv";
+  };
 
-  # Basic home configuration
-  home.username = "cuiv";
-  home.homeDirectory = "/home/cuiv";
-
-  # Allow Home-Manager to manage itself
-  programs.home-manager.enable = true;
-
-  # Shell configuration (Keep bash as fallback)
-  programs.bash.enable = true;
+  # Programs managed by Home-Manager
+  programs = {
+    home-manager.enable = true;
+    bash.enable = true; # Keep bash as fallback
+  };
 }
