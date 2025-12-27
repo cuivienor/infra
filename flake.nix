@@ -22,6 +22,12 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # zjstatus - zellij status bar plugin
+    zjstatus = {
+      url = "github:dj95/zjstatus";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -94,6 +100,7 @@
                 useGlobalPkgs = true;
                 useUserPackages = true;
                 users.cuiv = import ./home/users/cuiv/default.nix;
+                extraSpecialArgs = { inherit inputs; };
               };
             }
           ];
