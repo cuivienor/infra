@@ -1,0 +1,32 @@
+[package]
+name = "zesh"
+version = "0.1.0"
+edition = "2021"
+description = "Fast terminal session manager for zellij"
+authors = ["Peter Petrov <peter@petrovs.io>"]
+license = "MIT"
+
+[dependencies]
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Config
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+
+# Filesystem
+ignore = "0.4"           # Fast directory walking (ripgrep's crate)
+shellexpand = "3"        # ~/path expansion
+
+# Picker
+skim = "0.10"            # fzf clone in Rust
+
+# Data
+serde_json = "1"         # Frecency persistence
+
+# Error handling
+anyhow = "1"
+thiserror = "2"
+
+# Misc
+dirs = "5"               # XDG paths
