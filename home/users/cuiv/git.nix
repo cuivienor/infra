@@ -3,10 +3,14 @@
 {
   programs.git = {
     enable = true;
-    userName = "Peter Petrov";
-    userEmail = "peter@petrovs.io";
 
-    extraConfig = {
+    # Git settings (new 25.11 format)
+    settings = {
+      user = {
+        name = "Peter Petrov";
+        email = "peter@petrovs.io";
+      };
+
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;
@@ -21,14 +25,16 @@
         lg = "log --oneline --graph --decorate";
       };
     };
+  };
 
-    delta = {
-      enable = true;
-      options = {
-        navigate = true;
-        side-by-side = false;
-        line-numbers = true;
-      };
+  # Delta (moved to programs.delta in 25.11)
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      navigate = true;
+      side-by-side = false;
+      line-numbers = true;
     };
   };
 }

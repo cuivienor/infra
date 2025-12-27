@@ -60,8 +60,8 @@
         reload = "source ~/.zshrc";
       };
 
-      # Additional init commands
-      initExtra = ''
+      # Additional init commands (renamed from initExtra in 25.11)
+      initContent = ''
         # Vi mode settings
         bindkey -v
         export KEYTIMEOUT=1
