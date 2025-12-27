@@ -14,7 +14,8 @@
     nil # Nix LSP
 
     # Session management
-    zesh
+    zellij # Terminal multiplexer
+    zesh # Session picker for zellij
   ];
 
   programs = {
