@@ -33,6 +33,12 @@ in
     jq
     htop
 
+    # Editor
+    neovim
+
+    # Git tools
+    lazygit
+
     # Nix development
     nixfmt-rfc-style # Nix formatter (RFC standard)
     nil # Nix LSP
