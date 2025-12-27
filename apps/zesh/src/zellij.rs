@@ -13,7 +13,6 @@
 
 use crate::discovery::Project;
 use anyhow::{anyhow, Result};
-use std::path::Path;
 use std::process::{Command, ExitStatus, Stdio};
 
 /// Parse the output of `zellij list-sessions` into a list of session names
@@ -75,7 +74,7 @@ pub fn build_attach_command(name: &str) -> Command {
 
 /// Attach to an existing zellij session
 ///
-/// This replaces the current process with zellij attached to the session.
+/// Spawns zellij attached to the session and waits for it to exit.
 /// Returns an error if attachment fails.
 pub fn attach_session(name: &str) -> Result<ExitStatus> {
     let mut cmd = build_attach_command(name);
@@ -116,10 +115,8 @@ pub fn build_create_command(project: &Project) -> Command {
 
     let mut cmd = Command::new("zellij");
 
-    // Using the options found in zellij's help:
-    // -s, --session <SESSION_NAME>: session name
-    // -l, --layout <LAYOUT>: layout file path or "default"
-    // --new-session-with-layout: create new session with the layout
+    // Creates a new session with the given name and layout.
+    // When run without an existing session, zellij starts a new one.
     cmd.arg("--layout")
         .arg(&layout)
         .arg("--session")
@@ -185,20 +182,14 @@ pub fn kill_session(name: &str) -> Result<()> {
     Ok(())
 }
 
-/// Get a list of sessions that no longer have corresponding project paths
+/// Find sessions that don't correspond to any known project.
 ///
+/// Compares session names against project names (which already handle collisions).
 /// Used for the `clean` command to remove orphaned sessions.
-pub fn find_orphaned_sessions(sessions: &[String], valid_paths: &[&Path]) -> Vec<String> {
+pub fn find_orphaned_sessions(sessions: &[String], projects: &[Project]) -> Vec<String> {
     sessions
         .iter()
-        .filter(|session| {
-            // A session is orphaned if no valid path's last component matches the session name
-            // This is a simple heuristic - for more accuracy we'd need to track session->path mapping
-            !valid_paths.iter().any(|path| {
-                path.file_name()
-                    .is_some_and(|name| name.to_string_lossy() == **session)
-            })
-        })
+        .filter(|session| !projects.iter().any(|p| &p.name == *session))
         .cloned()
         .collect()
 }
@@ -409,33 +400,41 @@ mod tests {
     // find_orphaned_sessions tests
     // =========================================================================
 
+    /// Helper to create a Project with just a name (for orphan detection tests)
+    fn project_with_name(name: &str) -> Project {
+        Project {
+            name: name.to_string(),
+            path: PathBuf::from("/dummy"),
+            repo_root: PathBuf::from("/dummy"),
+            worktree_branch: None,
+            sparse_zone: None,
+        }
+    }
+
     #[test]
     fn test_find_orphaned_sessions_empty_lists() {
         let sessions: Vec<String> = vec![];
-        let valid_paths: Vec<&Path> = vec![];
+        let projects: Vec<Project> = vec![];
 
-        let orphaned = find_orphaned_sessions(&sessions, &valid_paths);
+        let orphaned = find_orphaned_sessions(&sessions, &projects);
         assert!(orphaned.is_empty());
     }
 
     #[test]
     fn test_find_orphaned_sessions_no_orphans() {
         let sessions = vec!["project-a".to_string(), "project-b".to_string()];
-        let path_a = PathBuf::from("/home/user/dev/project-a");
-        let path_b = PathBuf::from("/home/user/dev/project-b");
-        let valid_paths: Vec<&Path> = vec![path_a.as_path(), path_b.as_path()];
+        let projects = vec![project_with_name("project-a"), project_with_name("project-b")];
 
-        let orphaned = find_orphaned_sessions(&sessions, &valid_paths);
+        let orphaned = find_orphaned_sessions(&sessions, &projects);
         assert!(orphaned.is_empty());
     }
 
     #[test]
     fn test_find_orphaned_sessions_all_orphaned() {
         let sessions = vec!["old-project".to_string(), "deleted-project".to_string()];
-        let path_a = PathBuf::from("/home/user/dev/current-project");
-        let valid_paths: Vec<&Path> = vec![path_a.as_path()];
+        let projects = vec![project_with_name("current-project")];
 
-        let orphaned = find_orphaned_sessions(&sessions, &valid_paths);
+        let orphaned = find_orphaned_sessions(&sessions, &projects);
         assert_eq!(
             orphaned,
             vec!["old-project".to_string(), "deleted-project".to_string()]
@@ -449,12 +448,26 @@ mod tests {
             "orphaned".to_string(),
             "also-exists".to_string(),
         ];
-        let path_a = PathBuf::from("/home/user/dev/still-exists");
-        let path_b = PathBuf::from("/home/user/src/also-exists");
-        let valid_paths: Vec<&Path> = vec![path_a.as_path(), path_b.as_path()];
+        let projects = vec![
+            project_with_name("still-exists"),
+            project_with_name("also-exists"),
+        ];
 
-        let orphaned = find_orphaned_sessions(&sessions, &valid_paths);
+        let orphaned = find_orphaned_sessions(&sessions, &projects);
         assert_eq!(orphaned, vec!["orphaned".to_string()]);
+    }
+
+    #[test]
+    fn test_find_orphaned_sessions_with_collision_resolved_names() {
+        // Session names can include parent directory for collision resolution
+        let sessions = vec!["org-a/api".to_string(), "org-b/api".to_string(), "orphaned/api".to_string()];
+        let projects = vec![
+            project_with_name("org-a/api"),
+            project_with_name("org-b/api"),
+        ];
+
+        let orphaned = find_orphaned_sessions(&sessions, &projects);
+        assert_eq!(orphaned, vec!["orphaned/api".to_string()]);
     }
 
     // =========================================================================
