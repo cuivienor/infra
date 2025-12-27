@@ -8,9 +8,6 @@
 //! - Switching to projects (attach or create)
 //! - Killing sessions
 
-// TODO: Remove when picker.rs integrates with zellij
-#![allow(dead_code)]
-
 use crate::discovery::Project;
 use anyhow::{anyhow, Result};
 use std::process::{Command, ExitStatus, Stdio};

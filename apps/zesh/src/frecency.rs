@@ -3,9 +3,6 @@
 //! Tracks project access frequency and recency to sort projects by usage patterns.
 //! Data is persisted to `~/.local/share/zesh/frecency.json`.
 
-// TODO: Remove when picker.rs integrates with frecency
-#![allow(dead_code)]
-
 use crate::discovery::Project;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};

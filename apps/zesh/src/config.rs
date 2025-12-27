@@ -3,9 +3,6 @@
 //! Loads config from `~/.config/zesh/config.toml` with sensible defaults
 //! if the config file doesn't exist.
 
-// TODO: Remove when discovery.rs integrates with config
-#![allow(dead_code)]
-
 use anyhow::Result;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};

@@ -3,9 +3,6 @@
 //! Discovers git repositories across configured roots, including support for
 //! git worktrees and sparse checkouts.
 
-// TODO: Remove when picker.rs integrates with discovery
-#![allow(dead_code)]
-
 use crate::config::{Config, Root};
 use ignore::WalkBuilder;
 use std::collections::HashMap;

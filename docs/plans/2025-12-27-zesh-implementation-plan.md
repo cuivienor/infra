@@ -2,6 +2,21 @@
 
 Comprehensive implementation plan for zesh, a Rust CLI session manager with Nix packaging and Home Manager integration.
 
+## Resume Checklist (Session Interrupted)
+
+**Status:** Implementation paused mid-execution on `feat/zesh-setup` branch.
+
+**Before continuing, verify:**
+1. Shell has nix integration (`which nix` should work, not require full path)
+2. Pre-commit hooks work (`pre-commit run --all-files` in infra devShell)
+3. Uncommitted change: `.pre-commit-config.yaml` reverted hardcoded nix path - needs commit
+
+**Remaining tasks:**
+- Task 2.6: Verify `cargo build` works in zesh devShell
+- Task 3.1: Add zesh to `home/users/cuiv/tools.nix`
+
+---
+
 ## Context
 
 **Design doc:** `docs/plans/2025-12-26-zesh-session-manager-design.md`
