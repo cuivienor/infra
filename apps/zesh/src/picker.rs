@@ -197,10 +197,7 @@ mod tests {
 
     #[test]
     fn test_fuzzy_match_single_substring_in_path() {
-        let projects = vec![
-            make_project("org-a/api"),
-            make_project("org-b/web"),
-        ];
+        let projects = vec![make_project("org-a/api"), make_project("org-b/web")];
         // "a/api" should match "org-a/api"
         let result = fuzzy_match_single(&projects, "a/api");
         assert!(result.is_some());

@@ -420,7 +420,10 @@ mod tests {
     #[test]
     fn test_find_orphaned_sessions_no_orphans() {
         let sessions = vec!["project-a".to_string(), "project-b".to_string()];
-        let projects = vec![project_with_name("project-a"), project_with_name("project-b")];
+        let projects = vec![
+            project_with_name("project-a"),
+            project_with_name("project-b"),
+        ];
 
         let orphaned = find_orphaned_sessions(&sessions, &projects);
         assert!(orphaned.is_empty());
@@ -457,7 +460,11 @@ mod tests {
     #[test]
     fn test_find_orphaned_sessions_with_collision_resolved_names() {
         // Session names can include parent directory for collision resolution
-        let sessions = vec!["org-a/api".to_string(), "org-b/api".to_string(), "orphaned/api".to_string()];
+        let sessions = vec![
+            "org-a/api".to_string(),
+            "org-b/api".to_string(),
+            "orphaned/api".to_string(),
+        ];
         let projects = vec![
             project_with_name("org-a/api"),
             project_with_name("org-b/api"),
