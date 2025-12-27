@@ -1,0 +1,46 @@
+layout {
+    default_tab_template {
+        // zjstatus bar at top
+        pane size=1 borderless=true {
+            plugin location="file:~/.config/zellij/plugins/zjstatus.wasm" {
+                format_left   "{mode} {tabs}"
+                format_center ""
+                format_right  "{session}"
+
+                mode_normal  "#[bg=#a6e3a1,fg=#1e1e2e,bold] NORMAL "
+                mode_locked  "#[bg=#6c7086,fg=#1e1e2e,bold] LOCKED "
+                mode_pane    "#[bg=#89b4fa,fg=#1e1e2e,bold] PANE "
+                mode_tab     "#[bg=#cba6f7,fg=#1e1e2e,bold] TAB "
+                mode_scroll  "#[bg=#f9e2af,fg=#1e1e2e,bold] SCROLL "
+                mode_resize  "#[bg=#f38ba8,fg=#1e1e2e,bold] RESIZE "
+
+                tab_normal   "#[fg=#6c7086] {name} "
+                tab_active   "#[fg=#fab387,bold] {name} "
+            }
+        }
+        children
+    }
+
+    // Tab 1: Editor
+    tab name="nvim" focus=true {
+        pane command="nvim"
+    }
+
+    // Tab 2: Claude
+    tab name="claude" {
+        pane command="claude"
+    }
+
+    // Tab 3: Git (lazygit + shell)
+    tab name="git" {
+        pane split_direction="vertical" {
+            pane command="lazygit"
+            pane
+        }
+    }
+
+    // Tab 4: Scratch
+    tab name="scratch" {
+        pane
+    }
+}
