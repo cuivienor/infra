@@ -60,6 +60,23 @@ repos:
         files: \.nix$
         pass_filenames: false
 
+  # Rust linting and formatting for zesh (uses zesh devShell for edition 2024)
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        entry: nix develop .#zesh --command cargo fmt --manifest-path apps/zesh/Cargo.toml --
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      - id: cargo-clippy
+        name: cargo clippy
+        entry: nix develop .#zesh --command cargo clippy --manifest-path apps/zesh/Cargo.toml -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+
   # Terraform formatting and linting
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.103.0
