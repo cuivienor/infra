@@ -1,13 +1,29 @@
-{ config, pkgs, ... }:
-
 {
-  # Zesh session manager config
-  xdg.configFile."zesh/config.toml".text = ''
-    # Project discovery roots
-    [[roots]]
-    path = "~/dev"
-    depth = 2
-  '';
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
+
+let
+  zjstatusPackage = inputs.zjstatus.packages.${pkgs.system}.default;
+in
+{
+  # XDG config file management
+  xdg.configFile = {
+    # Zesh session manager config
+    "zesh/config.toml".text = ''
+      # Project discovery roots
+      [[roots]]
+      path = "~/dev"
+      depth = 2
+    '';
+
+    # Zellij configuration
+    "zellij/config.kdl".source = ./zellij/config.kdl;
+    "zellij/layouts/default.kdl".source = ./zellij/layouts/default.kdl;
+    "zellij/plugins/zjstatus.wasm".source = "${zjstatusPackage}/bin/zjstatus.wasm";
+  };
 
   home.packages = with pkgs; [
     # Core utilities
