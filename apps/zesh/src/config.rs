@@ -8,7 +8,7 @@
 
 use anyhow::Result;
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// A search root directory with discovery settings
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -31,7 +31,7 @@ pub struct Config {
 }
 
 impl Root {
-    /// Expand the path (handles ~ and environment variables)
+    /// Expand the path (handles ~ expansion)
     pub fn expanded_path(&self) -> PathBuf {
         let expanded = shellexpand::tilde(&self.path);
         PathBuf::from(expanded.as_ref())
@@ -59,7 +59,7 @@ impl Config {
     ///
     /// Returns default config if file doesn't exist.
     /// Returns error if file exists but is malformed.
-    pub fn load_from_path(path: &PathBuf) -> Result<Self> {
+    pub fn load_from_path(path: &Path) -> Result<Self> {
         if !path.exists() {
             return Ok(Config::default());
         }
