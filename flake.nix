@@ -16,6 +16,12 @@
       url = "github:nix-community/naersk";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Rust overlay for latest stable Rust (supports edition 2024)
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -24,16 +30,24 @@
       nixpkgs,
       home-manager,
       naersk,
+      rust-overlay,
       ...
     }@inputs:
     let
       system = "x86_64-linux";
 
+      # Rust overlay to get latest stable Rust (supports edition 2024)
+      rustOverlay = import rust-overlay;
+
       # Overlay that adds zesh package
       zeshOverlay = final: prev: {
         zesh =
           let
-            naersk' = prev.callPackage naersk { };
+            rustToolchain = prev.rust-bin.stable.latest.default;
+            naersk' = prev.callPackage naersk {
+              cargo = rustToolchain;
+              rustc = rustToolchain;
+            };
           in
           naersk'.buildPackage {
             src = ./apps/zesh;
@@ -44,14 +58,20 @@
 
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [ zeshOverlay ];
+        overlays = [
+          rustOverlay
+          zeshOverlay
+        ];
       };
 
       # Allow unfree packages (terraform)
       pkgsUnfree = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
-        overlays = [ zeshOverlay ];
+        overlays = [
+          rustOverlay
+          zeshOverlay
+        ];
       };
     in
     {
@@ -64,8 +84,11 @@
             ./nixos/hosts/devbox/configuration.nix
             home-manager.nixosModules.home-manager
             {
-              # Apply overlay so pkgs.zesh is available
-              nixpkgs.overlays = [ zeshOverlay ];
+              # Apply overlays so pkgs.zesh is available
+              nixpkgs.overlays = [
+                rustOverlay
+                zeshOverlay
+              ];
 
               home-manager = {
                 useGlobalPkgs = true;
@@ -155,12 +178,9 @@
         # Rust development for zesh
         zesh = pkgs.mkShell {
           buildInputs = with pkgs; [
-            # Rust toolchain
-            rustc
-            cargo
-            rust-analyzer
-            clippy
-            rustfmt
+            # Use rust-overlay toolchain (supports edition 2024)
+            rust-bin.stable.latest.default
+            rust-bin.stable.latest.rust-analyzer
 
             # Build dependencies
             pkg-config
