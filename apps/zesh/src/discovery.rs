@@ -321,6 +321,27 @@ mod tests {
     }
 
     #[test]
+    fn test_discover_excludes_repo_at_root_depth() {
+        let temp = TempDir::new().unwrap();
+        // Make the root itself a git repo
+        create_git_repo(temp.path());
+
+        let config = Config {
+            roots: vec![Root {
+                path: temp.path().to_string_lossy().to_string(),
+                depth: 2,
+                sparse_checkout: false,
+            }],
+        };
+
+        let projects = discover_projects(&config);
+        assert!(
+            projects.is_empty(),
+            "Should not discover repo at root depth 0"
+        );
+    }
+
+    #[test]
     fn test_discover_does_not_descend_into_git_repos() {
         let temp = TempDir::new().unwrap();
 
@@ -470,11 +491,16 @@ mod tests {
 
         assert_eq!(projects.len(), 2);
 
-        // Names should include parent to disambiguate
+        // Names should include parent to disambiguate - verify BOTH are disambiguated
         let names: Vec<_> = projects.iter().map(|p| p.name.as_str()).collect();
         assert!(
-            names.contains(&"org-a/api") || names.contains(&"org-b/api"),
-            "Should disambiguate with parent dir. Got: {:?}",
+            names.contains(&"org-a/api"),
+            "Missing org-a/api. Got: {:?}",
+            names
+        );
+        assert!(
+            names.contains(&"org-b/api"),
+            "Missing org-b/api. Got: {:?}",
             names
         );
     }
