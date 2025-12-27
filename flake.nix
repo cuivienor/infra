@@ -10,6 +10,12 @@
       url = "github:nix-community/home-manager/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Rust packaging
+    naersk = {
+      url = "github:nix-community/naersk";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -17,15 +23,35 @@
       self,
       nixpkgs,
       home-manager,
+      naersk,
       ...
     }@inputs:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+
+      # Overlay that adds zesh package
+      zeshOverlay = final: prev: {
+        zesh =
+          let
+            naersk' = prev.callPackage naersk { };
+          in
+          naersk'.buildPackage {
+            src = ./apps/zesh;
+            nativeBuildInputs = [ prev.pkg-config ];
+            buildInputs = [ prev.openssl ];
+          };
+      };
+
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ zeshOverlay ];
+      };
+
       # Allow unfree packages (terraform)
       pkgsUnfree = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
+        overlays = [ zeshOverlay ];
       };
     in
     {
@@ -38,6 +64,9 @@
             ./nixos/hosts/devbox/configuration.nix
             home-manager.nixosModules.home-manager
             {
+              # Apply overlay so pkgs.zesh is available
+              nixpkgs.overlays = [ zeshOverlay ];
+
               home-manager = {
                 useGlobalPkgs = true;
                 useUserPackages = true;
@@ -46,6 +75,12 @@
             }
           ];
         };
+      };
+
+      # Make zesh buildable standalone
+      packages.${system} = {
+        inherit (pkgs) zesh;
+        default = pkgs.zesh;
       };
 
       # Development shells
@@ -113,6 +148,33 @@
 
           shellHook = ''
             echo "📺 Session Manager devShell loaded"
+            echo ""
+          '';
+        };
+
+        # Rust development for zesh
+        zesh = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            # Rust toolchain
+            rustc
+            cargo
+            rust-analyzer
+            clippy
+            rustfmt
+
+            # Build dependencies
+            pkg-config
+            openssl
+
+            # Runtime deps for testing
+            zellij
+            fzf
+          ];
+
+          shellHook = ''
+            echo "🎯 Zesh devShell loaded"
+            echo "   Rust: $(rustc --version | cut -d' ' -f2)"
+            echo "   Cargo: $(cargo --version | cut -d' ' -f2)"
             echo ""
           '';
         };
