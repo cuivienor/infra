@@ -88,19 +88,6 @@ pub fn attach_session(name: &str) -> Result<ExitStatus> {
     Ok(status)
 }
 
-/// Determine the layout path for a project
-///
-/// Returns the path to .zellij.kdl if it exists in the project directory,
-/// otherwise returns "default" to use zellij's default layout.
-pub fn determine_layout(project: &Project) -> String {
-    let layout_path = project.path.join(".zellij.kdl");
-    if layout_path.exists() {
-        layout_path.to_string_lossy().to_string()
-    } else {
-        "default".to_string()
-    }
-}
-
 /// Build the command to create a new session for a project
 ///
 /// The session will:
@@ -108,16 +95,19 @@ pub fn determine_layout(project: &Project) -> String {
 /// - Start in the project.path directory
 /// - Use .zellij.kdl layout if present, otherwise default layout
 pub fn build_create_command(project: &Project) -> Command {
-    let layout = determine_layout(project);
-
     let mut cmd = Command::new("zellij");
 
-    // Creates a new session with the given name and layout.
-    // When run without an existing session, zellij starts a new one.
-    cmd.arg("--layout")
-        .arg(&layout)
-        .arg("--session")
-        .arg(&project.name);
+    // Set session name
+    cmd.arg("--session").arg(&project.name);
+
+    // Add layout if custom .zellij.kdl exists
+    // Note: --layout with --session tries to ADD a tab to existing session
+    // We need --new-session-with-layout to CREATE a session with a layout
+    let layout_path = project.path.join(".zellij.kdl");
+    if layout_path.exists() {
+        cmd.arg("--new-session-with-layout")
+            .arg(layout_path.to_string_lossy().as_ref());
+    }
 
     // Set the working directory for the session
     cmd.current_dir(&project.path);
@@ -253,43 +243,6 @@ mod tests {
     }
 
     // =========================================================================
-    // determine_layout tests
-    // =========================================================================
-
-    #[test]
-    fn test_determine_layout_returns_default_when_no_layout_file() {
-        let temp = TempDir::new().unwrap();
-        let project = Project {
-            name: "test-project".to_string(),
-            path: temp.path().to_path_buf(),
-            repo_root: temp.path().to_path_buf(),
-            worktree_branch: None,
-            sparse_zone: None,
-        };
-
-        let layout = determine_layout(&project);
-        assert_eq!(layout, "default");
-    }
-
-    #[test]
-    fn test_determine_layout_returns_path_when_layout_exists() {
-        let temp = TempDir::new().unwrap();
-        let layout_path = temp.path().join(".zellij.kdl");
-        std::fs::write(&layout_path, "layout {}").unwrap();
-
-        let project = Project {
-            name: "test-project".to_string(),
-            path: temp.path().to_path_buf(),
-            repo_root: temp.path().to_path_buf(),
-            worktree_branch: None,
-            sparse_zone: None,
-        };
-
-        let layout = determine_layout(&project);
-        assert_eq!(layout, layout_path.to_string_lossy());
-    }
-
-    // =========================================================================
     // build_attach_command tests
     // =========================================================================
 
@@ -331,10 +284,11 @@ mod tests {
         let args: Vec<_> = cmd.get_args().collect();
 
         assert_eq!(cmd.get_program(), "zellij");
-        assert!(args.contains(&std::ffi::OsStr::new("--layout")));
-        assert!(args.contains(&std::ffi::OsStr::new("default")));
         assert!(args.contains(&std::ffi::OsStr::new("--session")));
         assert!(args.contains(&std::ffi::OsStr::new("my-project")));
+        // No layout flags when using default (zellij uses its default)
+        assert!(!args.contains(&std::ffi::OsStr::new("--layout")));
+        assert!(!args.contains(&std::ffi::OsStr::new("--new-session-with-layout")));
     }
 
     #[test]
@@ -355,8 +309,9 @@ mod tests {
         let args: Vec<_> = cmd.get_args().collect();
 
         assert_eq!(cmd.get_program(), "zellij");
-        assert!(args.contains(&std::ffi::OsStr::new("--layout")));
-        // Should contain the actual layout path, not "default"
+        assert!(args.contains(&std::ffi::OsStr::new("--session")));
+        assert!(args.contains(&std::ffi::OsStr::new("--new-session-with-layout")));
+        // Should contain the actual layout path
         let layout_arg = args
             .iter()
             .find(|a| a.to_string_lossy().contains(".zellij.kdl"));
