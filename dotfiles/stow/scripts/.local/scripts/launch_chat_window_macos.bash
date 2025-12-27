@@ -8,7 +8,7 @@ get_chat_window_id() {
     # First try to find it in AeroSpace
     local window_id=$(aerospace list-windows --all --format '%{window-id} %{app-name} %{window-title}' |
         grep "$app_name" | grep "$window_title" | head -1 | awk '{print $1}')
-    
+
     # If not found in AeroSpace, check if process exists using AppleScript
     if [[ -z "$window_id" ]]; then
         local process_exists=$(osascript -e "
@@ -25,15 +25,15 @@ get_chat_window_id() {
             end try
             return \"not_found\"
         end tell" 2>/dev/null)
-        
+
         echo "DEBUG: Process check result: '$process_exists'" >&2
-        
+
         # If process exists but not in AeroSpace, it's probably minimized
         if [[ "$process_exists" == "found" ]]; then
             # Try to get window ID from AeroSpace again (sometimes minimized windows still have IDs)
             window_id=$(aerospace list-windows --all --format '%{window-id} %{app-name} %{window-title}' |
                 grep "$app_name" | grep "$window_title" | head -1 | awk '{print $1}')
-            
+
             # If still no ID, return a placeholder that indicates window exists
             if [[ -z "$window_id" ]]; then
                 echo "minimized_window"
@@ -41,7 +41,7 @@ get_chat_window_id() {
             fi
         fi
     fi
-    
+
     echo "$window_id"
 }
 
@@ -52,7 +52,7 @@ is_window_visible() {
         # Check if window exists in visible windows (non-minimized)
         local visible_window=$(aerospace list-windows --workspace focused --format '%{window-id}' | grep "^$window_id$")
         echo "DEBUG: Window in focused workspace: '$visible_window'" >&2
-        
+
         # If window is in focused workspace, it's visible
         if [[ -n "$visible_window" ]]; then
             echo "true"
@@ -108,31 +108,31 @@ create_chat_window() {
             try
                 tell process \"$app_name\"
                     set chatWindow to first window whose name contains \"$window_title\"
-                    
+
                     -- Get screen dimensions
                     tell application \"Finder\"
                         set screenBounds to bounds of window of desktop
                         set screenWidth to item 3 of screenBounds
                         set screenHeight to item 4 of screenBounds
                     end tell
-                    
+
                     -- Calculate window dimensions (75% width, reasonable height)
                     set windowWidth to screenWidth * 0.75
                     set windowHeight to screenHeight * 0.6
-                    
+
                     -- Calculate position (centered horizontally, upper portion vertically)
                     set windowX to (screenWidth - windowWidth) / 2
                     set windowY to screenHeight * 0.15
-                    
+
                     -- Set size and position
                     set size of chatWindow to {windowWidth, windowHeight}
                     set position of chatWindow to {windowX, windowY}
-                    
+
                     -- Try to make it behave like a dialog (always on top)
                     try
                         set value of attribute \"AXModal\" of chatWindow to true
                     end try
-                    
+
                     -- Bring to front
                     perform action \"AXRaise\" of chatWindow
                 end tell
@@ -176,4 +176,3 @@ else
     echo "DEBUG: No window found, creating new one..." >&2
     create_chat_window
 fi
-

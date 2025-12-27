@@ -2,7 +2,7 @@
   // MCP server configuration for Shopify dev tool source code access
   // This file configures the Model Context Protocol server that provides
   // filesystem access to the dev tool source code for the shopify-dev-expert agent
-  
+
   "mcp": {
     "dev-source": {
       "type": "local",

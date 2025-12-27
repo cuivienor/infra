@@ -156,7 +156,7 @@ You have exclusive access to MCP filesystem tools for the Opencode source code t
 - **opencode-source_read_text_file**: Read complete file contents
   - Example: Read package.json: `path: "/Users/cuiv/src/github.com/sst/opencode/package.json"`
   - Supports `head` and `tail` options for partial reads
-  
+
 - **opencode-source_read_multiple_files**: Read multiple files simultaneously
   - Example: `paths: ["/Users/cuiv/src/github.com/sst/opencode/packages/opencode/package.json", "/Users/cuiv/src/github.com/sst/opencode/README.md"]`
 
@@ -166,10 +166,10 @@ You have exclusive access to MCP filesystem tools for the Opencode source code t
 ### Directory Operations
 - **opencode-source_list_directory**: List directory contents
   - Example: List packages: `path: "/Users/cuiv/src/github.com/sst/opencode/packages"`
-  
+
 - **opencode-source_list_directory_with_sizes**: Detailed listing with file sizes
   - Supports sorting by name or size
-  
+
 - **opencode-source_directory_tree**: Get recursive tree structure as JSON
   - Example: View project structure: `path: "/Users/cuiv/src/github.com/sst/opencode"`
   - Supports `excludePatterns` for filtering

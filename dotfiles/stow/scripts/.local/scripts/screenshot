@@ -85,14 +85,14 @@ execute_capture() {
     local output_file="$2"
     local output_mode="$3"
     local silent="$4"
-    
+
     local cmd_args=()
-    
+
     # Add silent flag if requested
     if [[ "$silent" == "true" ]]; then
         cmd_args+=("-x")
     fi
-    
+
     case "$output_mode" in
         save)
             # Save to file only
@@ -143,16 +143,16 @@ capture_main_monitor() {
     local output_file="$1"
     local output_mode="$2"
     local silent="$3"
-    
+
     info "Capturing main monitor..."
-    
+
     local cmd_args=("-m")
-    
+
     # Add silent flag if requested
     if [[ "$silent" == "true" ]]; then
         cmd_args+=("-x")
     fi
-    
+
     case "$output_mode" in
         save|path)
             # Save to file (and optionally copy path)
@@ -187,31 +187,31 @@ capture_all_screens() {
     local output_file="$1"
     local output_mode="$2"
     local silent="$3"
-    
+
     # Note: clipboard mode doesn't make sense for multiple displays
     if [[ "$output_mode" == "clipboard" ]]; then
         warn "Clipboard mode not supported for all screens capture. Using save mode instead."
         output_mode="save"
     fi
-    
+
     # Get base filename without extension
     local base="${output_file%.*}"
     local ext="${output_file##*.}"
-    
+
     info "Capturing all displays..."
-    
+
     # Build file list for up to MAX_DISPLAYS
     local files=()
     local i
     for ((i=1; i<=MAX_DISPLAYS; i++)); do
         files+=("${base}_display${i}.${ext}")
     done
-    
+
     local cmd_args=()
     if [[ "$silent" == "true" ]]; then
         cmd_args+=("-x")
     fi
-    
+
     # screencapture with multiple filenames captures each display to a separate file
     # It will only create files for displays that actually exist
     if screencapture "${cmd_args[@]}" "${files[@]}" 2>/dev/null; then
@@ -225,7 +225,7 @@ capture_all_screens() {
                 ((count++))
             fi
         done
-        
+
         if [[ $count -gt 0 ]]; then
             if [[ "$output_mode" == "path" ]]; then
                 # Copy all file paths to clipboard (newline separated)
@@ -253,17 +253,17 @@ capture_interactive() {
     local output_file="$1"
     local output_mode="$2"
     local silent="$3"
-    
+
     info "Interactive mode: Select area or window"
     info "Tips: Click and drag to select area, Space to toggle window mode, Esc to cancel"
-    
+
     local cmd_args=("-i")
-    
+
     # Add silent flag if requested
     if [[ "$silent" == "true" ]]; then
         cmd_args+=("-x")
     fi
-    
+
     case "$output_mode" in
         save|path)
             # Save to file (and optionally copy path)
@@ -383,15 +383,15 @@ EOF
 # Main execution
 main() {
     parse_args "$@"
-    
+
     local output_file
     output_file=$(generate_filename "screenshot" "$DEFAULT_FORMAT")
-    
+
     # For clipboard mode with no file needed, pass empty filename
     if [[ "$OUTPUT_MODE" == "clipboard" ]]; then
         output_file=""
     fi
-    
+
     case "$CAPTURE_MODE" in
         monitor)
             capture_main_monitor "$output_file" "$OUTPUT_MODE" "$SILENT_MODE"

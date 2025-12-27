@@ -118,25 +118,25 @@ __git_status_files () {
 
   local ret=1
   local -a status_files unstaged_files staged_files
-  
+
   # Get git status with null-terminated output
   status_files=("${(@0)$(git status --porcelain=v1 -z 2>/dev/null)}")
-  
+
   # Parse each status entry
   for entry in "${status_files[@]}"; do
     if [[ -z "$entry" ]]; then continue; fi
-    
+
     local status_code="${entry[1,2]}"
     local file_path="${entry[4,-1]}"
-    
+
     # Skip if no file path
     [[ -z "$file_path" ]] && continue
-    
+
     # Check for unstaged changes (second character not space)
     if [[ "${status_code[2]}" != " " ]]; then
       unstaged_files+=("$file_path")
     fi
-    
+
     # Check for staged changes (first character not space and not untracked)
     if [[ "${status_code[1]}" != " " && "${status_code[1]}" != "?" ]]; then
       staged_files+=("$file_path")
@@ -147,7 +147,7 @@ __git_status_files () {
   if (( ${#unstaged_files[@]} > 0 )); then
     _describe -t unstaged 'Unstaged files' unstaged_files && ret=0
   fi
-  
+
   if (( ${#staged_files[@]} > 0 )); then
     _describe -t staged 'Staged files' staged_files && ret=0
   fi
@@ -163,17 +163,17 @@ __git_staged_files () {
 
   local ret=1
   local -a staged_files
-  
+
   # Get staged files with null-terminated output
   staged_files=("${(@0)$(git diff --name-only --cached -z 2>/dev/null)}")
-  
+
   # Filter out empty entries
   staged_files=("${staged_files[@]:#}")
-  
+
   if (( ${#staged_files[@]} > 0 )); then
     _describe -t staged 'Staged files' staged_files && ret=0
   fi
-  
+
   return $ret
 }
 
@@ -193,17 +193,17 @@ __git_other_files () {
 
   local ret=1
   local -a other_files
-  
+
   # Get untracked files
   other_files=("${(@0)$(git ls-files --others --exclude-standard -z 2>/dev/null)}")
-  
+
   # Filter out empty entries
   other_files=("${other_files[@]:#}")
-  
+
   if (( ${#other_files[@]} > 0 )); then
     _describe -t other 'Untracked files' other_files && ret=0
   fi
-  
+
   return $ret
 }
 

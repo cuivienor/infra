@@ -49,7 +49,7 @@ start-at-login = true
 [workspace-to-monitor-force-assignment]
 # Primary workspaces 1-8 on main external monitor (when docked) or built-in (when undocked)
 1 = 'main'
-2 = 'main' 
+2 = 'main'
 3 = 'main'
 4 = 'main'
 5 = 'main'
@@ -148,7 +148,7 @@ cmd-shift-r = 'reload-config'
 # Resize mode trigger (cmd+r like i3 mod+r)
 cmd-r = 'mode resize'
 
-# Chat window launcher (replicating i3 mod+shift+h) 
+# Chat window launcher (replicating i3 mod+shift+h)
 cmd-shift-backtick = 'exec-and-forget ~/.local/scripts/launch_chat_window_macos.bash'
 
 # Browser new window (cmd+shift+enter)
@@ -162,7 +162,7 @@ end tell'
 # Layout optimization commands for different monitors
 # Force vertical layout (good for main monitor - horizontal screen)
 cmd-shift-v = ['flatten-workspace-tree', 'layout tiles vertical']
-# Force horizontal layout (good for secondary monitor - vertical screen)  
+# Force horizontal layout (good for secondary monitor - vertical screen)
 cmd-shift-t = ['flatten-workspace-tree', 'layout tiles horizontal']
 
 # Monitor navigation (useful for dual monitor setup)
@@ -220,6 +220,6 @@ run = 'move-node-to-workspace 9'
 inner.horizontal = 0
 inner.vertical = 0
 outer.left = 0
-outer.bottom = 0  
+outer.bottom = 0
 outer.top = 0
-outer.right = 0 
+outer.right = 0

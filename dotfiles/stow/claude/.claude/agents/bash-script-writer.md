@@ -165,12 +165,12 @@ fi
   process_file() {
       local file="$1"
       local output="${2:-/tmp/output}"
-      
+
       if [[ ! -f "$file" ]]; then
           error "File not found: $file"
           return 1
       fi
-      
+
       # Process the file
       return 0
   }

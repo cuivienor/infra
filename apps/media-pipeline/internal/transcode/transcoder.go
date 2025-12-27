@@ -252,4 +252,3 @@ func (t *Transcoder) logSummary(ctx context.Context, jobID int64) {
 			ratio, savedGB)
 	}
 }
-

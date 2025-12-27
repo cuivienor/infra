@@ -55,7 +55,7 @@ command_exists() {
 parse_json() {
     local json_file="$1"
     local query="$2"
-    
+
     if command_exists jq; then
         jq -r ".$query" "$json_file" 2>/dev/null
     elif command_exists python3; then
@@ -89,18 +89,18 @@ except:
 get_packages_for_arch() {
     local arch="$1"
     local packages
-    
+
     if [[ ! -f "$CONFIG_FILE" ]]; then
         log_error "Configuration file not found: $CONFIG_FILE"
         return 1
     fi
-    
+
     packages=$(parse_json "$CONFIG_FILE" "architectures.$arch.packages[]")
     if [[ $? -ne 0 || -z "$packages" ]]; then
         log_error "Failed to get packages for architecture: $arch"
         return 1
     fi
-    
+
     echo "$packages"
 }
 
@@ -110,10 +110,10 @@ list_architectures() {
         log_error "Configuration file not found: $CONFIG_FILE"
         return 1
     fi
-    
+
     log_info "Available architectures:"
     echo
-    
+
     local archs
     if command_exists jq; then
         archs=$(jq -r '.architectures | keys[]' "$CONFIG_FILE" 2>/dev/null)
@@ -129,7 +129,7 @@ for arch in data['architectures'].keys():
         log_error "JSON parsing requires either 'jq' or 'python3' to be installed"
         return 1
     fi
-    
+
     for arch in $archs; do
         local desc
         desc=$(parse_json "$CONFIG_FILE" "architectures.$arch.description")
@@ -137,11 +137,11 @@ for arch in data['architectures'].keys():
         packages=$(parse_json "$CONFIG_FILE" "architectures.$arch.packages[]" | wc -l)
         printf "  %-12s - %s (%s packages)\n" "$arch" "$desc" "$packages"
     done
-    
+
     echo
     log_info "Package details:"
     echo
-    
+
     local package_names
     if command_exists jq; then
         package_names=$(jq -r '.package_info | keys[]' "$CONFIG_FILE" 2>/dev/null)
@@ -154,7 +154,7 @@ for pkg in data['package_info'].keys():
     print(pkg)
         " 2>/dev/null)
     fi
-    
+
     for pkg in $package_names; do
         local desc
         desc=$(parse_json "$CONFIG_FILE" "package_info.$pkg.description")
@@ -168,7 +168,7 @@ for pkg in data['package_info'].keys():
 detect_architecture() {
     local os
     os=$(uname -s)
-    
+
     case "$os" in
         Linux*)
             if [[ -n "${CORPORATE_ENV:-}" ]] || [[ -n "${WORK_ENV:-}" ]]; then
@@ -195,7 +195,7 @@ create_symlink() {
     local source="$1"
     local target="$2"
     local force="$3"
-    
+
     # Create target directory if it doesn't exist
     local target_dir
     target_dir="$(dirname "$target")"
@@ -207,7 +207,7 @@ create_symlink() {
             log_info "Created directory: $target_dir"
         fi
     fi
-    
+
     # Check if target already exists
     if [[ -e "$target" || -L "$target" ]]; then
         if [[ -L "$target" ]]; then
@@ -247,7 +247,7 @@ create_symlink() {
             fi
         fi
     fi
-    
+
     # Create the symlink
     if [[ "$DRY_RUN" == "true" ]]; then
         log_success "Would create symlink: $target -> $source"
@@ -255,14 +255,14 @@ create_symlink() {
         ln -s "$source" "$target"
         log_success "Created symlink: $target -> $source"
     fi
-    
+
     return 0
 }
 
 # Function to remove a symlink
 remove_symlink() {
     local target="$1"
-    
+
     if [[ -L "$target" ]]; then
         local current_target
         current_target="$(readlink "$target")"
@@ -291,13 +291,13 @@ process_directory() {
     local module_name="$3"
     local operation="$4"  # "stow" or "unstow"
     local force="$5"
-    
+
     # Find all files and directories in the source directory
     while IFS= read -r -d '' item; do
         # Get relative path from source_dir
         local relative_path="${item#$source_dir/}"
         local target_path="$target_base/$relative_path"
-        
+
         if [[ -d "$item" ]]; then
             # It's a directory - we don't need to do anything special for directories
             # as they will be created when we create symlinks for files
@@ -318,15 +318,15 @@ stow_module() {
     local module_path="$1"
     local module_name="$2"
     local force="$3"
-    
+
     log_info "Processing module: $module_name"
-    
+
     # Process each top-level item in the module
     while IFS= read -r -d '' item; do
         local item_name
         item_name="$(basename "$item")"
         local target_path="$HOME/$item_name"
-        
+
         if [[ -d "$item" ]]; then
             # It's a directory - process recursively
             process_directory "$item" "$HOME/$item_name" "$module_name" "stow" "$force"
@@ -341,15 +341,15 @@ stow_module() {
 unstow_module() {
     local module_path="$1"
     local module_name="$2"
-    
+
     log_info "Unstowing module: $module_name"
-    
+
     # Process each top-level item in the module
     while IFS= read -r -d '' item; do
         local item_name
         item_name="$(basename "$item")"
         local target_path="$HOME/$item_name"
-        
+
         if [[ -d "$item" ]]; then
             # It's a directory - process recursively
             process_directory "$item" "$HOME/$item_name" "$module_name" "unstow" "false"
@@ -438,21 +438,21 @@ for module_dir in "$STOW_DIR"/*/; do
     if [[ ! -d "$module_dir" ]]; then
         continue
     fi
-    
+
     module_name="$(basename "$module_dir")"
-    
+
     # Check if this package should be installed for the current architecture
     if [[ "$PACKAGE_LIST" != *" $module_name "* ]]; then
         log_info "Skipping $module_name (not included in $ARCHITECTURE architecture)"
         continue
     fi
-    
+
     if [[ "$DELETE" == "true" ]]; then
         unstow_module "$module_dir" "$module_name"
     else
         stow_module "$module_dir" "$module_name" "$FORCE"
     fi
-    
+
     echo
 done
 

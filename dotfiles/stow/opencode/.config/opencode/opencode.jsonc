@@ -4,7 +4,7 @@
   "autoshare": false,
   "autoupdate": false,
   "disabled_providers": ["openai","gemini"],
-  
+
   // MCP server for Opencode source code access
   "mcp": {
     "opencode-source": {
@@ -37,7 +37,7 @@
       "enabled": true
     }
   },
-  
+
   // Globally disable MCP tools for all agents by default
   "tools": {
     "opencode-source_*": false,
@@ -46,7 +46,7 @@
     "vault-mcp_*": true,  // Enable vault-mcp tools globally
     "gworkspace-mcp_*": true  // Enable gworkspace-mcp tools globally
   },
-  
+
   // Agent-specific configurations
   "agent": {
     "opencode-config-expert": {
@@ -69,7 +69,7 @@
       "model": "shopify/claude-sonnet-4"
     }
   },
-  
+
   // Custom commands
   "command": {
     "devlog": {
@@ -78,7 +78,7 @@
       "agent": "devlog-writer"
     }
   },
-  
+
   "provider": {
     "shopify": {
       "npm": "@ai-sdk/openai-compatible",
