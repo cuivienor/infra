@@ -1,6 +1,7 @@
 mod config;
 mod discovery;
 mod frecency;
+mod zellij;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
