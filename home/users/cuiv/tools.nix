@@ -12,6 +12,9 @@
     # Nix development
     nixfmt-rfc-style # Nix formatter (RFC standard)
     nil # Nix LSP
+
+    # Session management
+    zesh
   ];
 
   programs = {
