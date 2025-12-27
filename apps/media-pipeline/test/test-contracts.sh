@@ -10,7 +10,6 @@ VALIDATOR="$PROJECT_ROOT/bin/validate-state"
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Track results
@@ -25,7 +24,7 @@ fi
 
 # Create temp staging area
 STAGING_DIR=$(mktemp -d)
-trap "rm -rf $STAGING_DIR" EXIT
+trap 'rm -rf "$STAGING_DIR"' EXIT
 
 echo "================================"
 echo "Contract Tests"
@@ -48,7 +47,8 @@ test_rip_script() {
     echo "n" | timeout 10 ./cmd/rip/rip-disc.sh -t movie -n "Test Movie" 2>/dev/null || true
 
     # Find and validate state directory
-    local state_dir=$(find "$STAGING_DIR" -name ".rip" -type d 2>/dev/null | head -1)
+    local state_dir
+    state_dir=$(find "$STAGING_DIR" -name ".rip" -type d 2>/dev/null | head -1)
     if [ -z "$state_dir" ]; then
         echo -e "${RED}FAIL${NC} - no .rip directory created"
         FAILED=$((FAILED + 1))
