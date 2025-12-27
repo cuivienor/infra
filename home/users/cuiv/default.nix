@@ -1,4 +1,9 @@
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 
 {
   imports = [
@@ -6,6 +11,9 @@
     ./tools.nix
     ./shell.nix
   ];
+
+  # Pass inputs to imported modules
+  _module.args = { inherit inputs; };
 
   # Home-Manager version and basic configuration
   home = {
