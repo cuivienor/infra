@@ -6,12 +6,14 @@ app_name="Ghostty"
 # Function to check if chat window exists and get its window ID
 get_chat_window_id() {
     # First try to find it in AeroSpace
-    local window_id=$(aerospace list-windows --all --format '%{window-id} %{app-name} %{window-title}' |
+    local window_id
+    window_id=$(aerospace list-windows --all --format '%{window-id} %{app-name} %{window-title}' |
         grep "$app_name" | grep "$window_title" | head -1 | awk '{print $1}')
 
     # If not found in AeroSpace, check if process exists using AppleScript
     if [[ -z "$window_id" ]]; then
-        local process_exists=$(osascript -e "
+        local process_exists
+        process_exists=$(osascript -e "
         tell application \"System Events\"
             try
                 tell process \"$app_name\"
@@ -50,7 +52,8 @@ is_window_visible() {
     local window_id=$1
     if [[ -n "$window_id" ]]; then
         # Check if window exists in visible windows (non-minimized)
-        local visible_window=$(aerospace list-windows --workspace focused --format '%{window-id}' | grep "^$window_id$")
+        local visible_window
+        visible_window=$(aerospace list-windows --workspace focused --format '%{window-id}' | grep "^$window_id$") || true
         echo "DEBUG: Window in focused workspace: '$visible_window'" >&2
 
         # If window is in focused workspace, it's visible
@@ -67,7 +70,8 @@ is_window_visible() {
 # Function to toggle chat window visibility
 toggle_chat_window() {
     local window_id=$1
-    local visible=$(is_window_visible "$window_id")
+    local visible
+    visible=$(is_window_visible "$window_id")
     echo "DEBUG: In toggle, visible = '$visible'" >&2
 
     if [[ "$visible" == "true" ]]; then

@@ -61,6 +61,7 @@ if [ -n "$REMOTE_HOST" ]; then
     echo "Created directory structure"
 
     # Create config file on remote
+    # shellcheck disable=SC2087 # Variables should expand locally before sending
     ssh "$REMOTE_HOST" "cat > '$TEST_MEDIA_BASE/pipeline/config.yaml'" << EOF
 staging_base: $TEST_MEDIA_BASE/staging
 library_base: $TEST_MEDIA_BASE/library
