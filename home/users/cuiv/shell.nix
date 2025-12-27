@@ -50,6 +50,7 @@
         c = "clear";
         h = "history";
         ports = "ss -tuln";
+        t = "zesh"; # Session launcher (muscle memory)
 
         # Safer operations
         rm = "rm -i";
