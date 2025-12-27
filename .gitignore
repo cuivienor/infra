@@ -69,3 +69,7 @@ ansible/vars/makemkv_secrets.yml
 !ansible/vars/makemkv_secrets.yml.example
 
 .direnv/
+
+# Nix build outputs
+result
+result-*
