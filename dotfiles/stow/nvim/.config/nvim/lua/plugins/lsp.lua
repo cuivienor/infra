@@ -28,7 +28,7 @@ return { -- LSP Configuration & Plugins
 				source = "always",  -- Always show source in floating window
 			},
 		})
-		
+
 		-- Brief aside: **What is LSP?**
 		--
 		-- LSP is an initialism you've probably heard, but might not understand what it is.
@@ -62,22 +62,22 @@ return { -- LSP Configuration & Plugins
 		vim.api.nvim_create_user_command("LspDebugEncodings", function()
 			local clients = vim.lsp.get_active_clients({ bufnr = 0 })
 			local lines = { "LSP Client Encodings for current buffer:", "" }
-			
+
 			for _, client in ipairs(clients) do
 				table.insert(lines, string.format("Client: %s (ID: %d)", client.name, client.id))
 				table.insert(lines, string.format("  Offset Encoding: %s", client.offset_encoding or "not set"))
-				table.insert(lines, string.format("  Server Capabilities offsetEncoding: %s", 
+				table.insert(lines, string.format("  Server Capabilities offsetEncoding: %s",
 					vim.inspect(client.server_capabilities.positionEncoding or "not set")))
 				table.insert(lines, "")
 			end
-			
+
 			if #clients == 0 then
 				table.insert(lines, "No active LSP clients for this buffer")
 			end
-			
+
 			-- Check buffer filetype
 			table.insert(lines, string.format("Buffer filetype: %s", vim.bo.filetype))
-			
+
 			vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
 		end, { desc = "Debug LSP client encodings" })
 
@@ -325,9 +325,9 @@ return { -- LSP Configuration & Plugins
 		local ensure_installed = vim.tbl_keys(servers or {})
 		-- Remove servers that aren't available via Mason
 		ensure_installed = vim.tbl_filter(function(name)
-			return name ~= "sourcekit" 
-				and name ~= "ziggy_lsp" 
-				and name ~= "ziggy_schema_lsp" 
+			return name ~= "sourcekit"
+				and name ~= "ziggy_lsp"
+				and name ~= "ziggy_schema_lsp"
 				and name ~= "superhtml_lsp"
 		end, ensure_installed)
 		vim.list_extend(ensure_installed, {

@@ -53,7 +53,7 @@ screenshot -m
 screenshot -a -p
 
 # Interactive capture with custom name saved to file
-screenshot -s -n "bugfix" 
+screenshot -s -n "bugfix"
 
 # Silent capture of main monitor saved to file
 screenshot -m -s -x

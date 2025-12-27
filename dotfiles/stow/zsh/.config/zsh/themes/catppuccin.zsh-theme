@@ -1,9 +1,9 @@
 # This is a modification of the agnoster theme modeled after the Catppuccin theme for oh-my-posh but for oh-my-zsh!
 # I like many love this theme and i thought I would share it in case anyone is looking for it.
-# currently you either need zsh-syntax highlighting (built-in plugin for oh-my-zsh) and the catppuccin add on for that 
+# currently you either need zsh-syntax highlighting (built-in plugin for oh-my-zsh) and the catppuccin add on for that
 # which you can find in their master repo under zsh. That or you can define the colors in this config to match catppuccin
 # You can change the Arch symbol by going to the nerd fonts website and finding the code for the icon for anything you want
-# ex: debian==\uf306 linux==\ue712 manjaro==\uf312 cent==\uf304 mint==\uf30f arch==\uf303 elementary==\uf309 fedora==\uff30a gentoo==\uf30d mac==\ue711 
+# ex: debian==\uf306 linux==\ue712 manjaro==\uf312 cent==\uf304 mint==\uf30f arch==\uf303 elementary==\uf309 fedora==\uff30a gentoo==\uf30d mac==\ue711
 
 ### Segment drawing
 # A few utility functions to make it easy and re-usable to draw segmented prompts
@@ -23,7 +23,7 @@ esac
   SEGMENT_LEAD=$'\ue0b6'
   SEGMENT_SEPARATOR=$'\ue0b4'
   ARCH=$'\uf303'
-  DEBIAN=$'\uf306' 
+  DEBIAN=$'\uf306'
 }
 
 # Begin a segment

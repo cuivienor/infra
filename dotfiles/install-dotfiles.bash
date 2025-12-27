@@ -14,7 +14,7 @@ command_exists() {
 parse_json() {
     local json_file="$1"
     local query="$2"
-    
+
     if command_exists jq; then
         jq -r ".$query" "$json_file" 2>/dev/null
     elif command_exists python3; then
@@ -48,18 +48,18 @@ except:
 get_packages_for_arch() {
     local arch="$1"
     local packages
-    
+
     if [[ ! -f "$CONFIG_FILE" ]]; then
         echo "Configuration file not found: $CONFIG_FILE"
         return 1
     fi
-    
+
     packages=$(parse_json "$CONFIG_FILE" "architectures.$arch.packages[]")
     if [[ $? -ne 0 || -z "$packages" ]]; then
         echo "Failed to get packages for architecture: $arch"
         return 1
     fi
-    
+
     echo "$packages"
 }
 
@@ -87,10 +87,10 @@ list_architectures() {
         echo "Configuration file not found: $CONFIG_FILE"
         return 1
     fi
-    
+
     echo "Available architectures:"
     echo
-    
+
     local archs
     if command_exists jq; then
         archs=$(jq -r '.architectures | keys[]' "$CONFIG_FILE" 2>/dev/null)
@@ -106,7 +106,7 @@ for arch in data['architectures'].keys():
         echo "JSON parsing requires either 'jq' or 'python3' to be installed"
         return 1
     fi
-    
+
     for arch in $archs; do
         local desc
         desc=$(parse_json "$CONFIG_FILE" "architectures.$arch.description")
@@ -192,13 +192,13 @@ cd "$STOW_DIR" || exit
 # Loop over each directory inside the base directory and run stow
 for module in */; do
     module_name="${module%/}" # Remove trailing slash
-    
+
     # Check if this package should be installed for the current architecture
     if [[ "$PACKAGE_LIST" != *" $module_name "* ]]; then
         echo "Skipping $module_name (not included in $ARCHITECTURE architecture)"
         continue
     fi
-    
+
     if [ "$DRY_RUN" == "true" ]; then
         if [ "$DELETE" == "true" ]; then
             echo "Dry-Run: Would run 'stow -t $HOME -D $module_name'"

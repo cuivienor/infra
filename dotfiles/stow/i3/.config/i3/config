@@ -268,5 +268,3 @@ exec --no-startup-id i3-msg "workspace $ws2; exec ~/.local/scripts/start-notes.b
 exec --no-startup-id i3-msg "workspace $ws1; exec ghostty"
 exec --no-startup-id i3-msg "workspace $ws3; exec chromium"
 exec --no-startup-id sleep 1; i3-msg "workspace $ws1"
-
-

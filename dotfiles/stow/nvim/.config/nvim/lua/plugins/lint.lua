@@ -21,7 +21,7 @@ return {
 			"MD013",
 			"--",
 		}
-		
+
 		-- Note: Ruby linting is handled by RuboCop LSP server in shadowenv.lua
 		-- for shadowenv projects with bin/rubocop
 
@@ -34,12 +34,12 @@ return {
 				require("lint").try_lint()
 			end,
 		})
-		
+
 		-- Create commands for manual linting
 		vim.api.nvim_create_user_command("LintInfo", function()
 			local filetype = vim.bo.filetype
 			local linters = lint.linters_by_ft[filetype] or {}
-			
+
 			if #linters > 0 then
 				local lines = { "Active linters for " .. filetype .. ":" }
 				for _, linter_name in ipairs(linters) do
@@ -59,7 +59,7 @@ return {
 				vim.notify("No linters configured for filetype: " .. filetype, vim.log.levels.WARN)
 			end
 		end, { desc = "Show lint info for current buffer" })
-		
+
 		vim.api.nvim_create_user_command("Lint", function()
 			require("lint").try_lint()
 			vim.notify("Linting triggered", vim.log.levels.INFO)

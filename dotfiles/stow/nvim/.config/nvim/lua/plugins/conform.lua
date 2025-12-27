@@ -26,37 +26,37 @@ return { -- Autoformat
 				command = function(ctx)
 					-- Get the directory from context or current file
 					local dir = ctx.dirname or vim.fn.expand("%:p:h")
-					
+
 					-- Check if we're in a shadowenv project
 					local shadowenv_dir = vim.fn.finddir(".shadowenv.d", dir .. ";")
 					if shadowenv_dir ~= "" then
 						local project_root = vim.fn.fnamemodify(shadowenv_dir, ":h")
 						local bin_rubocop = project_root .. "/bin/rubocop"
-						
+
 						-- If there's a bin/rubocop, use it (it will use bundler and shadowenv)
 						if vim.fn.filereadable(bin_rubocop) == 1 then
 							return bin_rubocop
 						end
-						
+
 						-- Fallback - don't use global rubocop for shadowenv projects
 						-- This prevents conflicts with project-specific cops
 						vim.notify("RuboCop not found in project. Run: bundle install", vim.log.levels.WARN)
 						return nil
 					end
-					
+
 					-- For non-shadowenv projects, use global rubocop if available
 					return "rubocop"
 				end,
 				args = function(ctx)
 					-- Get the directory from context or current file
 					local dir = ctx.dirname or vim.fn.expand("%:p:h")
-					
+
 					-- Check if we're using project rubocop (no --server for binstubs)
 					local shadowenv_dir = vim.fn.finddir(".shadowenv.d", dir .. ";")
 					if shadowenv_dir ~= "" then
 						local project_root = vim.fn.fnamemodify(shadowenv_dir, ":h")
 						local bin_rubocop = project_root .. "/bin/rubocop"
-						
+
 						if vim.fn.filereadable(bin_rubocop) == 1 then
 							-- Don't use --server with binstub, it handles its own optimization
 							return {
@@ -68,7 +68,7 @@ return { -- Autoformat
 							}
 						end
 					end
-					
+
 					-- For global rubocop, use server mode
 					return {
 						"--server",
@@ -83,7 +83,7 @@ return { -- Autoformat
 				cwd = function(ctx)
 					-- Get the directory from context or current file
 					local dir = ctx.dirname or vim.fn.expand("%:p:h")
-					
+
 					-- Find the project root (where .rubocop.yml likely is)
 					local rubocop_config = vim.fn.findfile(".rubocop.yml", dir .. ";")
 					if rubocop_config ~= "" then
@@ -94,7 +94,7 @@ return { -- Autoformat
 				condition = function(ctx)
 					-- Get the directory from context or current file
 					local dir = ctx.dirname or vim.fn.expand("%:p:h")
-					
+
 					-- Only run if we have a valid command
 					local shadowenv_dir = vim.fn.finddir(".shadowenv.d", dir .. ";")
 					if shadowenv_dir ~= "" then
@@ -114,7 +114,7 @@ return { -- Autoformat
 			swiftformat = {
 				-- Use system SwiftFormat installed via Homebrew
 				command = "swiftformat",
-				args = { 
+				args = {
 					"--quiet",
 					"stdin",
 					"--stdinpath", "$FILENAME",
@@ -187,7 +187,7 @@ return { -- Autoformat
 	config = function(_, opts)
 		local conform = require("conform")
 		conform.setup(opts)
-		
+
 		-- Create a command to show format info
 		vim.api.nvim_create_user_command("ConformInfo", function()
 			local info = conform.list_formatters_for_buffer(0)

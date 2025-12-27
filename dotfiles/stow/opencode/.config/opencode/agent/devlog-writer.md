@@ -21,7 +21,7 @@ Each devlog entry should follow this format:
 
 **Context**: [Brief context/project name]
 **Task**: [What was being worked on]
-**Changes**: 
+**Changes**:
 - [Key change 1]
 - [Key change 2]
 - [etc.]
@@ -56,7 +56,7 @@ When invoked:
 
 **Context**: Dotfiles repository - Opencode configuration
 **Task**: Create devlog writer subagent
-**Changes**: 
+**Changes**:
 - Created new subagent configuration at `.config/opencode/agent/devlog-writer.md`
 - Set up MCP server for brain notes access
 - Established devlog format and location

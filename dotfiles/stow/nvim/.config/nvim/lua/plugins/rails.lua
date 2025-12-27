@@ -46,7 +46,7 @@ return {
 		ft = { "ruby", "eruby" },
 		config = function()
 			vim.g.rspec_command = "!bundle exec rspec {spec}"
-			
+
 			-- RSpec keymaps
 			vim.keymap.set("n", "<leader>tt", ":call RunCurrentSpecFile()<CR>", { desc = "Run current spec file" })
 			vim.keymap.set("n", "<leader>ts", ":call RunNearestSpec()<CR>", { desc = "Run nearest spec" })

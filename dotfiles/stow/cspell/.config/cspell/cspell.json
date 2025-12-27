@@ -26,4 +26,3 @@
   "dictionaries": ["project-words", "personal", "names", "software"],
   "ignorePaths": ["node_modules"]
 }
-

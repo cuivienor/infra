@@ -51,7 +51,7 @@ return { -- Highlight, edit, and navigate code
 
 		-- Register Zine language parsers
 		local parser_config = require("nvim-treesitter.parsers").get_parser_configs()
-		
+
 		parser_config.ziggy = {
 			install_info = {
 				url = "~/dev/ziggy/tree-sitter-ziggy",
@@ -59,7 +59,7 @@ return { -- Highlight, edit, and navigate code
 				branch = "main",
 			},
 		}
-		
+
 		parser_config.ziggy_schema = {
 			install_info = {
 				url = "~/dev/ziggy/tree-sitter-ziggy-schema",
@@ -67,7 +67,7 @@ return { -- Highlight, edit, and navigate code
 				branch = "main",
 			},
 		}
-		
+
 		parser_config.supermd = {
 			install_info = {
 				url = "~/dev/supermd/tree-sitter/supermd",
@@ -75,7 +75,7 @@ return { -- Highlight, edit, and navigate code
 				branch = "main",
 			},
 		}
-		
+
 		parser_config.supermd_inline = {
 			install_info = {
 				url = "~/dev/supermd/tree-sitter/supermd-inline",
@@ -83,7 +83,7 @@ return { -- Highlight, edit, and navigate code
 				branch = "main",
 			},
 		}
-		
+
 		parser_config.superhtml = {
 			install_info = {
 				url = "~/dev/superhtml/tree-sitter-superhtml",

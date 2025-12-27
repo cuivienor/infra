@@ -109,18 +109,18 @@ return {
 			local start_config = vim.deepcopy(config)
 			local target_bufnr = start_config.bufnr
 			start_config.bufnr = nil
-			
+
 			local client_id = vim.lsp.start_client(start_config)
-			
+
 			if client_id and target_bufnr then
 				-- Wait for client to initialize before attaching
 				local attempts = 0
 				local max_attempts = 20 -- 2 seconds total
-				
+
 				local function try_attach()
 					attempts = attempts + 1
 					local client = vim.lsp.get_client_by_id(client_id)
-					
+
 					if client and client.initialized and vim.api.nvim_buf_is_valid(target_bufnr) then
 						vim.lsp.buf_attach_client(target_bufnr, client_id)
 						return true
@@ -137,10 +137,10 @@ return {
 						return false
 					end
 				end
-				
+
 				try_attach()
 			end
-			
+
 			return client_id
 		end
 
@@ -210,7 +210,7 @@ return {
 					return
 				end
 			end
-			
+
 			-- Check if Sorbet client already exists for this project
 			local project = ruby_project.state.projects[project_root]
 			if project and project.sorbet_client_id then
@@ -219,23 +219,23 @@ return {
 					return
 				end
 			end
-			
+
 			-- Load shadowenv environment for Sorbet (only if available)
 			if not shadowenv.is_available() then
 				return
 			end
-			
+
 			local environment = shadowenv.load_environment(project_root)
 			if not environment then
 				return
 			end
-			
+
 			-- Get the shadowenv srb path
 			local ruby_paths = shadowenv.get_ruby_paths(environment)
 			if not ruby_paths then
 				return
 			end
-			
+
 			-- Find srb in the same gem directory as ruby-lsp
 			local srb_path = ruby_paths.gem_home .. "/bin/srb"
 			if vim.fn.filereadable(srb_path) ~= 1 then
@@ -244,7 +244,7 @@ return {
 				end
 				return
 			end
-			
+
 			-- Configure Sorbet LSP with shadowenv environment
 			local sorbet_config = {
 				name = "sorbet_lsp_" .. project_root:gsub("[/\\]", "_"),
@@ -259,7 +259,7 @@ return {
 					if client.server_capabilities.positionEncoding then
 						client.offset_encoding = client.server_capabilities.positionEncoding
 					end
-					
+
 					-- Debug: log capabilities
 					if vim.g.ruby_shadowenv_debug then
 						vim.notify(
@@ -275,10 +275,10 @@ return {
 				cwd = project_root,
 				capabilities = lsp.make_capabilities(),
 			}
-			
+
 			-- Remove bufnr from config as vim.lsp.start will handle it
 			sorbet_config.bufnr = nil
-			
+
 			-- Use vim.lsp.start for better attachment handling
 			local client_id = vim.lsp.start(sorbet_config, {
 				bufnr = bufnr,
@@ -286,14 +286,14 @@ return {
 					return client.name == config.name and client.root_dir == config.root_dir
 				end,
 			})
-			
+
 			if client_id then
 				-- Update project state to include Sorbet client
 				local project = ruby_project.state.projects[project_root]
 				if project then
 					project.sorbet_client_id = client_id
 				end
-				
+
 				vim.notify(
 					string.format(
 						"Sorbet LSP started for %s",
@@ -307,7 +307,7 @@ return {
 		-- Ensure RuboCop LSP for a project
 		ruby_project.ensure_rubocop_lsp = function(project_root, bufnr)
 			local bin_rubocop = project_root .. "/bin/rubocop"
-			
+
 			-- Check if RuboCop is already attached to this buffer
 			local existing_clients = vim.lsp.get_clients({ bufnr = bufnr })
 			for _, client in ipairs(existing_clients) do
@@ -316,7 +316,7 @@ return {
 					return
 				end
 			end
-			
+
 			-- Check if RuboCop client already exists for this project
 			local project = ruby_project.state.projects[project_root]
 			if project and project.rubocop_client_id then
@@ -325,17 +325,17 @@ return {
 					return
 				end
 			end
-			
+
 			-- Load shadowenv environment for RuboCop (only if available)
 			if not shadowenv.is_available() then
 				return
 			end
-			
+
 			local environment = shadowenv.load_environment(project_root)
 			if not environment then
 				return
 			end
-			
+
 			-- Configure RuboCop LSP with shadowenv environment
 			local rubocop_config = {
 				name = "rubocop_lsp_" .. project_root:gsub("[/\\]", "_"),
@@ -350,14 +350,14 @@ return {
 				settings = {},
 				on_attach = function(client, attached_bufnr)
 					-- Keep RuboCop LSP formatting enabled - conform will use it with lsp_format = "first"
-					
+
 					-- Update offset encoding if available
 					if client.server_capabilities.positionEncoding then
 						client.offset_encoding = client.server_capabilities.positionEncoding
 					end
-					
+
 					-- No need for manual document sync - vim.lsp.start handles this
-					
+
 					-- Debug: log capabilities
 					if vim.g.ruby_shadowenv_debug then
 						vim.notify(
@@ -374,10 +374,10 @@ return {
 				cwd = project_root,
 				capabilities = lsp.make_capabilities(),
 			}
-			
+
 			-- Remove bufnr from config as vim.lsp.start will handle it
 			rubocop_config.bufnr = nil
-			
+
 			-- Use vim.lsp.start for better attachment handling
 			local client_id = vim.lsp.start(rubocop_config, {
 				bufnr = bufnr,
@@ -385,14 +385,14 @@ return {
 					return client.name == config.name and client.root_dir == config.root_dir
 				end,
 			})
-			
+
 			if client_id then
 				-- Update project state to include RuboCop client
 				local project = ruby_project.state.projects[project_root]
 				if project then
 					project.rubocop_client_id = client_id
 				end
-				
+
 				vim.notify(
 					string.format(
 						"RuboCop LSP started for %s",
@@ -409,7 +409,7 @@ return {
 			-- Ensure ruby-lsp uses UTF-16 encoding to match other LSPs
 			capabilities.general = capabilities.general or {}
 			capabilities.general.positionEncodings = { "utf-16" }
-			
+
 			local config = {
 				name = "ruby_lsp_" .. project_root:gsub("[/\\]", "_"),
 				cmd = { "ruby-lsp" },
@@ -434,7 +434,7 @@ return {
 			-- Try to load shadowenv (only if available)
 			local env_type = "system"
 			local environment = nil
-			
+
 			if shadowenv.is_available() then
 				environment = shadowenv.load_environment(project_root)
 			end
@@ -444,7 +444,7 @@ return {
 				if ruby_paths then
 					-- Check if ruby-lsp exists in the shadowenv path
 					local ruby_lsp_exists = vim.fn.filereadable(ruby_paths.ruby_lsp) == 1
-					
+
 					if not ruby_lsp_exists then
 						-- Try to use the ruby-lsp from the project's .ruby-lsp directory
 						-- This requires running bundle install in .ruby-lsp first
@@ -453,16 +453,16 @@ return {
 							"cd " .. project_root .. "/.ruby-lsp && bundle install",
 							vim.log.levels.WARN
 						)
-						
+
 						-- Use the shadowenv ruby to run ruby-lsp
-						config.cmd = { 
+						config.cmd = {
 							environment.PATH:match("([^:]+)/bin") .. "/ruby",
 							"-S", "ruby-lsp"
 						}
 					else
 						config.cmd = { ruby_paths.ruby_lsp }
 					end
-					
+
 					config.cmd_env = {
 						GEM_HOME = ruby_paths.gem_home,
 						GEM_PATH = ruby_paths.gem_path,
@@ -491,7 +491,7 @@ return {
 							break
 						end
 					end
-					
+
 					if not has_rubocop then
 						local project = ruby_project.state.projects[project_root]
 						if project and project.env_type == "shadowenv" then
@@ -504,7 +504,7 @@ return {
 					return
 				end
 			end
-			
+
 			local project = ruby_project.state.projects[project_root]
 
 			-- Try to reuse existing client from another buffer
@@ -527,10 +527,10 @@ return {
 			-- Create new ruby-lsp client only if we don't have one
 			if not project or not lsp.is_client_active(project.client_id) then
 				local config, env_type = ruby_project.build_lsp_config(project_root, bufnr)
-				
+
 				-- Remove bufnr from config as vim.lsp.start will handle it
 				config.bufnr = nil
-				
+
 				-- Use vim.lsp.start for better attachment handling
 				local client_id = vim.lsp.start(config, {
 					bufnr = bufnr,
@@ -552,14 +552,14 @@ return {
 						),
 						vim.log.levels.INFO
 					)
-					
+
 					-- Also start RuboCop LSP if bin/rubocop exists and we're in a shadowenv project
 					if env_type == "shadowenv" then
 						local bin_rubocop = project_root .. "/bin/rubocop"
 						if vim.fn.filereadable(bin_rubocop) == 1 then
 							ruby_project.ensure_rubocop_lsp(project_root, bufnr)
 						end
-						
+
 						-- Also start Sorbet LSP if sorbet/config exists
 						if vim.fn.filereadable(project_root .. "/sorbet/config") == 1 then
 							ruby_project.ensure_sorbet_lsp(project_root, bufnr)
@@ -598,14 +598,14 @@ return {
 			pattern = { "ruby", "eruby", "rakefile", "gemfile" },
 			callback = function(args)
 				local bufnr = args.buf
-				
+
 				-- Skip if we're already processing this buffer
 				if ruby_project.state.pending_buffers[bufnr] then
 					return
 				end
-				
+
 				local filepath = vim.api.nvim_buf_get_name(bufnr)
-				
+
 				-- For new buffers without a file, try to find project from current directory
 				if not filepath or filepath == "" then
 					filepath = vim.fn.getcwd()
@@ -621,11 +621,11 @@ return {
 					if vim.g.ruby_shadowenv_debug then
 						vim.notify(string.format("Found project root: %s", project_root), vim.log.levels.INFO)
 					end
-					
+
 					-- Mark as pending to prevent duplicate processing
 					ruby_project.state.pending_buffers[bufnr] = true
 					ruby_project.state.buffers[bufnr] = project_root
-					
+
 					-- Ensure LSP with a small delay to debounce multiple FileType events
 					vim.defer_fn(function()
 						ruby_project.ensure_lsp(project_root, bufnr)
@@ -744,14 +744,14 @@ return {
 				-- Create .ruby-lsp directory with Gemfile
 				vim.notify("Creating .ruby-lsp directory...", vim.log.levels.INFO)
 				vim.fn.mkdir(ruby_lsp_dir, "p")
-				
+
 				local gemfile_content = {
 					'source "https://rubygems.org"',
 					'',
 					'gem "ruby-lsp", require: false, group: :development',
 					'gem "ruby-lsp-rails", require: false, group: :development',
 				}
-				
+
 				vim.fn.writefile(gemfile_content, ruby_lsp_dir .. "/Gemfile")
 				vim.notify("Created .ruby-lsp/Gemfile. Run :RubyShadowenvInstallLsp again to install.", vim.log.levels.INFO)
 			end
@@ -761,29 +761,29 @@ return {
 		vim.api.nvim_create_user_command("RuboCopTestDiagnostics", function()
 			local bufnr = vim.api.nvim_get_current_buf()
 			local filetype = vim.bo[bufnr].filetype
-			
+
 			-- Check if it's a Ruby-related filetype
 			if not vim.tbl_contains({ "ruby", "eruby", "rakefile", "gemfile" }, filetype) then
 				vim.notify("Please open a Ruby file first (current filetype: " .. filetype .. ")", vim.log.levels.WARN)
 				return
 			end
-			
+
 			-- Get all LSP clients for this buffer
 			local clients = vim.lsp.get_clients({ bufnr = bufnr })
 			local rubocop_client = nil
-			
+
 			for _, client in ipairs(clients) do
 				if client.name:match("^rubocop_lsp_") then
 					rubocop_client = client
 					break
 				end
 			end
-			
+
 			if not rubocop_client then
 				vim.notify("RuboCop LSP not attached to this buffer", vim.log.levels.WARN)
 				return
 			end
-			
+
 			-- Show client info
 			local lines = {
 				"RuboCop LSP Client Info:",
@@ -798,39 +798,39 @@ return {
 				"",
 				"Current diagnostics count: " .. #vim.diagnostic.get(bufnr, { namespace = vim.lsp.diagnostic.get_namespace(rubocop_client.id) }),
 			}
-			
+
 			vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
 		end, { desc = "Test RuboCop LSP diagnostics" })
-		
+
 		-- Toggle debug mode
 		vim.api.nvim_create_user_command("RubyShadowenvDebugToggle", function()
 			vim.g.ruby_shadowenv_debug = not vim.g.ruby_shadowenv_debug
 			vim.notify("Ruby Shadowenv debug mode: " .. tostring(vim.g.ruby_shadowenv_debug), vim.log.levels.INFO)
 		end, { desc = "Toggle Ruby shadowenv debug mode" })
-		
+
 		-- Force restart RuboCop LSP for current buffer
 		vim.api.nvim_create_user_command("RuboCopRestart", function()
 			local bufnr = vim.api.nvim_get_current_buf()
 			local filepath = vim.api.nvim_buf_get_name(bufnr)
-			
+
 			if not filepath or filepath == "" then
 				vim.notify("No file in current buffer", vim.log.levels.WARN)
 				return
 			end
-			
+
 			local project_root = ruby_project.find_root(filepath)
 			if not project_root then
 				vim.notify("No Ruby project found", vim.log.levels.WARN)
 				return
 			end
-			
+
 			-- Stop RuboCop client if it exists
 			local project = ruby_project.state.projects[project_root]
 			if project and project.rubocop_client_id then
 				lsp.stop_client(project.rubocop_client_id)
 				project.rubocop_client_id = nil
 			end
-			
+
 			-- Check for bin/rubocop
 			local bin_rubocop = project_root .. "/bin/rubocop"
 			if vim.fn.filereadable(bin_rubocop) == 1 then
@@ -844,36 +844,36 @@ return {
 		vim.api.nvim_create_user_command("RubyShadowenvDebug", function()
 			local bufnr = vim.api.nvim_get_current_buf()
 			local filepath = vim.api.nvim_buf_get_name(bufnr)
-			
+
 			local lines = { "Ruby Shadowenv Debug Info:", "" }
-			
+
 			-- Check current file
 			table.insert(lines, "Current file: " .. (filepath or "none"))
 			table.insert(lines, "")
-			
+
 			-- Check for shadowenv.vim plugin
 			local has_shadowenv_plugin = vim.fn.exists(":ShadowenvHook") == 2
 			table.insert(lines, "Shadowenv.vim plugin loaded: " .. tostring(has_shadowenv_plugin))
 			table.insert(lines, "")
-			
+
 			if filepath and filepath ~= "" then
 				-- Find project root
 				local project_root = ruby_project.find_root(filepath)
 				table.insert(lines, "Project root: " .. (project_root or "not found"))
-				
+
 				if project_root then
 					-- Check for shadowenv
 					local has_shadowenv = shadowenv.has_shadowenv(project_root)
 					table.insert(lines, "Has .shadowenv.d: " .. tostring(has_shadowenv))
-					
+
 					-- Try to load environment
 					table.insert(lines, "")
 					table.insert(lines, "Loading shadowenv environment...")
 					local env = shadowenv.load_environment(project_root)
-					
+
 					if env then
 						table.insert(lines, "Environment loaded successfully")
-						
+
 						-- Check for Ruby paths
 						local ruby_paths = shadowenv.get_ruby_paths(env)
 						if ruby_paths then
@@ -881,7 +881,7 @@ return {
 							table.insert(lines, "Ruby paths found:")
 							table.insert(lines, "  ruby-lsp: " .. ruby_paths.ruby_lsp)
 							table.insert(lines, "  gem_home: " .. ruby_paths.gem_home)
-							
+
 							-- Check if ruby-lsp exists
 							local ruby_lsp_exists = vim.fn.filereadable(ruby_paths.ruby_lsp) == 1
 							table.insert(lines, "  ruby-lsp executable exists: " .. tostring(ruby_lsp_exists))
@@ -892,7 +892,7 @@ return {
 					else
 						table.insert(lines, "Failed to load shadowenv environment")
 					end
-					
+
 					-- Check project state
 					table.insert(lines, "")
 					local project = ruby_project.state.projects[project_root]
@@ -906,14 +906,14 @@ return {
 					end
 				end
 			end
-			
+
 			-- Show all buffers tracked
 			table.insert(lines, "")
 			table.insert(lines, "Tracked buffers:")
 			for buf, root in pairs(ruby_project.state.buffers) do
 				table.insert(lines, string.format("  Buffer %d -> %s", buf, root))
 			end
-			
+
 			vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
 		end, { desc = "Debug Ruby shadowenv LSP setup" })
 	end,

@@ -99,4 +99,4 @@ To get the full experience, install AutoRaise for focus-follows-mouse:
 2. Follow the installation instructions in the repository
 3. AutoRaise will start automatically with AeroSpace once installed
 
-AutoRaise provides seamless focus-follows-mouse behavior just like i3. 
+AutoRaise provides seamless focus-follows-mouse behavior just like i3.
