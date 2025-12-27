@@ -1,6 +1,14 @@
 { config, pkgs, ... }:
 
 {
+  # Zesh session manager config
+  xdg.configFile."zesh/config.toml".text = ''
+    # Project discovery roots
+    [[roots]]
+    path = "~/dev"
+    depth = 2
+  '';
+
   home.packages = with pkgs; [
     # Core utilities
     ripgrep
