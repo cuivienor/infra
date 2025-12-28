@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(terraform:*)",
+      "Bash(ansible:*)",
+      "Bash(ansible-playbook:*)",
+      "Bash(ansible-vault:*)",
+      "Bash(ansible-lint:*)",
+      "Bash(sops:*)",
+      "Bash(age:*)",
+      "Bash(yamllint:*)",
+      "Bash(nix:*)",
+      "Bash(nix-shell:*)",
+      "Bash(nix-instantiate:*)",
+      "Bash(direnv:*)",
+      "Bash(pre-commit:*)",
+      "Bash(ssh:*)",
+      "Bash(ssh-keygen:*)",
+      "Bash(curl:*)",
+      "Bash(dig:*)",
+      "Bash(git -C:*)",
+      "Bash(git push:*)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(gh:*)",
+      "WebFetch(domain:developer.hashicorp.com)",
+      "WebFetch(domain:registry.terraform.io)",
+      "WebFetch(domain:forum.proxmox.com)",
+      "WebFetch(domain:nixos.wiki)",
+      "WebFetch(domain:discourse.nixos.org)"
+    ]
+  }
+}

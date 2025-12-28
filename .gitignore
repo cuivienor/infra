@@ -73,3 +73,6 @@ ansible/vars/makemkv_secrets.yml
 # Nix build outputs
 result
 result-*
+
+# Claude Code local settings (personal permissions)
+.claude/settings.local.json
