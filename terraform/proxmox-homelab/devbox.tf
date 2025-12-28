@@ -41,7 +41,7 @@ resource "proxmox_virtual_environment_container" "devbox" {
 
   # Operating system - NixOS requires unmanaged type
   operating_system {
-    template_file_id = "local:vztmpl/nixos-24.11-proxmox.tar.xz"
+    template_file_id = proxmox_virtual_environment_download_file.nixos_devbox_bootstrap.id
     type             = "unmanaged"
   }
 
