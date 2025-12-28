@@ -1,6 +1,6 @@
 # CT320: NixOS Dev Container
 # NixOS development environment for learning Nix and managing configurations
-# Uses official NixOS LXC template from Hydra
+# Uses custom bootstrap template from GitHub releases (see images/ zone)
 
 resource "proxmox_virtual_environment_container" "devbox" {
   description = "NixOS dev environment - flake-based config management"
