@@ -1,0 +1,61 @@
+name: Build LXC Templates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'images/**'
+      - 'nixos/hosts/bootstrap/**'
+      - '.github/workflows/build-lxc-templates.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-lxc-templates
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v14
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v8
+
+      - name: Build LXC template
+        run: |
+          set -euo pipefail
+          nix build ./images#lxc-devbox-bootstrap --print-build-logs
+          tarball=$(ls result/tarball/*.tar.xz | head -1)
+          if [[ -z "$tarball" ]]; then
+            echo "ERROR: No tarball found in result/tarball/"
+            exit 1
+          fi
+          cp "$tarball" nixos-devbox-bootstrap.tar.xz
+
+      - name: Get short SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Create/Update Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: lxc-templates-latest
+          name: LXC Templates (Latest)
+          body: |
+            Auto-built LXC templates from commit ${{ steps.sha.outputs.short }}
+
+            **Templates:**
+            - `nixos-devbox-bootstrap.tar.xz` - Minimal NixOS devbox template
+
+            **Derivation:** Built with nixos-generators proxmox-lxc format
+          files: nixos-devbox-bootstrap.tar.xz
+          make_latest: true
