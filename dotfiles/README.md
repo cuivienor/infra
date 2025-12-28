@@ -57,6 +57,20 @@ rmdir dotfiles
 ./install-dotfiles.bash -d
 ```
 
+## 🔧 Post-Install Setup
+
+Some modules have external dependencies that aren't stowed (they're gitignored). After installing dotfiles on a new machine:
+
+### tmux plugins (TPM)
+
+The tmux plugins directory is gitignored. Install TPM and plugins manually:
+
+```bash
+git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
+```
+
+Then restart tmux and press `prefix + I` to install plugins (catppuccin theme, vim-tmux-navigator, etc.).
+
 ## 🧩 Modules
 
 - **X11** 🖥️ - X Window System configuration
