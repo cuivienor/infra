@@ -21,6 +21,26 @@ in
 
     # Zellij configuration
     "zellij/config.kdl".source = ./zellij/config.kdl;
+
+    # zjstatus permission grant helper layout
+    # FIRST TIME SETUP: zjstatus needs permissions but the borderless status bar
+    # hides the permission prompt. Run this once to grant permissions:
+    #   zellij --layout ~/.config/zellij/layouts/grant-zjstatus-permissions.kdl
+    # Navigate to top pane (Ctrl+p, k) and press 'y' to grant permissions.
+    # Permissions persist in ~/.local/share/zellij/permissions.kdl
+    "zellij/layouts/grant-zjstatus-permissions.kdl".text = ''
+      layout {
+          pane size=3 {
+              plugin location="file:${zjstatusPackage}/bin/zjstatus.wasm" {
+                  format_left "{mode}"
+                  format_right "{session}"
+                  mode_normal "#[bold] NORMAL "
+              }
+          }
+          pane
+      }
+    '';
+
     # Layout generated with absolute plugin path (tilde doesn't expand in zellij)
     "zellij/layouts/default.kdl".text = ''
       layout {
