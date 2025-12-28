@@ -42,25 +42,58 @@ in
     '';
 
     # Layout generated with absolute plugin path (tilde doesn't expand in zellij)
+    # Riced zjstatus with powerline rounded tabs, Catppuccin Mocha colors
     "zellij/layouts/default.kdl".text = ''
       layout {
           default_tab_template {
-              // zjstatus bar at top
+              // zjstatus bar at top - riced with powerline style
               pane size=1 borderless=true {
                   plugin location="file:${zjstatusPackage}/bin/zjstatus.wasm" {
-                      format_left   "{mode} {tabs}"
+                      // Layout: [MODE] [SESSION] [TABS]              [GIT] [TIME]
+                      format_left   "{mode}#[bg=#1e1e2e] #[fg=#89b4fa,bold] {session}#[fg=#1e1e2e] {tabs}"
                       format_center ""
-                      format_right  "{session}"
+                      format_right  "{command_git_branch} {datetime}"
+                      format_space  ""
 
-                      mode_normal  "#[bg=#a6e3a1,fg=#1e1e2e,bold] NORMAL "
-                      mode_locked  "#[bg=#6c7086,fg=#1e1e2e,bold] LOCKED "
-                      mode_pane    "#[bg=#89b4fa,fg=#1e1e2e,bold] PANE "
-                      mode_tab     "#[bg=#cba6f7,fg=#1e1e2e,bold] TAB "
-                      mode_scroll  "#[bg=#f9e2af,fg=#1e1e2e,bold] SCROLL "
-                      mode_resize  "#[bg=#f38ba8,fg=#1e1e2e,bold] RESIZE "
+                      // Mode indicators with powerline rounded separators
+                      mode_normal        "#[bg=#a6e3a1,fg=#1e1e2e,bold]  NORMAL #[bg=#1e1e2e,fg=#a6e3a1]"
+                      mode_locked        "#[bg=#6c7086,fg=#1e1e2e,bold]  LOCKED #[bg=#1e1e2e,fg=#6c7086]"
+                      mode_pane          "#[bg=#89b4fa,fg=#1e1e2e,bold]  PANE #[bg=#1e1e2e,fg=#89b4fa]"
+                      mode_tab           "#[bg=#cba6f7,fg=#1e1e2e,bold] 󰓩 TAB #[bg=#1e1e2e,fg=#cba6f7]"
+                      mode_scroll        "#[bg=#f9e2af,fg=#1e1e2e,bold] 󱕒 SCROLL #[bg=#1e1e2e,fg=#f9e2af]"
+                      mode_resize        "#[bg=#f38ba8,fg=#1e1e2e,bold] 󰩨 RESIZE #[bg=#1e1e2e,fg=#f38ba8]"
+                      mode_session       "#[bg=#fab387,fg=#1e1e2e,bold]  SESSION #[bg=#1e1e2e,fg=#fab387]"
+                      mode_move          "#[bg=#fab387,fg=#1e1e2e,bold]  MOVE #[bg=#1e1e2e,fg=#fab387]"
+                      mode_tmux          "#[bg=#fab387,fg=#1e1e2e,bold]  TMUX #[bg=#1e1e2e,fg=#fab387]"
+                      mode_enter_search  "#[bg=#f9e2af,fg=#1e1e2e,bold]  SEARCH #[bg=#1e1e2e,fg=#f9e2af]"
+                      mode_search        "#[bg=#f9e2af,fg=#1e1e2e,bold]  SEARCH #[bg=#1e1e2e,fg=#f9e2af]"
+                      mode_rename_tab    "#[bg=#fab387,fg=#1e1e2e,bold] 󰏫 RENAME #[bg=#1e1e2e,fg=#fab387]"
+                      mode_rename_pane   "#[bg=#fab387,fg=#1e1e2e,bold] 󰏫 RENAME #[bg=#1e1e2e,fg=#fab387]"
+                      mode_prompt        "#[bg=#fab387,fg=#1e1e2e,bold]  PROMPT #[bg=#1e1e2e,fg=#fab387]"
 
-                      tab_normal   "#[fg=#6c7086] {name} "
-                      tab_active   "#[fg=#fab387,bold] {name} "
+                      // Tab formatting with powerline rounded separators and index numbers
+                      tab_normal              "#[bg=#1e1e2e,fg=#45475a]#[bg=#45475a,fg=#bac2de] {index} {name} #[bg=#1e1e2e,fg=#45475a]"
+                      tab_normal_fullscreen   "#[bg=#1e1e2e,fg=#45475a]#[bg=#45475a,fg=#bac2de] {index} {name} 󰊓 #[bg=#1e1e2e,fg=#45475a]"
+                      tab_normal_sync         "#[bg=#1e1e2e,fg=#45475a]#[bg=#45475a,fg=#bac2de] {index} {name} 󰓦 #[bg=#1e1e2e,fg=#45475a]"
+                      tab_active              "#[bg=#1e1e2e,fg=#fab387]#[bg=#fab387,fg=#1e1e2e,bold] {index} {name} #[bg=#1e1e2e,fg=#fab387]"
+                      tab_active_fullscreen   "#[bg=#1e1e2e,fg=#fab387]#[bg=#fab387,fg=#1e1e2e,bold] {index} {name} 󰊓 #[bg=#1e1e2e,fg=#fab387]"
+                      tab_active_sync         "#[bg=#1e1e2e,fg=#fab387]#[bg=#fab387,fg=#1e1e2e,bold] {index} {name} 󰓦 #[bg=#1e1e2e,fg=#fab387]"
+                      tab_separator           "#[bg=#1e1e2e] "
+
+                      // Tab indicators
+                      tab_sync_indicator       ""
+                      tab_fullscreen_indicator ""
+                      tab_floating_indicator   ""
+
+                      // Git branch (updates every 10s)
+                      command_git_branch_command     "git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '''"
+                      command_git_branch_format      "#[fg=#89b4fa,bold]  {stdout}"
+                      command_git_branch_interval    "10"
+                      command_git_branch_rendermode  "static"
+
+                      // Datetime (local system time)
+                      datetime          "#[fg=#6c7086] {format}"
+                      datetime_format   "%I:%M %p"
                   }
               }
               children
