@@ -86,7 +86,7 @@ in
                       tab_floating_indicator   ""
 
                       // Git branch (updates every 10s)
-                      command_git_branch_command     "git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '''"
+                      command_git_branch_command     "git rev-parse --abbrev-ref HEAD"
                       command_git_branch_format      "#[fg=#89b4fa,bold]  {stdout}"
                       command_git_branch_interval    "10"
                       command_git_branch_rendermode  "static"
