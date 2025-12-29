@@ -74,14 +74,14 @@ fn run_main_flow(query: Option<&str>) -> Result<()> {
     if let Some(q) = query {
         // Try to find a single matching project
         if let Some(project) = picker::fuzzy_match_single(&projects, q) {
-            return switch_to_project(project);
+            return switch_to_project(&project);
         }
         // Multiple matches or no matches - show picker with query pre-filled
     }
 
     // Show interactive picker
     match picker::pick_project(&projects, &frecency, query) {
-        Some(project) => switch_to_project(project),
+        Some(project) => switch_to_project(&project),
         None => {
             // User cancelled (Esc)
             Ok(())
@@ -90,13 +90,13 @@ fn run_main_flow(query: Option<&str>) -> Result<()> {
 }
 
 /// Switch to a project's session, recording the access in frecency
-fn switch_to_project(project: discovery::Project) -> Result<()> {
+fn switch_to_project(project: &discovery::Project) -> Result<()> {
     // Record access for frecency tracking
     let mut frecency = frecency::FrecencyStore::new()?;
     frecency.record_access(&project.path)?;
 
     // Switch to the project's session
-    zellij::switch_to_project(&project)?;
+    zellij::switch_to_project(project)?;
     Ok(())
 }
 

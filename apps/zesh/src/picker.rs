@@ -216,7 +216,7 @@ mod tests {
 
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let frecency = FrecencyStore::with_path(data_path).unwrap();
+        let frecency = FrecencyStore::with_path(data_path);
 
         let projects: Vec<Project> = vec![];
         let result = pick_project(&projects, &frecency, None);
@@ -231,7 +231,7 @@ mod tests {
 
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let frecency = FrecencyStore::with_path(data_path).unwrap();
+        let frecency = FrecencyStore::with_path(data_path);
 
         let projects = vec![
             make_project("project-a"),

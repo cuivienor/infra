@@ -2,9 +2,13 @@
 name = "zesh"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.75"
 description = "Fast terminal session manager for zellij"
 authors = ["Peter Petrov <peter@petrovs.io>"]
 license = "MIT"
+repository = "https://github.com/cuivienor/infra"
+keywords = ["zellij", "terminal", "session-manager", "tmux"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 # CLI
@@ -33,3 +37,30 @@ dirs = "5"               # XDG paths
 
 [dev-dependencies]
 tempfile = "3"           # Temp files for tests
+
+# Clippy lints - be strict about common issues
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+# Allow pedantic lints that are too noisy or stylistic
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+module_name_repetitions = "allow"
+uninlined_format_args = "allow"
+single_match_else = "allow"
+match_wildcard_for_single_variants = "allow"
+unnecessary_debug_formatting = "allow"
+doc_markdown = "allow"                  # False positives on snake_case
+cast_precision_loss = "allow"           # Acceptable for frecency scores
+cast_lossless = "allow"
+explicit_iter_loop = "allow"
+
+# Release profile optimizations
+[profile.release]
+lto = true              # Link-time optimization
+codegen-units = 1       # Better optimization (slower compile)
+strip = true            # Remove debug symbols
+opt-level = 3           # Maximum optimization
+
+[profile.dev]
+opt-level = 0           # Fast compilation
+debug = true            # Full debug info

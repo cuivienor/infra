@@ -61,7 +61,7 @@ fn discover_from_root(root: &Root, projects: &mut Vec<Project>) {
         .git_ignore(false) // Don't respect .gitignore for discovery
         .git_global(false)
         .git_exclude(false)
-        .sort_by_file_path(|a, b| a.cmp(b)) // Ensure deterministic order
+        .sort_by_file_path(std::cmp::Ord::cmp) // Ensure deterministic order
         .build();
 
     for entry in walker.flatten() {

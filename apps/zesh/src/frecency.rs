@@ -36,14 +36,15 @@ impl FrecencyStore {
     /// The default path is `~/.local/share/zesh/frecency.json`
     pub fn new() -> Result<Self> {
         let data_path = Self::default_data_path()?;
-        Self::with_path(data_path)
+        Ok(Self::with_path(data_path))
     }
 
     /// Create a FrecencyStore with a custom data path
     ///
     /// Loads existing data from the path if it exists.
     /// Creates an empty store if the file doesn't exist or is corrupt.
-    pub fn with_path(path: PathBuf) -> Result<Self> {
+    #[must_use]
+    pub fn with_path(path: PathBuf) -> Self {
         let mut store = if path.exists() {
             match fs::read_to_string(&path) {
                 Ok(content) => serde_json::from_str(&content).unwrap_or_default(),
@@ -53,7 +54,7 @@ impl FrecencyStore {
             FrecencyStore::default()
         };
         store.data_path = Some(path);
-        Ok(store)
+        store
     }
 
     /// Get the default data file path
@@ -140,7 +141,7 @@ fn calculate_score(frequency: u32, last_access: u64) -> f64 {
     let age_secs = now.saturating_sub(last_access) as f64;
 
     // Decay by half every week (604800 seconds)
-    let recency_weight = 0.5_f64.powf(age_secs / 604800.0);
+    let recency_weight = 0.5_f64.powf(age_secs / 604_800.0);
 
     frequency as f64 * recency_weight
 }
@@ -193,7 +194,7 @@ mod tests {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("nonexistent").join("frecency.json");
 
-        let store = FrecencyStore::with_path(data_path).unwrap();
+        let store = FrecencyStore::with_path(data_path);
         assert!(store.entries.is_empty());
     }
 
@@ -206,7 +207,7 @@ mod tests {
         let json = r#"{"entries":{"/test/path":{"frequency":5,"last_access":1700000000}}}"#;
         fs::write(&data_path, json).unwrap();
 
-        let store = FrecencyStore::with_path(data_path).unwrap();
+        let store = FrecencyStore::with_path(data_path);
 
         let entry = store.get_entry(Path::new("/test/path")).unwrap();
         assert_eq!(entry.frequency, 5);
@@ -222,7 +223,7 @@ mod tests {
         fs::write(&data_path, "not valid json {{{{").unwrap();
 
         // Should return empty store, not error
-        let store = FrecencyStore::with_path(data_path).unwrap();
+        let store = FrecencyStore::with_path(data_path);
         assert!(store.entries.is_empty());
     }
 
@@ -234,7 +235,7 @@ mod tests {
         fs::write(&data_path, "").unwrap();
 
         // Should return empty store, not error
-        let store = FrecencyStore::with_path(data_path).unwrap();
+        let store = FrecencyStore::with_path(data_path);
         assert!(store.entries.is_empty());
     }
 
@@ -253,7 +254,7 @@ mod tests {
     fn test_record_access_creates_new_entry() {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let mut store = FrecencyStore::with_path(data_path).unwrap();
+        let mut store = FrecencyStore::with_path(data_path);
 
         let project_path = Path::new("/home/user/dev/project");
         store.record_access(project_path).unwrap();
@@ -267,7 +268,7 @@ mod tests {
     fn test_record_access_increments_frequency() {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let mut store = FrecencyStore::with_path(data_path).unwrap();
+        let mut store = FrecencyStore::with_path(data_path);
 
         let project_path = Path::new("/home/user/dev/project");
 
@@ -283,7 +284,7 @@ mod tests {
     fn test_record_access_updates_last_access_time() {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let mut store = FrecencyStore::with_path(data_path).unwrap();
+        let mut store = FrecencyStore::with_path(data_path);
 
         let project_path = Path::new("/home/user/dev/project");
 
@@ -307,12 +308,12 @@ mod tests {
 
         // Create store, record access, drop it
         {
-            let mut store = FrecencyStore::with_path(data_path.clone()).unwrap();
+            let mut store = FrecencyStore::with_path(data_path.clone());
             store.record_access(Path::new("/test/project")).unwrap();
         }
 
         // Load again and verify data persisted
-        let store = FrecencyStore::with_path(data_path).unwrap();
+        let store = FrecencyStore::with_path(data_path);
         let entry = store.get_entry(Path::new("/test/project")).unwrap();
         assert_eq!(entry.frequency, 1);
     }
@@ -326,7 +327,7 @@ mod tests {
             .join("dirs")
             .join("frecency.json");
 
-        let mut store = FrecencyStore::with_path(data_path.clone()).unwrap();
+        let mut store = FrecencyStore::with_path(data_path.clone());
         store.record_access(Path::new("/test/project")).unwrap();
 
         // Verify file was created
@@ -341,7 +342,7 @@ mod tests {
     fn test_get_score_returns_zero_for_unknown_path() {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let store = FrecencyStore::with_path(data_path).unwrap();
+        let store = FrecencyStore::with_path(data_path);
 
         let score = store.get_score(Path::new("/unknown/path"));
         assert_eq!(score, 0.0);
@@ -351,7 +352,7 @@ mod tests {
     fn test_get_score_returns_positive_for_accessed_path() {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let mut store = FrecencyStore::with_path(data_path).unwrap();
+        let mut store = FrecencyStore::with_path(data_path);
 
         let project_path = Path::new("/test/project");
         store.record_access(project_path).unwrap();
@@ -364,7 +365,7 @@ mod tests {
     fn test_get_score_higher_for_more_frequent_access() {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let mut store = FrecencyStore::with_path(data_path).unwrap();
+        let mut store = FrecencyStore::with_path(data_path);
 
         let path_once = Path::new("/accessed/once");
         let path_many = Path::new("/accessed/many");
@@ -462,7 +463,7 @@ mod tests {
     fn test_sort_by_frecency_empty_list() {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let store = FrecencyStore::with_path(data_path).unwrap();
+        let store = FrecencyStore::with_path(data_path);
 
         let mut projects: Vec<Project> = vec![];
         store.sort_by_frecency(&mut projects);
@@ -474,7 +475,7 @@ mod tests {
     fn test_sort_by_frecency_single_project() {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let store = FrecencyStore::with_path(data_path).unwrap();
+        let store = FrecencyStore::with_path(data_path);
 
         let mut projects = vec![Project {
             name: "single".to_string(),
@@ -494,7 +495,7 @@ mod tests {
     fn test_sort_by_frecency_orders_by_score_descending() {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let mut store = FrecencyStore::with_path(data_path).unwrap();
+        let mut store = FrecencyStore::with_path(data_path);
 
         // Create projects
         let mut projects = vec![
@@ -545,7 +546,7 @@ mod tests {
     fn test_sort_by_frecency_untracked_projects_go_to_end() {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let mut store = FrecencyStore::with_path(data_path).unwrap();
+        let mut store = FrecencyStore::with_path(data_path);
 
         let mut projects = vec![
             Project {
@@ -578,7 +579,7 @@ mod tests {
     fn test_sort_by_frecency_preserves_projects() {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
-        let store = FrecencyStore::with_path(data_path).unwrap();
+        let store = FrecencyStore::with_path(data_path);
 
         let original_projects = vec![
             Project {
@@ -621,7 +622,7 @@ mod tests {
 
         // Create store and record various accesses
         {
-            let mut store = FrecencyStore::with_path(data_path.clone()).unwrap();
+            let mut store = FrecencyStore::with_path(data_path.clone());
             store.record_access(Path::new("/project/a")).unwrap();
             store.record_access(Path::new("/project/a")).unwrap();
             store.record_access(Path::new("/project/b")).unwrap();
@@ -629,7 +630,7 @@ mod tests {
 
         // Load fresh and verify
         {
-            let store = FrecencyStore::with_path(data_path).unwrap();
+            let store = FrecencyStore::with_path(data_path);
 
             let entry_a = store.get_entry(Path::new("/project/a")).unwrap();
             assert_eq!(entry_a.frequency, 2);
