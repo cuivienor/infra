@@ -142,9 +142,6 @@
             # Secret scanning
             trufflehog
             gitleaks
-
-            # Terminal multiplexer
-            zellij
           ];
 
           shellHook = ''
