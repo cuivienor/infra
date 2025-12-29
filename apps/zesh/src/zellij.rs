@@ -105,14 +105,20 @@ pub fn build_create_command(project: &Project) -> Command {
 
     // Always specify layout explicitly:
     // - Custom .zellij.kdl in project takes priority
-    // - Otherwise use "default" which resolves to ~/.config/zellij/layouts/default.kdl
+    // - Otherwise use user's default layout at ~/.config/zellij/layouts/default.kdl
+    //   (using full path to avoid layout name resolution issues)
     let layout_path = project.path.join(".zellij.kdl");
     if layout_path.exists() {
         cmd.arg("--new-session-with-layout")
             .arg(layout_path.to_string_lossy().as_ref());
-    } else {
-        // Use user's default layout (not zellij's internal default)
-        cmd.arg("--new-session-with-layout").arg("default");
+    } else if let Some(home) = std::env::var_os("HOME") {
+        let default_layout =
+            std::path::PathBuf::from(home).join(".config/zellij/layouts/default.kdl");
+        if default_layout.exists() {
+            cmd.arg("--new-session-with-layout")
+                .arg(default_layout.to_string_lossy().as_ref());
+        }
+        // If no layout exists, let zellij use its internal default
     }
 
     // Set the working directory for the session
@@ -292,9 +298,49 @@ mod tests {
         assert_eq!(cmd.get_program(), "zellij");
         assert!(args.contains(&std::ffi::OsStr::new("--session")));
         assert!(args.contains(&std::ffi::OsStr::new("my-project")));
-        // Should use --new-session-with-layout default to load user's default.kdl
+        // When user's default.kdl exists at ~/.config/zellij/layouts/default.kdl,
+        // should use --new-session-with-layout with full path.
+        // In test environment, HOME may not have this file, so behavior depends on system.
+        // The important thing is we set --session and current_dir correctly.
+    }
+
+    #[test]
+    fn test_build_create_command_uses_home_default_layout() {
+        // Create a mock HOME with default.kdl
+        let mock_home = TempDir::new().unwrap();
+        let layout_dir = mock_home.path().join(".config/zellij/layouts");
+        std::fs::create_dir_all(&layout_dir).unwrap();
+        let default_layout = layout_dir.join("default.kdl");
+        std::fs::write(&default_layout, "layout {}").unwrap();
+
+        // Temporarily override HOME
+        let original_home = std::env::var_os("HOME");
+        std::env::set_var("HOME", mock_home.path());
+
+        let project_dir = TempDir::new().unwrap();
+        let project = Project {
+            name: "my-project".to_string(),
+            path: project_dir.path().to_path_buf(),
+            repo_root: project_dir.path().to_path_buf(),
+            worktree_branch: None,
+            sparse_zone: None,
+        };
+
+        let cmd = build_create_command(&project);
+        let args: Vec<_> = cmd.get_args().collect();
+
+        // Restore HOME
+        match original_home {
+            Some(h) => std::env::set_var("HOME", h),
+            None => std::env::remove_var("HOME"),
+        }
+
         assert!(args.contains(&std::ffi::OsStr::new("--new-session-with-layout")));
-        assert!(args.contains(&std::ffi::OsStr::new("default")));
+        // Should contain the full path to default.kdl
+        let layout_arg = args
+            .iter()
+            .find(|a| a.to_string_lossy().contains("default.kdl"));
+        assert!(layout_arg.is_some(), "Should use full path to default.kdl");
     }
 
     #[test]
