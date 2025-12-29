@@ -93,20 +93,26 @@ pub fn attach_session(name: &str) -> Result<ExitStatus> {
 /// The session will:
 /// - Use the project.name as the session name
 /// - Start in the project.path directory
-/// - Use .zellij.kdl layout if present, otherwise default layout
+/// - Use .zellij.kdl layout if present, otherwise user's default layout
+///
+/// Note: We always use --new-session-with-layout because `zellij --session`
+/// alone uses zellij's internal default, not ~/.config/zellij/layouts/default.kdl
 pub fn build_create_command(project: &Project) -> Command {
     let mut cmd = Command::new("zellij");
 
     // Set session name
     cmd.arg("--session").arg(&project.name);
 
-    // Add layout if custom .zellij.kdl exists
-    // Note: --layout with --session tries to ADD a tab to existing session
-    // We need --new-session-with-layout to CREATE a session with a layout
+    // Always specify layout explicitly:
+    // - Custom .zellij.kdl in project takes priority
+    // - Otherwise use "default" which resolves to ~/.config/zellij/layouts/default.kdl
     let layout_path = project.path.join(".zellij.kdl");
     if layout_path.exists() {
         cmd.arg("--new-session-with-layout")
             .arg(layout_path.to_string_lossy().as_ref());
+    } else {
+        // Use user's default layout (not zellij's internal default)
+        cmd.arg("--new-session-with-layout").arg("default");
     }
 
     // Set the working directory for the session
@@ -286,9 +292,9 @@ mod tests {
         assert_eq!(cmd.get_program(), "zellij");
         assert!(args.contains(&std::ffi::OsStr::new("--session")));
         assert!(args.contains(&std::ffi::OsStr::new("my-project")));
-        // No layout flags when using default (zellij uses its default)
-        assert!(!args.contains(&std::ffi::OsStr::new("--layout")));
-        assert!(!args.contains(&std::ffi::OsStr::new("--new-session-with-layout")));
+        // Should use --new-session-with-layout default to load user's default.kdl
+        assert!(args.contains(&std::ffi::OsStr::new("--new-session-with-layout")));
+        assert!(args.contains(&std::ffi::OsStr::new("default")));
     }
 
     #[test]
