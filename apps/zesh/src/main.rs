@@ -55,7 +55,7 @@ fn run_main_flow(query: Option<&str>) -> Result<()> {
 
     if cfg.roots.is_empty() {
         eprintln!("No roots configured. Run 'zesh config' to set up.");
-        eprintln!("Config file: {:?}", config::Config::config_path()?);
+        eprintln!("Config file: {}", config::Config::config_path()?.display());
         return Ok(());
     }
 
@@ -108,7 +108,7 @@ fn cmd_ls() -> Result<()> {
         println!("No active zellij sessions.");
     } else {
         for session in sessions {
-            println!("{}", session);
+            println!("{session}");
         }
     }
 
@@ -118,7 +118,7 @@ fn cmd_ls() -> Result<()> {
 /// Kill a zellij session by name
 fn cmd_kill(name: &str) -> Result<()> {
     zellij::kill_session(name)?;
-    println!("Killed session: {}", name);
+    println!("Killed session: {name}");
     Ok(())
 }
 
@@ -141,14 +141,14 @@ fn cmd_clean() -> Result<()> {
 
     println!("Found {} orphaned session(s):", orphaned.len());
     for session in &orphaned {
-        println!("  {}", session);
+        println!("  {session}");
     }
 
     // Kill each orphaned session
     for session in &orphaned {
         match zellij::kill_session(session) {
-            Ok(()) => println!("Killed: {}", session),
-            Err(e) => eprintln!("Failed to kill '{}': {}", session, e),
+            Ok(()) => println!("Killed: {session}"),
+            Err(e) => eprintln!("Failed to kill '{session}': {e}"),
         }
     }
 
@@ -180,7 +180,7 @@ fn cmd_config() -> Result<()> {
 # sparse_checkout = true
 "#;
         std::fs::write(&config_path, default_config)?;
-        println!("Created default config at: {:?}", config_path);
+        println!("Created default config at: {}", config_path.display());
     }
 
     // Get editor from environment
@@ -190,7 +190,7 @@ fn cmd_config() -> Result<()> {
     let status = Command::new(&editor)
         .arg(&config_path)
         .status()
-        .map_err(|e| anyhow::anyhow!("Failed to open editor '{}': {}", editor, e))?;
+        .map_err(|e| anyhow::anyhow!("Failed to open editor '{editor}': {e}"))?;
 
     if !status.success() {
         return Err(anyhow::anyhow!("Editor exited with non-zero status"));

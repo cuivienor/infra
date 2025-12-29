@@ -492,13 +492,11 @@ mod tests {
         let names: Vec<_> = projects.iter().map(|p| p.name.as_str()).collect();
         assert!(
             names.contains(&"org-a/api"),
-            "Missing org-a/api. Got: {:?}",
-            names
+            "Missing org-a/api. Got: {names:?}"
         );
         assert!(
             names.contains(&"org-b/api"),
-            "Missing org-b/api. Got: {:?}",
-            names
+            "Missing org-b/api. Got: {names:?}"
         );
     }
 

@@ -41,18 +41,11 @@ tempfile = "3"           # Temp files for tests
 # Clippy lints - be strict about common issues
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }
-# Allow pedantic lints that are too noisy or stylistic
+# Only allow truly noisy pedantic lints
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 module_name_repetitions = "allow"
-uninlined_format_args = "allow"
-single_match_else = "allow"
-match_wildcard_for_single_variants = "allow"
-unnecessary_debug_formatting = "allow"
-doc_markdown = "allow"                  # False positives on snake_case
-cast_precision_loss = "allow"           # Acceptable for frecency scores
-cast_lossless = "allow"
-explicit_iter_loop = "allow"
+similar_names = "allow"        # project1 vs projects is fine in tests
 
 # Release profile optimizations
 [profile.release]

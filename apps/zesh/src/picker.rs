@@ -8,7 +8,7 @@ use crate::frecency::FrecencyStore;
 use skim::prelude::*;
 use std::sync::Arc;
 
-/// A wrapper around Project that implements SkimItem for use in the picker
+/// A wrapper around Project that implements `SkimItem` for use in the picker
 struct ProjectItem {
     project: Project,
 }
@@ -58,7 +58,7 @@ pub fn pick_project(
     // Convert projects to skim items
     let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
-    for project in sorted_projects.iter() {
+    for project in &sorted_projects {
         let item = ProjectItem {
             project: project.clone(),
         };
@@ -113,8 +113,8 @@ mod tests {
     fn make_project(name: &str) -> Project {
         Project {
             name: name.to_string(),
-            path: PathBuf::from(format!("/test/{}", name)),
-            repo_root: PathBuf::from(format!("/test/{}", name)),
+            path: PathBuf::from(format!("/test/{name}")),
+            repo_root: PathBuf::from(format!("/test/{name}")),
             worktree_branch: None,
             sparse_zone: None,
         }
@@ -241,6 +241,6 @@ mod tests {
 
         // This will open the skim picker - user needs to select manually
         let result = pick_project(&projects, &frecency, None);
-        println!("Selected: {:?}", result);
+        println!("Selected: {result:?}");
     }
 }

@@ -163,7 +163,7 @@ depth = 3
         )
         .unwrap();
 
-        let config = Config::load_from_path(&file.path().to_path_buf()).unwrap();
+        let config = Config::load_from_path(file.path()).unwrap();
         assert_eq!(config.roots.len(), 1);
         assert_eq!(config.roots[0].path, "~/projects");
         assert_eq!(config.roots[0].depth, 3);
@@ -174,7 +174,7 @@ depth = 3
         let mut file = NamedTempFile::new().unwrap();
         writeln!(file, "invalid toml [[[").unwrap();
 
-        let result = Config::load_from_path(&file.path().to_path_buf());
+        let result = Config::load_from_path(file.path());
         assert!(result.is_err());
     }
 

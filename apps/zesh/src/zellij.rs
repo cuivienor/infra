@@ -35,7 +35,7 @@ pub fn list_sessions() -> Result<Vec<String>> {
     let output = Command::new("zellij")
         .arg("list-sessions")
         .output()
-        .map_err(|e| anyhow!("Failed to run zellij list-sessions: {}", e))?;
+        .map_err(|e| anyhow!("Failed to run zellij list-sessions: {e}"))?;
 
     if !output.status.success() {
         // zellij returns non-zero if no sessions exist
@@ -62,7 +62,7 @@ pub fn session_exists(name: &str) -> Result<bool> {
 /// Build the command to attach to an existing session
 ///
 /// Returns the Command configured for attaching. The caller is responsible
-/// for executing it (typically via exec() or spawn()).
+/// for executing it (typically via `exec` or `spawn`).
 pub fn build_attach_command(name: &str) -> Command {
     let mut cmd = Command::new("zellij");
     cmd.arg("attach").arg(name);
@@ -83,7 +83,7 @@ pub fn attach_session(name: &str) -> Result<ExitStatus> {
 
     let status = cmd
         .status()
-        .map_err(|e| anyhow!("Failed to attach to session '{}': {}", name, e))?;
+        .map_err(|e| anyhow!("Failed to attach to session '{name}': {e}"))?;
 
     Ok(status)
 }
@@ -171,11 +171,11 @@ pub fn kill_session(name: &str) -> Result<()> {
 
     let output = cmd
         .output()
-        .map_err(|e| anyhow!("Failed to kill session '{}': {}", name, e))?;
+        .map_err(|e| anyhow!("Failed to kill session '{name}': {e}"))?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(anyhow!("Failed to kill session '{}': {}", name, stderr));
+        return Err(anyhow!("Failed to kill session '{name}': {stderr}"));
     }
 
     Ok(())

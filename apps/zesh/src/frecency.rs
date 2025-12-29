@@ -31,7 +31,7 @@ pub struct FrecencyStore {
 }
 
 impl FrecencyStore {
-    /// Create a new FrecencyStore that will persist to the default data path
+    /// Create a new `FrecencyStore` that will persist to the default data path
     ///
     /// The default path is `~/.local/share/zesh/frecency.json`
     pub fn new() -> Result<Self> {
@@ -39,7 +39,7 @@ impl FrecencyStore {
         Ok(Self::with_path(data_path))
     }
 
-    /// Create a FrecencyStore with a custom data path
+    /// Create a `FrecencyStore` with a custom data path
     ///
     /// Loads existing data from the path if it exists.
     /// Creates an empty store if the file doesn't exist or is corrupt.
@@ -84,8 +84,8 @@ impl FrecencyStore {
 
     /// Get the frecency score for a project path
     ///
-    /// Score is calculated as: frequency * recency_weight
-    /// where recency_weight decays by half every week (604800 seconds)
+    /// Score is calculated as: frequency * `recency_weight`
+    /// where `recency_weight` decays by half every week (604800 seconds)
     pub fn get_score(&self, path: &Path) -> f64 {
         let path_str = path.to_string_lossy().to_string();
 
@@ -130,20 +130,22 @@ impl FrecencyStore {
 
 /// Calculate frecency score from frequency and last access time
 ///
-/// Score = frequency * recency_weight
-/// recency_weight decays by half every week (604800 seconds)
+/// Score = frequency * `recency_weight`
+/// `recency_weight` decays by half every week (604800 seconds)
 fn calculate_score(frequency: u32, last_access: u64) -> f64 {
     let now = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .map(|d| d.as_secs())
         .unwrap_or(0);
 
+    // Precision loss is acceptable - we don't need sub-second precision for frecency
+    #[allow(clippy::cast_precision_loss)]
     let age_secs = now.saturating_sub(last_access) as f64;
 
     // Decay by half every week (604800 seconds)
     let recency_weight = 0.5_f64.powf(age_secs / 604_800.0);
 
-    frequency as f64 * recency_weight
+    f64::from(frequency) * recency_weight
 }
 
 #[cfg(test)]
@@ -159,18 +161,18 @@ mod tests {
     fn test_frecency_entry_has_required_fields() {
         let entry = FrecencyEntry {
             frequency: 5,
-            last_access: 1700000000,
+            last_access: 1_700_000_000,
         };
 
         assert_eq!(entry.frequency, 5);
-        assert_eq!(entry.last_access, 1700000000);
+        assert_eq!(entry.last_access, 1_700_000_000);
     }
 
     #[test]
     fn test_frecency_entry_serialization() {
         let entry = FrecencyEntry {
             frequency: 10,
-            last_access: 1700000000,
+            last_access: 1_700_000_000,
         };
 
         let json = serde_json::to_string(&entry).unwrap();
@@ -203,7 +205,7 @@ mod tests {
         let temp = TempDir::new().unwrap();
         let data_path = temp.path().join("frecency.json");
 
-        // Write some data manually
+        // Write some data manually (JSON doesn't support underscore separators)
         let json = r#"{"entries":{"/test/path":{"frequency":5,"last_access":1700000000}}}"#;
         fs::write(&data_path, json).unwrap();
 
@@ -211,7 +213,7 @@ mod tests {
 
         let entry = store.get_entry(Path::new("/test/path")).unwrap();
         assert_eq!(entry.frequency, 5);
-        assert_eq!(entry.last_access, 1700000000);
+        assert_eq!(entry.last_access, 1_700_000_000);
     }
 
     #[test]
@@ -345,7 +347,10 @@ mod tests {
         let store = FrecencyStore::with_path(data_path);
 
         let score = store.get_score(Path::new("/unknown/path"));
-        assert_eq!(score, 0.0);
+        assert!(
+            score.abs() < f64::EPSILON,
+            "Expected zero score for unknown path"
+        );
     }
 
     #[test]
@@ -413,15 +418,14 @@ mod tests {
             .unwrap()
             .as_secs();
 
-        let one_week_ago = now - 604800; // Exactly one week
+        let one_week_ago = now - 604_800; // Exactly one week
 
         let score = calculate_score(10, one_week_ago);
 
         // Should be approximately half of frequency
         assert!(
             (score - 5.0).abs() < 0.1,
-            "Score {} should be close to 5.0",
-            score
+            "Score {score} should be close to 5.0"
         );
     }
 
@@ -432,15 +436,14 @@ mod tests {
             .unwrap()
             .as_secs();
 
-        let two_weeks_ago = now - (604800 * 2);
+        let two_weeks_ago = now - (604_800 * 2);
 
         let score = calculate_score(10, two_weeks_ago);
 
         // Should be approximately quarter of frequency
         assert!(
             (score - 2.5).abs() < 0.1,
-            "Score {} should be close to 2.5",
-            score
+            "Score {score} should be close to 2.5"
         );
     }
 
@@ -452,7 +455,10 @@ mod tests {
             .as_secs();
 
         let score = calculate_score(0, now);
-        assert_eq!(score, 0.0);
+        assert!(
+            score.abs() < f64::EPSILON,
+            "Zero frequency should yield zero score"
+        );
     }
 
     // =========================================================================
