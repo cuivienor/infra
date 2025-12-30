@@ -100,7 +100,7 @@ layout {
     // Run commands through interactive shell so direnv loads the devshell
     tab name="nvim" focus=true {
         pane command="zsh" {
-            args "-ic" "nvim"
+            args "-ic" "nvim ."
         }
     }
 
