@@ -77,6 +77,22 @@ return {
 		end,
 	},
 
+	-- Zellij-nav - seamless navigation between neovim and zellij panes
+	{
+		"zellij-nav.nvim",
+		enabled = nixCats("navigation") or false,
+		event = "DeferredUIEnter",
+		keys = {
+			{ "<c-h>", "<cmd>ZellijNavigateLeftTab<cr>", desc = "Navigate left or tab" },
+			{ "<c-j>", "<cmd>ZellijNavigateDown<cr>", desc = "Navigate down" },
+			{ "<c-k>", "<cmd>ZellijNavigateUp<cr>", desc = "Navigate up" },
+			{ "<c-l>", "<cmd>ZellijNavigateRightTab<cr>", desc = "Navigate right or tab" },
+		},
+		after = function()
+			require("zellij-nav").setup()
+		end,
+	},
+
 	-- Oil - file explorer as buffer
 	{
 		"oil.nvim",

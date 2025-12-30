@@ -147,7 +147,7 @@ in
               telescope-fzf-native-nvim
               telescope-ui-select-nvim
               oil-nvim
-              # zellij-nav.nvim - may need custom packaging
+              zellij-nav-nvim
             ];
 
             git = with pkgs.vimPlugins; [
