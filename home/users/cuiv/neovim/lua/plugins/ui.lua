@@ -4,7 +4,7 @@ return {
 	{
 		"noice.nvim",
 		enabled = nixCats("ui") or false,
-		event = "VeryLazy",
+		event = "DeferredUIEnter",
 		load = function(name)
 			vim.cmd.packadd(name)
 			vim.cmd.packadd("nvim-notify")
@@ -34,7 +34,7 @@ return {
 	{
 		"which-key.nvim",
 		enabled = nixCats("ui") or false,
-		event = "VeryLazy",
+		event = "DeferredUIEnter",
 		after = function()
 			require("which-key").setup({})
 			require("which-key").add({
@@ -53,7 +53,7 @@ return {
 	{
 		"mini.nvim",
 		enabled = nixCats("ui") or false,
-		event = "VeryLazy",
+		event = "DeferredUIEnter",
 		after = function()
 			-- Statusline
 			require("mini.statusline").setup({
