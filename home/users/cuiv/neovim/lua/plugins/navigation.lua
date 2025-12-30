@@ -81,6 +81,8 @@ return {
 	{
 		"oil.nvim",
 		enabled = nixCats("navigation") or false,
+		-- Load on VimEnter so it handles `nvim .` properly
+		event = "VimEnter",
 		keys = {
 			{ "-", "<cmd>Oil<cr>", desc = "Open parent directory" },
 		},
