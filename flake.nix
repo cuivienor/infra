@@ -115,7 +115,7 @@
 
       # Development shells
       devShells.${system} = {
-        # Default: infrastructure work (terraform, ansible, etc.)
+        # Default: unified shell supporting all zones
         default = pkgsUnfree.mkShell {
           buildInputs = with pkgsUnfree; [
             # Infrastructure as Code
@@ -137,74 +137,41 @@
             jq
             yq-go
             shellcheck
+            shfmt
             pre-commit
+            stow
 
             # Secret scanning
             trufflehog
             gitleaks
-          ];
 
-          shellHook = ''
-            echo "🏗️  Infra devShell loaded"
-            echo "   Terraform: $(terraform version -json | jq -r '.terraform_version')"
-            echo "   Ansible:   $(ansible --version | head -1)"
-            echo ""
-          '';
-        };
-
-        # Go development for media-pipeline
-        media-pipeline = pkgs.mkShell {
-          buildInputs = with pkgs; [
+            # Go development (media-pipeline)
             go
             gopls
             gotools
             go-tools # staticcheck
-          ];
 
-          shellHook = ''
-            echo "🎬 Media Pipeline devShell loaded"
-            echo "   Go: $(go version | cut -d' ' -f3)"
-            echo ""
-          '';
-        };
-
-        # Bash development for session-manager
-        session-manager = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            bash
-            shellcheck
-            shfmt
-          ];
-
-          shellHook = ''
-            echo "📺 Session Manager devShell loaded"
-            echo ""
-          '';
-        };
-
-        # Rust development for zesh
-        zesh = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            # Use rust-overlay toolchain (supports edition 2024)
+            # Rust development (zesh)
             rust-bin.stable.latest.default
             rust-bin.stable.latest.rust-analyzer
-
-            # Build dependencies
             pkg-config
             openssl
 
-            # Runtime deps for testing
+            # Runtime deps for zesh testing
             zellij
             fzf
           ];
 
           shellHook = ''
-            echo "🎯 Zesh devShell loaded"
-            echo "   Rust: $(rustc --version | cut -d' ' -f2)"
-            echo "   Cargo: $(cargo --version | cut -d' ' -f2)"
+            echo "🏗️  Infra devShell loaded (unified)"
+            echo "   Terraform: $(terraform version -json | jq -r '.terraform_version')"
+            echo "   Ansible:   $(ansible --version | head -1)"
+            echo "   Go:        $(go version | cut -d' ' -f3)"
+            echo "   Rust:      $(rustc --version | cut -d' ' -f2)"
             echo ""
           '';
         };
+
       };
     };
 }
