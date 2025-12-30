@@ -62,6 +62,9 @@
 
       # Additional init commands (renamed from initExtra in 25.11)
       initContent = ''
+        # npm global packages (Claude Code, etc.)
+        export PATH="$HOME/.npm-global/bin:$PATH"
+
         # Vi mode settings
         bindkey -v
         export KEYTIMEOUT=1
