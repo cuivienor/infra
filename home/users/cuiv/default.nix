@@ -11,6 +11,7 @@
     ./tools.nix
     ./shell.nix
     ./neovim.nix
+    ./claude.nix
   ];
 
   # Pass inputs to imported modules
