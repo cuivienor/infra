@@ -28,6 +28,9 @@
       url = "github:dj95/zjstatus";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # nixCats - Neovim configuration framework
+    nixCats.url = "github:BirdeeHub/nixCats-nvim";
   };
 
   outputs =

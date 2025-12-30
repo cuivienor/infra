@@ -49,10 +49,8 @@ in
     tree
     jq
     htop
-    neovim
+    # neovim managed by nixCats in neovim.nix
     lazygit
-    nixfmt-rfc-style
-    nil
     zellij
     zesh
   ];

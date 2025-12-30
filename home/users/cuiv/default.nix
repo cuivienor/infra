@@ -10,6 +10,7 @@
     ./git.nix
     ./tools.nix
     ./shell.nix
+    ./neovim.nix
   ];
 
   # Pass inputs to imported modules
