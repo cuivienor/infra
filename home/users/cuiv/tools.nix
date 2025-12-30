@@ -53,6 +53,8 @@ in
     lazygit
     zellij
     zesh
+    # Node.js for Claude Code
+    nodejs_22
   ];
 
   programs = {
