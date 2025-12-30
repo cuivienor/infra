@@ -14,7 +14,11 @@ Personal AI agent tools and integrations.
 The cuiv-skills plugin lives in a separate repository for compatibility with Claude Code's plugin system:
 
 - **Repository:** https://github.com/cuivienor/cuiv-skills
-- **Install:** `/plugin install cuivienor/cuiv-skills`
+- **Install:**
+  ```
+  /plugin marketplace add cuivienor/cuiv-skills
+  /plugin install cuiv-skills@cuiv-skills-marketplace
+  ```
 
 ## Future Plans
 
