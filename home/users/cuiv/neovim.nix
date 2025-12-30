@@ -232,6 +232,8 @@ in
 
               # Formatting and linting
               format = true;
+              formatters = true;
+              linters = true;
 
               # Debugging
               debug = true;
