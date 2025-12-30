@@ -19,6 +19,38 @@ keybinds clear-defaults=false {
         bind "r" { SwitchToMode "RenamePane"; PaneNameInput 0; }
     }
 
+    // Vim-style scroll mode
+    scroll {
+        bind "j" { ScrollDown; }
+        bind "k" { ScrollUp; }
+        bind "Ctrl d" { HalfPageScrollDown; }
+        bind "Ctrl u" { HalfPageScrollUp; }
+        bind "Ctrl f" { PageScrollDown; }
+        bind "Ctrl b" { PageScrollUp; }
+        bind "g" { ScrollToTop; }
+        bind "G" { ScrollToBottom; }
+        bind "/" { SwitchToMode "EnterSearch"; SearchInput 0; }
+        bind "n" { Search "down"; }
+        bind "N" { Search "up"; }
+        bind "e" { EditScrollback; SwitchToMode "Normal"; }
+        bind "q" { SwitchToMode "Normal"; }
+        bind "Esc" { SwitchToMode "Normal"; }
+    }
+
+    // Vim-style search mode
+    search {
+        bind "j" { ScrollDown; }
+        bind "k" { ScrollUp; }
+        bind "Ctrl d" { HalfPageScrollDown; }
+        bind "Ctrl u" { HalfPageScrollUp; }
+        bind "n" { Search "down"; }
+        bind "N" { Search "up"; }
+        bind "c" { SearchToggleOption "CaseSensitivity"; }
+        bind "w" { SearchToggleOption "WholeWord"; }
+        bind "q" { SwitchToMode "Normal"; }
+        bind "Esc" { SwitchToMode "Normal"; }
+    }
+
     // Pane navigation with Ctrl+hjkl (works in all modes except locked)
     shared_except "locked" {
         bind "Ctrl h" { MoveFocus "Left"; }
