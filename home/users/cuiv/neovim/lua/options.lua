@@ -8,7 +8,8 @@ vim.opt.mouse = "a"
 -- Don't show mode (shown in statusline)
 vim.opt.showmode = false
 
--- Sync clipboard with OS
+-- Sync clipboard with OS via OSC 52 (works over SSH/terminal)
+vim.g.clipboard = "osc52"
 vim.opt.clipboard = "unnamedplus"
 
 -- Enable break indent
