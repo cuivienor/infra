@@ -14,6 +14,11 @@ default_layout "default"
 
 // Keybindings
 keybinds clear-defaults=false {
+    // Standardize rename to 'r' in pane mode (matches tab mode)
+    pane {
+        bind "r" { SwitchToMode "RenamePane"; PaneNameInput 0; }
+    }
+
     // Pane navigation with Ctrl+hjkl (works in all modes except locked)
     shared_except "locked" {
         bind "Ctrl h" { MoveFocus "Left"; }
