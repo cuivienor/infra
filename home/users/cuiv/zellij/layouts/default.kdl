@@ -97,22 +97,29 @@ layout {
         children
     }
 
+    // Run commands through interactive shell so direnv loads the devshell
     tab name="nvim" focus=true {
-        pane command="nvim"
+        pane command="zsh" {
+            args "-ic" "nvim"
+        }
     }
 
     tab name="claude" {
-        pane command="claude"
+        pane command="zsh" {
+            args "-ic" "claude"
+        }
     }
 
     tab name="git" {
         pane split_direction="vertical" {
-            pane command="lazygit"
-            pane
+            pane command="zsh" {
+                args "-ic" "lazygit"
+            }
+            pane  // Plain shell - will also get direnv via zsh startup
         }
     }
 
     tab name="scratch" {
-        pane
+        pane  // Plain shell - direnv loads on zsh startup
     }
 }
