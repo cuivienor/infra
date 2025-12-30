@@ -8,8 +8,21 @@ vim.opt.mouse = "a"
 -- Don't show mode (shown in statusline)
 vim.opt.showmode = false
 
--- Sync clipboard with OS via OSC 52 (works over SSH/terminal)
-vim.g.clipboard = "osc52"
+-- Clipboard via OSC 52 (works over SSH/terminal)
+-- Only use OSC 52 for copying - paste via terminal (Ctrl+Shift+V)
+vim.g.clipboard = {
+	name = "OSC 52",
+	copy = {
+		["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+		["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+	},
+	paste = {
+		-- Return empty to avoid OSC 52 read timeout
+		-- Use terminal paste (Ctrl+Shift+V) instead
+		["+"] = function() return {} end,
+		["*"] = function() return {} end,
+	},
+}
 vim.opt.clipboard = "unnamedplus"
 
 -- Enable break indent
