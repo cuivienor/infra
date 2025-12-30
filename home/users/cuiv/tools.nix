@@ -55,6 +55,9 @@ in
     zesh
     # Node.js for Claude Code
     nodejs_22
+    # Network debugging
+    openssl
+    dnsutils # dig, nslookup
   ];
 
   programs = {
