@@ -29,14 +29,15 @@
       "WebFetch(domain:docs.anthropic.com)"
     ]
   },
-  "enabledPlugins": {
-    "superpowers@superpowers-marketplace": true,
-    "superpowers-developing-for-claude-code@superpowers-marketplace": true,
-    "episodic-memory@superpowers-marketplace": true
-  },
-  "alwaysThinkingEnabled": true,
   "statusLine": {
     "type": "command",
     "command": "bunx ccstatusline"
-  }
+  },
+  "enabledPlugins": {
+    "superpowers@superpowers-marketplace": true,
+    "superpowers-developing-for-claude-code@superpowers-marketplace": true,
+    "episodic-memory@superpowers-marketplace": true,
+    "cuiv-skills@cuiv-skills-marketplace": true
+  },
+  "alwaysThinkingEnabled": true
 }

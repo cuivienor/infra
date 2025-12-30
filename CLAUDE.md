@@ -32,9 +32,9 @@ Each zone has its own CLAUDE.md with zone-specific guidance:
 |------|--------------|
 | `terraform/` | Provisioning containers, Tailscale ACLs |
 | `ansible/` | Configuring software, roles, playbooks |
-| `nixos/` | Flake.nix, NixOS, Home-Manager |
+| `home/` | Home Manager configs, zellij, shell, user tools |
 | `apps/media-pipeline/` | Go media pipeline TUI |
-| `apps/session-manager/` | Tmux sessionizer script |
+| `apps/zesh/` | Zellij session manager (Rust) |
 | `dotfiles/` | Stow packages, dotfiles |
 
 **Skills:** See `.claude/skills/` for workflow checklists (terraform-workflow, ansible-workflow, nix-development).
