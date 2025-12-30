@@ -51,6 +51,12 @@
         ];
       };
 
+      # Status line (using npx, works with Node.js)
+      statusLine = {
+        type = "command";
+        command = "npx -y ccstatusline";
+      };
+
       # Plugins
       enabledPlugins = {
         "superpowers@superpowers-marketplace" = true;
