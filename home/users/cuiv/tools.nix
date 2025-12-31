@@ -6,7 +6,7 @@
 }:
 
 let
-  zjstatusPackage = inputs.zjstatus.packages.${pkgs.system}.default;
+  zjstatusPackage = inputs.zjstatus.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 {
   # XDG config file management
