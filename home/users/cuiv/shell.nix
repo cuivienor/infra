@@ -69,6 +69,22 @@
         bindkey -v
         export KEYTIMEOUT=1
 
+        # Cursor shape for vi modes (beam for insert, block for normal)
+        function zle-keymap-select {
+          if [[ $KEYMAP == vicmd ]] || [[ $1 == 'block' ]]; then
+            echo -ne '\e[2 q'  # Block cursor
+          elif [[ $KEYMAP == main ]] || [[ $KEYMAP == viins ]] || [[ $1 == 'beam' ]]; then
+            echo -ne '\e[6 q'  # Beam cursor
+          fi
+        }
+        zle -N zle-keymap-select
+
+        # Start with beam cursor
+        function zle-line-init {
+          echo -ne '\e[6 q'
+        }
+        zle -N zle-line-init
+
         # Arrow key history search
         bindkey '^[[A' history-search-backward
         bindkey '^[[B' history-search-forward
