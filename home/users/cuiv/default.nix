@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  lib,
   inputs,
   ...
 }:
@@ -17,12 +18,18 @@
   # Pass inputs to imported modules
   _module.args = { inherit inputs; };
 
-  # Home-Manager version and basic configuration
+  # Home-Manager version and identity
+  # username and homeDirectory are set via flake.nix homeConfigurations
+  # or inferred by NixOS module - these are fallback defaults
   home = {
     stateVersion = "24.11";
-    username = "cuiv";
-    homeDirectory = "/home/cuiv";
+    username = lib.mkDefault "cuiv";
+    homeDirectory = lib.mkDefault (if pkgs.stdenv.isDarwin then "/Users/cuiv" else "/home/cuiv");
   };
+
+  # Enable generic Linux support for non-NixOS (Arch, Ubuntu, etc.)
+  # This fixes XDG_DATA_DIRS, font paths, and other environment issues
+  targets.genericLinux.enable = pkgs.stdenv.isLinux;
 
   # Programs managed by Home-Manager
   programs = {

@@ -43,12 +43,21 @@
       ...
     }@inputs:
     let
-      system = "x86_64-linux";
+      # Supported systems for Home Manager portability
+      supportedSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+
+      # Helper to generate attrs for all systems
+      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
 
       # Rust overlay to get latest stable Rust (supports edition 2024)
       rustOverlay = import rust-overlay;
 
-      # Overlay that adds zesh package
+      # Overlay that adds zesh package (pure Rust, no native deps needed)
       zeshOverlay = final: prev: {
         zesh =
           let
@@ -60,34 +69,37 @@
           in
           naersk'.buildPackage {
             src = ./apps/zesh;
-            nativeBuildInputs = [ prev.pkg-config ];
-            buildInputs = [ prev.openssl ];
           };
       };
 
-      pkgs = import nixpkgs {
-        inherit system;
-        overlays = [
-          rustOverlay
-          zeshOverlay
-        ];
-      };
+      # Generate pkgs for a given system
+      pkgsFor =
+        system:
+        import nixpkgs {
+          inherit system;
+          overlays = [
+            rustOverlay
+            zeshOverlay
+          ];
+        };
 
-      # Allow unfree packages (terraform)
-      pkgsUnfree = import nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
-        overlays = [
-          rustOverlay
-          zeshOverlay
-        ];
-      };
+      # Generate pkgs with unfree allowed for a given system
+      pkgsUnfreeFor =
+        system:
+        import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+          overlays = [
+            rustOverlay
+            zeshOverlay
+          ];
+        };
     in
     {
       # NixOS configurations
       nixosConfigurations = {
         devbox = nixpkgs.lib.nixosSystem {
-          inherit system;
+          system = "x86_64-linux";
           specialArgs = { inherit inputs; };
           modules = [
             ./nixos/hosts/devbox/configuration.nix
@@ -110,17 +122,77 @@
         };
       };
 
-      # Make zesh buildable standalone
-      packages.${system} = {
-        inherit (pkgs) zesh;
-        default = pkgs.zesh;
+      # Standalone Home Manager configurations (for non-NixOS: Arch, macOS, etc.)
+      homeConfigurations = {
+        # Universal config - works on any system
+        # Usage: home-manager switch --flake .#cuiv
+        cuiv = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsFor "x86_64-linux"; # Default, can override with --override-input
+          modules = [
+            ./home/users/cuiv/default.nix
+            {
+              home.username = "cuiv";
+              home.homeDirectory = "/home/cuiv";
+            }
+          ];
+          extraSpecialArgs = { inherit inputs; };
+        };
+
+        # Explicit per-system configs if needed
+        "cuiv@x86_64-linux" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsFor "x86_64-linux";
+          modules = [
+            ./home/users/cuiv/default.nix
+            {
+              home.username = "cuiv";
+              home.homeDirectory = "/home/cuiv";
+            }
+          ];
+          extraSpecialArgs = { inherit inputs; };
+        };
+
+        "cuiv@aarch64-darwin" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsFor "aarch64-darwin";
+          modules = [
+            ./home/users/cuiv/default.nix
+            {
+              home.username = "cuiv";
+              home.homeDirectory = "/Users/cuiv";
+            }
+          ];
+          extraSpecialArgs = { inherit inputs; };
+        };
+
+        "cuiv@x86_64-darwin" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsFor "x86_64-darwin";
+          modules = [
+            ./home/users/cuiv/default.nix
+            {
+              home.username = "cuiv";
+              home.homeDirectory = "/Users/cuiv";
+            }
+          ];
+          extraSpecialArgs = { inherit inputs; };
+        };
       };
 
-      # Development shells
-      devShells.${system} = {
+      # Make zesh buildable standalone (for all systems)
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = pkgsFor system;
+        in
+        {
+          inherit (pkgs) zesh;
+          default = pkgs.zesh;
+        }
+      );
+
+      # Development shells (Linux only - infra tools)
+      devShells.x86_64-linux = {
         # Default: unified shell supporting all zones
-        default = pkgsUnfree.mkShell {
-          buildInputs = with pkgsUnfree; [
+        default = (pkgsUnfreeFor "x86_64-linux").mkShell {
+          buildInputs = with (pkgsUnfreeFor "x86_64-linux"); [
             # Infrastructure as Code
             terraform
             ansible
@@ -157,8 +229,10 @@
             # Rust development (zesh)
             rust-bin.stable.latest.default
             rust-bin.stable.latest.rust-analyzer
-            pkg-config
+
+            # Network debugging (infra-specific)
             openssl
+            dnsutils
 
             # Runtime deps for zesh testing
             zellij
@@ -174,7 +248,6 @@
             echo ""
           '';
         };
-
       };
     };
 }

@@ -55,9 +55,7 @@ in
     zesh
     # Node.js for Claude Code
     nodejs_22
-    # Network debugging
-    openssl
-    dnsutils # dig, nslookup
+    # Note: openssl and dnsutils moved to devShell (infra-specific tools)
   ];
 
   programs = {
