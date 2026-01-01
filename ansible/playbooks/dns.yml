@@ -125,6 +125,7 @@
     # Whitelist for false positives (add as needed)
     # HaGeZi Pro is well-maintained so you may not need these
     adguard_home_user_rules:
+      - "@@||statsig.anthropic.com^"  # Claude Code feature flags/analytics
       - "@@||s.shopify.com^"        # Shopify CDN (if blocked)
       - "@@||cdn.optimizely.com^"   # EA/Origin (if blocked)
       - "@@||split.io^"             # EA Desktop (if blocked)
