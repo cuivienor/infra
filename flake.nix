@@ -264,6 +264,8 @@
             python3Packages.ruff
             python3Packages.mypy
             python3Packages.pytest
+            python3Packages.types-requests
+            python3Packages.types-beautifulsoup4
 
             # Network debugging (infra-specific)
             openssl

@@ -18,11 +18,17 @@ media_analyzer_packages:
   - wget            # Download tool
   - nano            # Text editor
   - tree            # Directory visualization
+  # Python for gramofonche-downloader
+  - python3
+  - python3-requests
+  - python3-bs4
+  - python3-mutagen
 
 # Scripts to deploy from repository (per ripping-guide.md)
 media_analyzer_scripts:
   - { src: "apps/media-pipeline/scripts/remux.sh", dest: "remux.sh" }
   - { src: "apps/media-pipeline/scripts/filebot.sh", dest: "filebot.sh" }
+  - { src: "apps/gramofonche-downloader/gramofonche_downloader/__main__.py", dest: "gramofonche-downloader.py" }
 
 # Staging base path (where media pipeline directories are mounted)
 staging_base_path: "/mnt/staging"
