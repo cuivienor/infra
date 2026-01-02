@@ -9,6 +9,7 @@
       - gnupg
       - curl
       - intel-media-va-driver  # Intel Arc VA-API driver
+      - intel-opencl-icd       # Intel OpenCL for HDR tonemapping
       - intel-gpu-tools
       - vainfo
     state: present
@@ -63,6 +64,24 @@
       - video
       - render
     append: true
+
+- name: Create systemd drop-in directory for Jellyfin
+  ansible.builtin.file:
+    path: /etc/systemd/system/jellyfin.service.d
+    state: directory
+    mode: '0755'
+
+- name: Configure Intel OpenCL workaround for kernel 6.8+
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/jellyfin.service.d/opencl-fix.conf
+    content: |
+      # Fix for Intel compute-runtime on kernel 6.8+
+      # See: https://github.com/intel/compute-runtime/issues/710
+      [Service]
+      Environment="NEOReadDebugKeys=1"
+      Environment="OverrideGpuAddressSpace=48"
+    mode: '0644'
+  notify: Restart jellyfin
 
 - name: Create Jellyfin directories
   ansible.builtin.file:
