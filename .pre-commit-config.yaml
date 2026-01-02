@@ -78,6 +78,27 @@ repos:
         types: [rust]
         pass_filenames: false
 
+  # Python linting, formatting, and type checking (uses Nix devShell tools)
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (lint)
+        entry: ruff check --fix
+        language: system
+        types: [python]
+
+      - id: ruff-format
+        name: ruff (format)
+        entry: ruff format
+        language: system
+        types: [python]
+
+      - id: mypy
+        name: mypy (type check)
+        entry: mypy --ignore-missing-imports --strict
+        language: system
+        types: [python]
+
   # Terraform formatting and linting
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.103.0

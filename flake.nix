@@ -57,8 +57,10 @@
       # Rust overlay to get latest stable Rust (supports edition 2024)
       rustOverlay = import rust-overlay;
 
-      # Overlay that adds zesh package (pure Rust, no native deps needed)
-      zeshOverlay = final: prev: {
+      # Local packages overlay - all custom packages defined in this repo
+      # Use this pattern instead of per-app overlays for simplicity
+      localPackagesOverlay = final: prev: {
+        # Rust: zellij session manager
         zesh =
           let
             rustToolchain = prev.rust-bin.stable.latest.default;
@@ -70,6 +72,33 @@
           naersk'.buildPackage {
             src = ./apps/zesh;
           };
+
+        # Python: Bulgarian audiobook downloader
+        gramofonche-downloader = prev.python3Packages.buildPythonApplication {
+          pname = "gramofonche-downloader";
+          version = "0.1.0";
+          src = ./apps/gramofonche-downloader;
+          format = "pyproject";
+
+          build-system = [ prev.python3Packages.setuptools ];
+
+          dependencies = with prev.python3Packages; [
+            requests
+            beautifulsoup4
+            mutagen
+          ];
+
+          # Tests run during nix build
+          nativeCheckInputs = with prev.python3Packages; [
+            pytestCheckHook
+            pytest
+          ];
+
+          meta = {
+            description = "Download Bulgarian audiobooks from gramofonche.chitanka.info";
+            mainProgram = "gramofonche-downloader";
+          };
+        };
       };
 
       # Generate pkgs for a given system
@@ -79,7 +108,7 @@
           inherit system;
           overlays = [
             rustOverlay
-            zeshOverlay
+            localPackagesOverlay
           ];
         };
 
@@ -91,7 +120,7 @@
           config.allowUnfree = true;
           overlays = [
             rustOverlay
-            zeshOverlay
+            localPackagesOverlay
           ];
         };
     in
@@ -105,10 +134,10 @@
             ./nixos/hosts/devbox/configuration.nix
             home-manager.nixosModules.home-manager
             {
-              # Apply overlays so pkgs.zesh is available
+              # Apply overlays so local packages (pkgs.zesh, etc.) are available
               nixpkgs.overlays = [
                 rustOverlay
-                zeshOverlay
+                localPackagesOverlay
               ];
 
               home-manager = {
@@ -176,14 +205,14 @@
         };
       };
 
-      # Make zesh buildable standalone (for all systems)
+      # Make packages buildable standalone (for all systems)
       packages = forAllSystems (
         system:
         let
           pkgs = pkgsFor system;
         in
         {
-          inherit (pkgs) zesh;
+          inherit (pkgs) zesh gramofonche-downloader;
           default = pkgs.zesh;
         }
       );
@@ -230,6 +259,12 @@
             rust-bin.stable.latest.default
             rust-bin.stable.latest.rust-analyzer
 
+            # Python development (gramofonche-downloader)
+            python3
+            python3Packages.ruff
+            python3Packages.mypy
+            python3Packages.pytest
+
             # Network debugging (infra-specific)
             openssl
             dnsutils
@@ -245,6 +280,7 @@
             echo "   Ansible:   $(ansible --version | head -1)"
             echo "   Go:        $(go version | cut -d' ' -f3)"
             echo "   Rust:      $(rustc --version | cut -d' ' -f2)"
+            echo "   Python:    $(python3 --version | cut -d' ' -f2)"
             echo ""
           '';
         };
