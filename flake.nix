@@ -143,7 +143,12 @@
               home-manager = {
                 useGlobalPkgs = true;
                 useUserPackages = true;
-                users.cuiv = import ./home/users/cuiv/default.nix;
+                users.cuiv = {
+                  imports = [
+                    ./home/users/cuiv/default.nix
+                    ./home/users/cuiv/opencode/personal.nix
+                  ];
+                };
                 extraSpecialArgs = { inherit inputs; };
               };
             }
