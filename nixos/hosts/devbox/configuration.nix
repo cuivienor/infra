@@ -35,6 +35,9 @@
 
   programs.zsh.enable = true;
 
+  # Enable nix-ld for running dynamically linked executables (npm packages, etc.)
+  programs.nix-ld.enable = true;
+
   # Users
   users.users = {
     root.openssh.authorizedKeys.keys = [
