@@ -14,16 +14,12 @@
 
   # Base opencode configuration
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
+    "$schema" = "https://opencode.ai/config.json";
+
     # oh-my-opencode as plugin
-    plugins = [
+    plugin = [
       "oh-my-opencode@latest"
     ];
-
-    # Shell config - use zsh with login shell for direnv
-    shell = {
-      path = "${pkgs.zsh}/bin/zsh";
-      args = [ "-l" ];
-    };
   };
 
   # Base oh-my-opencode config (shared settings)
