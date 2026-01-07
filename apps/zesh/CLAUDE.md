@@ -1,48 +1,37 @@
-# Zesh Development Guide
+# Zesh
 
-Rust session manager for zellij. Replaces the bash `t` sessionizer.
+Rust session manager for Zellij. Replaces bash `t` sessionizer.
 
-## Development
+## COMMANDS
 
 ```bash
-# Load devShell (automatic with direnv)
-cd apps/zesh
-
-# Build
-cargo build
-
-# Run
-cargo run -- --help
-cargo run             # Interactive picker
-cargo run infra       # Fuzzy match + jump
-
-# Test
-cargo test
-
-# Lint
-cargo clippy -- -D warnings
-cargo fmt --check
+cargo build              # Build
+cargo run                # Interactive picker
+cargo run infra          # Fuzzy match + jump
+cargo test               # Tests
+cargo clippy -- -D warnings  # Lint (warnings = errors)
+cargo fmt --check        # Format check
 ```
 
-## Architecture
+## ARCHITECTURE
 
 | File | Purpose |
 |------|---------|
-| `main.rs` | CLI entry point (clap) |
+| `main.rs` | CLI entry (clap) |
 | `config.rs` | TOML config parsing |
-| `discovery.rs` | Git repo/worktree/sparse-checkout discovery |
-| `frecency.rs` | Frecency scoring + JSON persistence |
-| `zellij.rs` | Zellij session management |
+| `discovery.rs` | Git repo/worktree discovery |
+| `frecency.rs` | Frecency scoring + persistence |
+| `zellij.rs` | Session management |
 | `picker.rs` | Interactive selection (skim) |
 
-## Config Location
+## PATHS
 
-`~/.config/zesh/config.toml`
+- **Config:** `~/.config/zesh/config.toml`
+- **Data:** `~/.local/share/zesh/frecency.json`
+- **Design:** `docs/plans/2025-12-26-zesh-session-manager-design.md`
 
-## Data Location
+## CONVENTIONS
 
-`~/.local/share/zesh/frecency.json`
-
-## Design Doc
-
-See `docs/plans/2025-12-26-zesh-session-manager-design.md`
+- `cargo clippy -- -D warnings` must pass
+- Tests in `#[cfg(test)]` modules per file
+- Dev dependency: `tempfile` for temp file tests

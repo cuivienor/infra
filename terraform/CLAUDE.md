@@ -1,23 +1,18 @@
 # Terraform Zone
 
-Zone-specific guidance for working with Terraform in this monorepo.
+Four independent root modules, each with own state. Run `terraform init` in each separately.
 
-## Module Organization
-
-Each subdirectory is an **independent root module** with its own state:
+## STRUCTURE
 
 ```
 terraform/
-├── proxmox-homelab/    # LXC containers on Proxmox (most common)
-├── tailscale/          # Tailscale ACLs, DNS, auth keys
-├── cloudflare/         # Cloudflare DNS records
-├── lldap/              # LLDAP user/group management
-└── modules/            # Shared modules (future use)
+├── proxmox-homelab/    # LXC containers (MOST COMMON)
+├── tailscale/          # VPN ACLs, DNS, auth keys
+├── cloudflare/         # DNS records, tunnels
+└── lldap/              # LDAP user/group management
 ```
 
-**Important:** Modules do NOT share state. Run `terraform init` in each module separately.
-
-## Provider Versions
+## PROVIDERS
 
 | Module | Provider | Version |
 |--------|----------|---------|
@@ -26,116 +21,80 @@ terraform/
 | cloudflare | cloudflare/cloudflare | ~4.0 |
 | all | carlpett/sops | ~1.1 |
 
-Check `versions.tf` in each module for current constraints.
-
-## Secrets with SOPS
-
-Secrets are encrypted with SOPS using age encryption:
+## SECRETS (SOPS)
 
 ```bash
-# Edit encrypted secrets
-sops terraform/proxmox-homelab/secrets.sops.yaml
-
-# Decrypt for debugging (don't commit decrypted!)
-sops -d terraform/proxmox-homelab/secrets.sops.yaml
+sops terraform/proxmox-homelab/secrets.sops.yaml    # Edit
+sops -d terraform/proxmox-homelab/secrets.sops.yaml # Decrypt (debug only)
 ```
 
-**Key location:** `terraform/.sops-key` (gitignored, restore from Bitwarden)
+Key: `terraform/.sops-key` (gitignored → Bitwarden)
 
-Access in HCL:
+HCL access:
 ```hcl
-data "sops_file" "secrets" {
-  source_file = "secrets.sops.yaml"
-}
-
+data "sops_file" "secrets" { source_file = "secrets.sops.yaml" }
 # Use: data.sops_file.secrets.data["key_name"]
 ```
 
-## Container Definition Pattern
+## CONTAINER PATTERN
 
-Standard pattern for `proxmox-homelab/*.tf`:
+Standard `proxmox-homelab/*.tf` structure:
 
 ```hcl
 resource "proxmox_virtual_environment_container" "name" {
-  description   = "Purpose description"
+  description   = "Purpose"
   node_name     = "homelab"
-  vm_id         = XXX        # See current-state.md for assignments
+  vm_id         = XXX              # See docs/reference/current-state.md
   started       = true
-  unprivileged  = false      # Most need privileged for bind mounts
+  unprivileged  = false            # Privileged for bind mounts
 
   initialization {
     hostname = "name"
-    ip_config {
-      ipv4 {
-        address = "192.168.1.XXX/24"
-        gateway = "192.168.1.1"
-      }
-    }
-    user_account {
-      keys = [for k in local.ssh_keys : trimspace(k)]
-    }
+    ip_config { ipv4 { address = "192.168.1.XXX/24"; gateway = "192.168.1.1" } }
+    user_account { keys = [for k in local.ssh_keys : trimspace(k)] }
   }
 
   operating_system {
     template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
-    type             = "debian"    # or "unmanaged" for NixOS
-  }
-
-  network_interface {
-    name   = "eth0"
-    bridge = "vmbr0"
+    type = "debian"                # or "unmanaged" for NixOS
   }
 
   cpu { cores = X }
-  memory { dedicated = XXXX }      # In MB
-  disk {
-    datastore_id = "local-lvm"
-    size         = XX              # In GB
-  }
-
-  features {
-    nesting = true                 # Required for systemd
-  }
+  memory { dedicated = XXXX }      # MB
+  disk { datastore_id = "local-lvm"; size = XX }  # GB
+  features { nesting = true }      # Required for systemd
 }
 ```
 
-## Testing New Containers
+## TESTING
 
-**Always test with CTID 199** before touching production:
-
+**Use CTID 199** for testing:
 ```bash
-# Create test container
 terraform apply -target=proxmox_virtual_environment_container.test
-
-# Verify via SSH
 ssh root@192.168.1.199
-
-# Destroy when done
 terraform destroy -target=proxmox_virtual_environment_container.test
 ```
 
-## Common Pitfalls
+## ANTI-PATTERNS
 
-1. **State conflicts**: Never edit state manually. If state is corrupted, work with Peter to fix.
+- **Manual state edits** → Work with Peter to fix corruption
+- **terraform.tfvars in git** → Contains secrets
+- **Skipping plan** → Always `terraform plan` first
+- **Upgrading providers without testing** → Lock in `versions.tf`
 
-2. **Provider upgrades**: Lock versions in `versions.tf`. Upgrade deliberately, test first.
+## GPU PASSTHROUGH
 
-3. **Bind mounts**: Container must be privileged. Add mount_point blocks:
-   ```hcl
-   mount_point {
-     volume = "/mnt/storage/media"
-     path   = "/mnt/media"
-   }
-   ```
+See `transcoder.tf` (Intel Arc) or `jellyfin.tf` (dual GPU) for patterns.
 
-4. **GPU passthrough**: Requires features in container config + host setup. See `transcoder.tf` or `jellyfin.tf` for examples.
+## BIND MOUNTS
 
-5. **DNS**: Containers use local DNS (Pi4: 192.168.1.102, backup: 192.168.1.110). Verify after provisioning.
+Container must be privileged:
+```hcl
+mount_point { volume = "/mnt/storage/media"; path = "/mnt/media" }
+```
 
-## Key Files
+## KEY FILES
 
-- `proxmox-homelab/locals.tf` - SSH keys loaded from ansible/files/ssh-keys/
-- `proxmox-homelab/provider.tf` - Provider configuration and SOPS setup
-- `*/versions.tf` - Provider version constraints
-- `*/terraform.tfvars` - Variable values (gitignored)
+- `proxmox-homelab/locals.tf` - SSH keys from `ansible/files/ssh-keys/`
+- `*/versions.tf` - Provider constraints
 - `*/secrets.sops.yaml` - Encrypted secrets

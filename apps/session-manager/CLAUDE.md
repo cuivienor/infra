@@ -1,70 +1,38 @@
 # Session Manager
 
-Tmux session management utility (based on ThePrimeagen's tmux-sessionizer).
+Bash tmux sessionizer (ThePrimeagen-inspired). Being replaced by `apps/zesh/`.
 
-## Purpose
-
-The `t` script provides fast project switching via tmux:
-- Discovers git repos in `~/dev`, `~/src`, and configurable paths
-- Uses fzf for interactive selection
-- Creates/switches tmux sessions per project
-- Supports `.t` files for project-specific initialization
-
-## Development
+## COMMANDS
 
 ```bash
-# Enter devShell with bash tooling
-nix develop .#session-manager
+./t              # Interactive fzf picker
+./t infra        # Fuzzy match + jump
+./t ~/dev/infra  # Direct path
 
-# Lint
-shellcheck t
-
-# Format
-shfmt -w t
+# Development
+shellcheck t     # Lint
+shfmt -w t       # Format
 ```
 
-## How It Works
+## HOW IT WORKS
 
-1. `find_projects()` discovers git repos in known directories
-2. User selects via fzf (or passes path as argument)
-3. Creates tmux session named after directory (dots → underscores)
-4. Sources `.t` file if present in project root
-5. Attaches or switches to session
+1. Discovers git repos in `~/dev`, `~/src`
+2. User selects via fzf
+3. Creates/switches tmux session
+4. Sources `.t` file if present
 
-## Key Functions
+## KEY FUNCTIONS
 
 | Function | Purpose |
 |----------|---------|
-| `switch_to` | Attach or switch based on TMUX context |
-| `has_session` | Check if session exists |
-| `tmux_init` | Source project `.t` file |
-| `find_projects` | Discover git repos in known paths |
+| `switch_to` | Attach/switch based on context |
+| `has_session` | Check session exists |
+| `find_projects` | Discover git repos |
 
-## Evolution Plans
+## INTEGRATION
 
-This script will evolve to support:
-- Zellij as alternative to tmux
-- Configuration file for custom search paths
-- Session templates beyond `.t` files
+Symlinked via stow: `dotfiles/stow/scripts/.local/scripts/t`
 
-## Testing
+## FUTURE
 
-No automated tests currently. Manual testing:
-
-```bash
-# Direct path
-./t ~/dev/infra
-
-# Fuzzy search
-./t infra
-
-# Interactive selection
-./t
-```
-
-## Dotfiles Integration
-
-The script lives here but is symlinked via stow:
-- `dotfiles/stow/scripts/.local/scripts/t` → `apps/session-manager/t`
-
-Changes here automatically apply to stowed environments.
+Being replaced by `apps/zesh/` (Rust, Zellij support).

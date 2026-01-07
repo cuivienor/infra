@@ -1,89 +1,64 @@
-# CLAUDE.md
+# Dotfiles Zone
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+GNU Stow managed dotfiles. Catppuccin Mocha theme throughout.
 
-## Repository Overview
+## COMMANDS
 
-This is a personal dotfiles repository managed using GNU Stow. It contains configuration files for various tools and applications organized in a modular architecture that supports different platforms (Linux, macOS) and environments (corporate, minimal).
-
-### Theme
-The repository uses Catppuccin (Mocha variant) consistently across tmux, starship, zsh, i3, and rofi for visual consistency.
-
-## Architecture
-
-The repository uses a JSON-based configuration system (`dotfiles-config.json`) that defines:
-- **Architectures**: Platform-specific package sets (linux, macos, corporate, minimal)
-- **Package definitions**: Individual configuration modules with platform compatibility
-
-### Structure
-- `stow/` - Contains all dotfiles modules organized by application
-- `install-dotfiles.bash` - Main installation script with architecture detection
-- `dotfiles-config.json` - Architecture and package configuration
-
-## Common Commands
-
-### Installation and Management
 ```bash
-# Install all modules for current platform (auto-detected)
-./install-dotfiles.bash
-
-# Dry run to preview changes
-./install-dotfiles.bash -n
-
-# Install specific architecture
-./install-dotfiles.bash -a macos
-./install-dotfiles.bash -a corporate
-
-# Remove all symlinks
-./install-dotfiles.bash -d
-
-# List available architectures
-./install-dotfiles.bash -l
+./install-dotfiles.bash      # Install (auto-detect platform)
+./install-dotfiles.bash -n   # Dry run
+./install-dotfiles.bash -d   # Remove symlinks
+./install-dotfiles.bash -a macos  # Specific architecture
 ```
 
-### Key Utilities
-- `t` - Tmux sessionizer script (located in `stow/scripts/.local/scripts/t`)
-  - Finds and switches to project directories in `~/dev`, `~/src`, and other common locations
-  - Integrates with zoxide for fuzzy directory finding
-  - Supports `.t` project initialization files for custom tmux layouts
-  - Inspired by ThePrimeagen's workflow
-- `batl` - Pipe last command output to bat pager (WARNING: re-executes the last command)
+## STRUCTURE
 
-## Key Configuration Files
+```
+dotfiles/
+├── stow/                    # All modules
+│   ├── nvim/               # Neovim (lazy.nvim)
+│   ├── tmux/               # Terminal multiplexer
+│   ├── zsh/                # Shell config
+│   ├── starship/           # Prompt
+│   └── ...
+├── install-dotfiles.bash   # Installer
+└── dotfiles-config.json    # Architecture definitions
+```
 
-### Core Components
-- **nvim**: Neovim configuration using lazy.nvim plugin manager
-- **tmux**: Terminal multiplexer with Catppuccin theme, vim-tmux-navigator
-- **zsh**: Z-shell with oh-my-zsh, plugins, and custom configuration
-- **starship**: Cross-shell prompt with Catppuccin theme
+## KEY MODULES
 
-### Platform-Specific
-- **i3/picom/rofi/X11**: Linux desktop environment components (full desktop stack)
-- **aerospace**: macOS tiling window manager (i3 replacement for macOS)
-- **karabiner**: macOS keyboard customization
-- **launchagents**: macOS service management
-- **systemd**: Linux user services
+| Module | Purpose |
+|--------|---------|
+| nvim | Neovim + lazy.nvim, LSP, treesitter |
+| tmux | Catppuccin theme, vim-tmux-navigator |
+| zsh | oh-my-zsh, plugins, aliases |
+| starship | Cross-shell prompt |
+| i3/rofi/picom | Linux desktop |
+| aerospace | macOS tiling WM |
 
-## Development Workflow
+## UTILITIES
 
-### Making Changes
-1. Edit configuration files in appropriate `stow/[module]/` directory
-2. Test changes with dry run: `./install-dotfiles.bash -n`
-3. Apply changes: `./install-dotfiles.bash`
+- **t** - Tmux sessionizer (in `stow/scripts/`)
+- **batl** - Pipe last command to bat (re-executes!)
 
-### Adding New Modules
-1. Create new directory under `stow/`
-2. Add module to `dotfiles-config.json` with platform compatibility
-3. Update README.md modules section if needed
+## ARCHITECTURES
 
-### Architecture Detection
-The installation script automatically detects platform and environment:
-- Linux vs macOS via `uname -s`
-- Corporate environment via `CORPORATE_ENV` or `WORK_ENV` variables
-- Falls back to minimal architecture for unknown platforms
+| Name | Platforms |
+|------|-----------|
+| linux | Full Linux desktop |
+| macos | macOS specific |
+| corporate | Work environment |
+| minimal | Servers, containers |
 
-## Special Files
-- `.t` files: Project-specific tmux initialization scripts (auto-sourced by `t` command)
-- `$HOME/.env`: Source file for environment secrets (optional)
-- `$XDG_CONFIG_HOME/path.bash`: PATH modifications
-- `dotfiles-config.json`: Defines package compatibility and architecture combinations
+Auto-detected via `uname -s` and `CORPORATE_ENV`/`WORK_ENV`.
+
+## ADDING MODULES
+
+1. Create `stow/<module>/` with XDG paths
+2. Add to `dotfiles-config.json`
+3. Test: `./install-dotfiles.bash -n`
+
+## SPECIAL FILES
+
+- `.t` - Project tmux init (sourced by `t`)
+- `dotfiles-config.json` - Package/arch definitions
