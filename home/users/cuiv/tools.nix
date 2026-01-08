@@ -41,6 +41,58 @@ in
     "zellij/layouts/default.kdl".source = pkgs.replaceVars ./zellij/layouts/default.kdl {
       zjstatus_path = "${zjstatusPackage}/bin/zjstatus.wasm";
     };
+
+    # t sessionizer script for tmux (fallback from zellij)
+    "scripts/t".source = pkgs.writeShellScript "t" ''
+      #!/usr/bin/env bash
+      # Tmux sessionizer - finds projects and creates/attaches to sessions
+
+      # Project roots to search
+      ROOTS=(
+        "$HOME/dev"
+        "$HOME/world/trees"
+      )
+
+      # Build find args
+      FIND_ARGS=""
+      for root in "''${ROOTS[@]}"; do
+        if [[ -d "$root" ]]; then
+          FIND_ARGS="$FIND_ARGS $root"
+        fi
+      done
+
+      if [[ -z "$FIND_ARGS" ]]; then
+        echo "No project roots found"
+        exit 1
+      fi
+
+      # Select project with fzf
+      if [[ $# -eq 1 ]]; then
+        selected=$1
+      else
+        selected=$(find $FIND_ARGS -mindepth 1 -maxdepth 2 -type d 2>/dev/null | fzf)
+      fi
+
+      if [[ -z "$selected" ]]; then
+        exit 0
+      fi
+
+      # Create session name from path
+      selected_name=$(basename "$selected" | tr . _)
+      tmux_running=$(pgrep tmux)
+
+      # Create or attach to session
+      if [[ -z $TMUX ]] && [[ -z "$tmux_running" ]]; then
+        tmux new-session -s "$selected_name" -c "$selected"
+        exit 0
+      fi
+
+      if ! tmux has-session -t="$selected_name" 2> /dev/null; then
+        tmux new-session -ds "$selected_name" -c "$selected"
+      fi
+
+      tmux switch-client -t "$selected_name"
+    '';
   };
 
   home.packages = with pkgs; [

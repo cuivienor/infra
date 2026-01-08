@@ -13,6 +13,7 @@
     ./shell.nix
     ./neovim.nix
     ./claude.nix
+    ./tmux.nix
   ];
 
   # Pass inputs to imported modules

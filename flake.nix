@@ -146,7 +146,7 @@
                 users.cuiv = {
                   imports = [
                     ./home/users/cuiv/default.nix
-                    ./home/users/cuiv/opencode/personal.nix
+                    ./home/profiles/personal/default.nix
                   ];
                 };
                 extraSpecialArgs = { inherit inputs; };
@@ -189,6 +189,20 @@
           pkgs = pkgsFor "aarch64-darwin";
           modules = [
             ./home/users/cuiv/default.nix
+            {
+              home.username = "cuiv";
+              home.homeDirectory = "/Users/cuiv";
+            }
+          ];
+          extraSpecialArgs = { inherit inputs; };
+        };
+
+        # Work MacBook with Shopify profile
+        "cuiv@work-macbook" = home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsFor "aarch64-darwin";
+          modules = [
+            ./home/users/cuiv/default.nix
+            ./home/profiles/shopify/default.nix
             {
               home.username = "cuiv";
               home.homeDirectory = "/Users/cuiv";

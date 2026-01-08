@@ -62,6 +62,9 @@
 
       # Additional init commands (renamed from initExtra in 25.11)
       initContent = ''
+        # Add local scripts to PATH
+        export PATH="$HOME/.config/scripts:$PATH"
+
         # npm global packages (Claude Code, etc.)
         export PATH="$HOME/.npm-global/bin:$PATH"
 

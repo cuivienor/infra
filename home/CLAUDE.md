@@ -117,3 +117,38 @@ sudo nixos-rebuild switch --flake .#devbox
 # Or remote
 nixos-rebuild switch --flake .#devbox --target-host devbox
 ```
+
+## Work MacBook Setup
+
+### First-Time Activation
+
+```bash
+# Install Home Manager if not present
+nix run home-manager/release-25.11 -- init
+
+# Activate work profile
+home-manager switch --flake .#cuiv@work-macbook
+```
+
+### What the Shopify Profile Adds
+
+- **Shell:** Sources dev.sh, Homebrew, chruby, shadowenv, tec
+- **Git:** Work email (peter.petrov@shopify.com), includes dev/gitconfig
+- **Claude:** Shopify proxy settings in settings.local.json
+- **Opencode:** Work proxy with model mappings
+
+### Switching Profiles
+
+```bash
+# Work MacBook (with Shopify profile)
+home-manager switch --flake .#cuiv@work-macbook
+
+# Personal macOS (without Shopify profile)
+home-manager switch --flake .#cuiv@aarch64-darwin
+```
+
+### After Activation
+
+1. Uninstall duplicate Homebrew packages (bat, eza, fzf, ripgrep, etc.)
+2. Keep Homebrew for casks only (Raycast, gcloud-sdk, etc.)
+3. Restart shell or run `exec zsh`
