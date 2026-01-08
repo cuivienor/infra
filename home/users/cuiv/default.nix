@@ -14,6 +14,7 @@
     ./neovim.nix
     ./claude.nix
     ./tmux.nix
+    ./macos.nix
   ];
 
   # Pass inputs to imported modules
