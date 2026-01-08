@@ -236,75 +236,81 @@
         }
       );
 
-      # Development shells (Linux only - infra tools)
-      devShells.x86_64-linux = {
-        # Default: unified shell supporting all zones
-        default = (pkgsUnfreeFor "x86_64-linux").mkShell {
-          buildInputs = with (pkgsUnfreeFor "x86_64-linux"); [
-            # Infrastructure as Code
-            terraform
-            ansible
-            ansible-lint
+      # Development shells
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = pkgsUnfreeFor system;
+        in
+        {
+          # Default: unified shell supporting all zones
+          default = pkgs.mkShell {
+            buildInputs = with pkgs; [
+              # Infrastructure as Code
+              terraform
+              ansible
+              ansible-lint
 
-            # Secrets management
-            sops
-            age
+              # Secrets management
+              sops
+              age
 
-            # Nix tooling
-            deadnix
-            statix
-            nixfmt-rfc-style
-            nil # Nix LSP
+              # Nix tooling
+              deadnix
+              statix
+              nixfmt-rfc-style
+              nil # Nix LSP
 
-            # Utilities
-            jq
-            yq-go
-            shellcheck
-            shfmt
-            pre-commit
-            stow
+              # Utilities
+              jq
+              yq-go
+              shellcheck
+              shfmt
+              pre-commit
+              stow
 
-            # Secret scanning
-            trufflehog
-            gitleaks
+              # Secret scanning
+              trufflehog
+              gitleaks
 
-            # Go development (media-pipeline)
-            go
-            gopls
-            gotools
-            go-tools # staticcheck
+              # Go development (media-pipeline)
+              go
+              gopls
+              gotools
+              go-tools # staticcheck
 
-            # Rust development (zesh)
-            rust-bin.stable.latest.default
-            rust-bin.stable.latest.rust-analyzer
+              # Rust development (zesh)
+              rust-bin.stable.latest.default
+              rust-bin.stable.latest.rust-analyzer
 
-            # Python development (gramofonche-downloader)
-            python3
-            python3Packages.ruff
-            python3Packages.mypy
-            python3Packages.pytest
-            python3Packages.types-requests
-            python3Packages.types-beautifulsoup4
+              # Python development (gramofonche-downloader)
+              python3
+              python3Packages.ruff
+              python3Packages.mypy
+              python3Packages.pytest
+              python3Packages.types-requests
+              python3Packages.types-beautifulsoup4
 
-            # Network debugging (infra-specific)
-            openssl
-            dnsutils
+              # Network debugging (infra-specific)
+              openssl
+              dnsutils
 
-            # Runtime deps for zesh testing
-            zellij
-            fzf
-          ];
+              # Runtime deps for zesh testing
+              zellij
+              fzf
+            ];
 
-          shellHook = ''
-            echo "🏗️  Infra devShell loaded (unified)"
-            echo "   Terraform: $(terraform version -json | jq -r '.terraform_version')"
-            echo "   Ansible:   $(ansible --version | head -1)"
-            echo "   Go:        $(go version | cut -d' ' -f3)"
-            echo "   Rust:      $(rustc --version | cut -d' ' -f2)"
-            echo "   Python:    $(python3 --version | cut -d' ' -f2)"
-            echo ""
-          '';
-        };
-      };
+            shellHook = ''
+              echo "🏗️  Infra devShell loaded (unified)"
+              echo "   Terraform: $(terraform version -json | jq -r '.terraform_version')"
+              echo "   Ansible:   $(ansible --version | head -1)"
+              echo "   Go:        $(go version | cut -d' ' -f3)"
+              echo "   Rust:      $(rustc --version | cut -d' ' -f2)"
+              echo "   Python:    $(python3 --version | cut -d' ' -f2)"
+              echo ""
+            '';
+          };
+        }
+      );
     };
 }
