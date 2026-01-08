@@ -178,5 +178,13 @@ in
       enableZshIntegration = true;
       options = [ "--cmd cd" ];
     };
+
+    gh = {
+      enable = true;
+      settings = {
+        git_protocol = "ssh";
+        prompt = "enabled";
+      };
+    };
   };
 }
