@@ -33,6 +33,7 @@ terraform/.sops-key
 # SOPS-encrypted files are safe to commit (override *secret* pattern)
 !*.sops.yaml
 !**/*.sops.yaml
+!secrets/
 
 # Terraform secrets.tf files are just code, not secrets (override *secret* pattern)
 !secrets.tf

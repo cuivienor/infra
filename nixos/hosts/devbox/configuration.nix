@@ -1,6 +1,18 @@
 { config, pkgs, ... }:
 
 {
+  # Secrets management with sops-nix
+  sops = {
+    defaultSopsFile = ../../../secrets/devbox.yaml;
+    age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+
+    secrets.github-ssh-key = {
+      owner = "cuiv";
+      mode = "0400";
+      path = "/home/cuiv/.ssh/github-devbox";
+    };
+  };
+
   # LXC container settings
   boot.isContainer = true;
 

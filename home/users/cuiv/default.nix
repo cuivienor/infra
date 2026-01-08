@@ -9,6 +9,7 @@
 {
   imports = [
     ./git.nix
+    ./ssh.nix
     ./tools.nix
     ./shell.nix
     ./neovim.nix

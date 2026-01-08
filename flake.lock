@@ -135,6 +135,7 @@
         "nixCats": "nixCats",
         "nixpkgs": "nixpkgs",
         "rust-overlay": "rust-overlay",
+        "sops-nix": "sops-nix",
         "zjstatus": "zjstatus"
       }
     },
@@ -193,6 +194,26 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "sops-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1767826491,
+        "narHash": "sha256-WSBENPotD2MIhZwolL6GC9npqgaS5fkM7j07V2i/Ur8=",
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "rev": "ea3adcb6d2a000d9a69d0e23cad1f2cacb3a9fbe",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "sops-nix",
         "type": "github"
       }
     },
