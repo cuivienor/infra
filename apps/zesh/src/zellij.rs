@@ -72,10 +72,22 @@ pub fn build_attach_command(name: &str) -> Command {
     cmd
 }
 
+/// URL for the zellij-switch plugin that enables in-session switching
+const ZELLIJ_SWITCH_PLUGIN: &str =
+    "https://github.com/mostafaqanbaryan/zellij-switch/releases/download/v0.1.1/zellij-switch.wasm";
+
 /// Build the command to switch to a session (from inside zellij)
-pub fn build_switch_command(name: &str) -> Command {
+/// Uses the zellij-switch plugin via `zellij pipe`
+pub fn build_switch_command(name: &str, cwd: Option<&std::path::Path>) -> Command {
     let mut cmd = Command::new("zellij");
-    cmd.args(["action", "switch-session", name]);
+
+    let cwd_str = cwd
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_default();
+
+    let payload = format!("--session {name} --cwd {cwd_str}");
+
+    cmd.args(["pipe", "--plugin", ZELLIJ_SWITCH_PLUGIN, "--", &payload]);
     cmd
 }
 
@@ -94,9 +106,9 @@ fn attach_session(name: &str) -> Result<ExitStatus> {
     Ok(status)
 }
 
-/// Switch to an existing session (from inside zellij)
-fn switch_session(name: &str) -> Result<ExitStatus> {
-    let mut cmd = build_switch_command(name);
+/// Switch to an existing session (from inside zellij) using zellij-switch plugin
+fn switch_session(name: &str, cwd: Option<&std::path::Path>) -> Result<ExitStatus> {
+    let mut cmd = build_switch_command(name, cwd);
 
     cmd.stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
@@ -110,9 +122,9 @@ fn switch_session(name: &str) -> Result<ExitStatus> {
 }
 
 /// Connect to an existing session (attach or switch depending on context)
-pub fn connect_to_session(name: &str) -> Result<ExitStatus> {
+pub fn connect_to_session(name: &str, cwd: Option<&std::path::Path>) -> Result<ExitStatus> {
     if is_inside_zellij() {
-        switch_session(name)
+        switch_session(name, cwd)
     } else {
         attach_session(name)
     }
@@ -183,7 +195,7 @@ pub fn create_session(project: &Project) -> Result<ExitStatus> {
 /// Otherwise, create a new session.
 pub fn switch_to_project(project: &Project) -> Result<ExitStatus> {
     if session_exists(&project.name)? {
-        connect_to_session(&project.name)
+        connect_to_session(&project.name, Some(&project.path))
     } else {
         create_session(project)
     }
