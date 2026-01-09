@@ -30,10 +30,11 @@ pub fn parse_list_sessions_output(output: &str) -> Vec<String> {
 
 /// List all active zellij sessions
 ///
-/// Runs `zellij list-sessions` and parses the output.
+/// Runs `zellij list-sessions --no-formatting` and parses the output.
+/// The --no-formatting flag removes ANSI color codes for reliable parsing.
 pub fn list_sessions() -> Result<Vec<String>> {
     let output = Command::new("zellij")
-        .arg("list-sessions")
+        .args(["list-sessions", "--no-formatting"])
         .output()
         .map_err(|e| anyhow!("Failed to run zellij list-sessions: {e}"))?;
 
@@ -59,24 +60,29 @@ pub fn session_exists(name: &str) -> Result<bool> {
     Ok(sessions.iter().any(|s| s == name))
 }
 
-/// Build the command to attach to an existing session
-///
-/// Returns the Command configured for attaching. The caller is responsible
-/// for executing it (typically via `exec` or `spawn`).
+/// Check if we're running inside a zellij session
+pub fn is_inside_zellij() -> bool {
+    std::env::var("ZELLIJ_SESSION_NAME").is_ok()
+}
+
+/// Build the command to attach to an existing session (from outside zellij)
 pub fn build_attach_command(name: &str) -> Command {
     let mut cmd = Command::new("zellij");
     cmd.arg("attach").arg(name);
     cmd
 }
 
-/// Attach to an existing zellij session
-///
-/// Spawns zellij attached to the session and waits for it to exit.
-/// Returns an error if attachment fails.
-pub fn attach_session(name: &str) -> Result<ExitStatus> {
+/// Build the command to switch to a session (from inside zellij)
+pub fn build_switch_command(name: &str) -> Command {
+    let mut cmd = Command::new("zellij");
+    cmd.args(["action", "switch-session", name]);
+    cmd
+}
+
+/// Attach to an existing zellij session (from outside zellij)
+fn attach_session(name: &str) -> Result<ExitStatus> {
     let mut cmd = build_attach_command(name);
 
-    // Inherit stdio so the user can interact with zellij
     cmd.stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
@@ -86,6 +92,30 @@ pub fn attach_session(name: &str) -> Result<ExitStatus> {
         .map_err(|e| anyhow!("Failed to attach to session '{name}': {e}"))?;
 
     Ok(status)
+}
+
+/// Switch to an existing session (from inside zellij)
+fn switch_session(name: &str) -> Result<ExitStatus> {
+    let mut cmd = build_switch_command(name);
+
+    cmd.stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit());
+
+    let status = cmd
+        .status()
+        .map_err(|e| anyhow!("Failed to switch to session '{name}': {e}"))?;
+
+    Ok(status)
+}
+
+/// Connect to an existing session (attach or switch depending on context)
+pub fn connect_to_session(name: &str) -> Result<ExitStatus> {
+    if is_inside_zellij() {
+        switch_session(name)
+    } else {
+        attach_session(name)
+    }
 }
 
 /// Build the command to create a new session for a project
@@ -148,11 +178,12 @@ pub fn create_session(project: &Project) -> Result<ExitStatus> {
 
 /// Switch to a project's session
 ///
-/// If a session with the project's name already exists, attach to it.
+/// If a session with the project's name already exists, connect to it
+/// (attach from outside zellij, or switch-session from inside zellij).
 /// Otherwise, create a new session.
 pub fn switch_to_project(project: &Project) -> Result<ExitStatus> {
     if session_exists(&project.name)? {
-        attach_session(&project.name)
+        connect_to_session(&project.name)
     } else {
         create_session(project)
     }
