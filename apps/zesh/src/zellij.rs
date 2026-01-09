@@ -72,9 +72,18 @@ pub fn build_attach_command(name: &str) -> Command {
     cmd
 }
 
-/// URL for the zellij-switch plugin that enables in-session switching
-const ZELLIJ_SWITCH_PLUGIN: &str =
-    "https://github.com/mostafaqanbaryan/zellij-switch/releases/download/v0.1.1/zellij-switch.wasm";
+/// Path to the zellij-switch plugin (installed via Home Manager)
+/// Falls back to remote URL if local file doesn't exist
+fn get_zellij_switch_plugin() -> String {
+    let local_path = dirs::config_dir()
+        .map(|p| p.join("zellij/plugins/zellij-switch.wasm"))
+        .filter(|p| p.exists());
+
+    match local_path {
+        Some(path) => format!("file:{}", path.display()),
+        None => "https://github.com/mostafaqanbaryan/zellij-switch/releases/download/0.2.1/zellij-switch.wasm".to_string(),
+    }
+}
 
 /// Build the command to switch to a session (from inside zellij)
 /// Uses the zellij-switch plugin via `zellij pipe`
@@ -86,8 +95,9 @@ pub fn build_switch_command(name: &str, cwd: Option<&std::path::Path>) -> Comman
         .unwrap_or_default();
 
     let payload = format!("--session {name} --cwd {cwd_str}");
+    let plugin = get_zellij_switch_plugin();
 
-    cmd.args(["pipe", "--plugin", ZELLIJ_SWITCH_PLUGIN, "--", &payload]);
+    cmd.args(["pipe", "--plugin", &plugin, "--", &payload]);
     cmd
 }
 

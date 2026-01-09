@@ -7,6 +7,10 @@
 
 let
   zjstatusPackage = inputs.zjstatus.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  zellijSwitchWasm = pkgs.fetchurl {
+    url = "https://github.com/mostafaqanbaryan/zellij-switch/releases/download/0.2.1/zellij-switch.wasm";
+    sha256 = "sha256-7yV+Qf/rczN+0d6tMJlC0UZj0S2PWBcPDNq1BFsKIq4=";
+  };
 in
 {
   # XDG config file management
@@ -21,6 +25,9 @@ in
 
     # Zellij configuration
     "zellij/config.kdl".source = ./zellij/config.kdl;
+
+    # zellij-switch plugin for in-session switching (used by zesh)
+    "zellij/plugins/zellij-switch.wasm".source = zellijSwitchWasm;
 
     # zjstatus permission grant helper layout
     "zellij/layouts/grant-zjstatus-permissions.kdl".text = ''
