@@ -114,6 +114,8 @@ in
     zesh
     # Node.js for Claude Code
     nodejs_22
+    # GitHub CLI
+    gh
     # Note: openssl and dnsutils moved to devShell (infra-specific tools)
   ];
 
