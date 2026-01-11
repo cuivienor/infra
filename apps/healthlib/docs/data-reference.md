@@ -377,6 +377,114 @@ intensity = garmin.get_intensity_minutes_data(date)
 
 ---
 
+### Workout Management (Training Plans)
+
+Pre-planned workouts that can be sent to your watch (not completed activities).
+
+#### API Capabilities
+
+| Operation | Available | Method |
+|-----------|-----------|--------|
+| **List workouts** | ✅ | `get_workouts(start, limit)` |
+| **Get workout by ID** | ✅ | `get_workout_by_id(workout_id)` |
+| **Download FIT file** | ✅ | `download_workout(workout_id)` |
+| **Create workout** | ✅ | `upload_workout(json)` or typed methods |
+| **Delete workout** | ❌ | Not available |
+| **Update workout** | ❌ | Not available |
+| **Schedule workout** | ⚠️ | Read-only (`get_scheduled_workout_by_id`) |
+| **Send to device** | ❌ | Not available (use Garmin Connect app) |
+
+#### Typed Upload Methods
+
+```python
+garmin.upload_running_workout(workout)
+garmin.upload_cycling_workout(workout)
+garmin.upload_swimming_workout(workout)
+garmin.upload_walking_workout(workout)
+garmin.upload_hiking_workout(workout)
+```
+
+#### Workout Structure
+
+**Step Types**:
+- `WARMUP = 1`
+- `COOLDOWN = 2`
+- `INTERVAL = 3`
+- `RECOVERY = 4`
+- `REST = 5`
+- `REPEAT = 6`
+
+**End Conditions** (when step ends):
+- `DISTANCE = 1`
+- `TIME = 2`
+- `HEART_RATE = 3`
+- `CALORIES = 4`
+- `CADENCE = 5`
+- `POWER = 6`
+- `ITERATIONS = 7`
+
+**Target Types** (intensity targets):
+- `NO_TARGET = 1`
+- `HEART_RATE = 2`
+- `CADENCE = 3`
+- `SPEED = 4`
+- `POWER = 5`
+- `OPEN = 6`
+
+**Sport Types**:
+- `RUNNING = 1`
+- `CYCLING = 2`
+- `SWIMMING = 3`
+- `WALKING = 4`
+- `MULTI_SPORT = 5`
+- `FITNESS_EQUIPMENT = 6`
+- `HIKING = 7`
+- `OTHER = 8`
+
+#### Example: Create Interval Workout
+
+```python
+from garminconnect.workout import (
+    RunningWorkout, WorkoutSegment,
+    create_warmup_step, create_interval_step,
+    create_recovery_step, create_repeat_group, create_cooldown_step,
+)
+
+workout = RunningWorkout(
+    workoutName="6x1min Intervals",
+    estimatedDurationInSecs=1800,
+    workoutSegments=[
+        WorkoutSegment(
+            segmentOrder=1,
+            sportType={"sportTypeId": 1, "sportTypeKey": "running"},
+            workoutSteps=[
+                create_warmup_step(300.0, step_order=1),  # 5 min warmup
+                create_repeat_group(
+                    iterations=6,
+                    workout_steps=[
+                        create_interval_step(60.0, step_order=2),  # 1 min fast
+                        create_recovery_step(60.0, step_order=3),  # 1 min easy
+                    ],
+                    step_order=2,
+                ),
+                create_cooldown_step(120.0, step_order=3),  # 2 min cooldown
+            ],
+        )
+    ],
+)
+
+# Upload to Garmin Connect
+garmin.upload_running_workout(workout)
+
+# List existing workouts
+workouts = garmin.get_workouts(start=0, limit=100)
+
+# Download as FIT file
+fit_data = garmin.download_workout(workout_id)
+```
+
+---
+
 ## Strava
 
 ### Activity Types (44+ supported)
