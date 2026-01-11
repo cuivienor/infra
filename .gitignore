@@ -68,6 +68,9 @@ tmp/
 ansible/vars/makemkv_secrets.yml
 !ansible/vars/makemkv_secrets.yml.example
 
+# Healthlib secrets example (allow committing)
+!apps/healthlib/vars/healthlib_secrets.sops.yaml.example
+
 .direnv/
 
 # Python
