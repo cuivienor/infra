@@ -19,6 +19,64 @@ def get_secrets_path() -> Path:
     return Path(__file__).parent.parent / "vars" / "healthlib_secrets.sops.yaml"
 
 
+def get_garmin_token_dir() -> Path:
+    """Get Garmin token storage directory."""
+    return Path.home() / ".garminconnect"
+
+
+def cmd_auth_garmin(args: argparse.Namespace) -> int:
+    """Handle Garmin authentication with MFA support."""
+    secrets_path = get_secrets_path()
+    token_dir = get_garmin_token_dir()
+
+    try:
+        config = load_config(secrets_path)
+    except ConfigError as e:
+        print(f"Error loading config: {e}", file=sys.stderr)
+        return 1
+
+    print("Garmin Connect Authentication")
+    print("=" * 50)
+    print()
+    print(f"Email: {config.garmin.email}")
+    print(f"Token directory: {token_dir}")
+    print()
+
+    try:
+        import garth
+
+        client = garth.Client()
+
+        def mfa_prompt() -> str:
+            return input("MFA code: ").strip()
+
+        print("Logging in to Garmin Connect...")
+        print("(You may be prompted for an MFA code)")
+        print()
+
+        client.login(config.garmin.email, config.garmin.password, prompt_mfa=mfa_prompt)
+
+        token_dir.mkdir(parents=True, exist_ok=True)
+        client.dump(str(token_dir))
+
+        print()
+        print("Success! Authenticated as:")
+        print(f"  {client.profile.get('displayName', 'unknown')}")
+        print()
+        print(f"Tokens saved to: {token_dir}")
+        print()
+        print("You can now use Garmin commands.")
+
+        return 0
+
+    except ImportError:
+        print("Error: garth package not installed", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
 def cmd_auth_strava(args: argparse.Namespace) -> int:
     """Handle Strava OAuth authentication."""
     secrets_path = get_secrets_path()
@@ -232,12 +290,14 @@ def cmd_garmin_list(args: argparse.Namespace) -> int:
         print("Error: garminconnect package not installed", file=sys.stderr)
         return 1
 
-    client = GarminClient(config.garmin)
+    token_dir = get_garmin_token_dir()
+    client = GarminClient(config.garmin, token_dir=token_dir)
 
     try:
         activities = client.list_activities(limit=args.limit)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
+        print("\nIf this is a login error, try running: healthlib auth garmin", file=sys.stderr)
         return 1
 
     if args.json:
@@ -278,7 +338,8 @@ def cmd_garmin_get(args: argparse.Namespace) -> int:
         print("Error: garminconnect package not installed", file=sys.stderr)
         return 1
 
-    client = GarminClient(config.garmin)
+    token_dir = get_garmin_token_dir()
+    client = GarminClient(config.garmin, token_dir=token_dir)
 
     try:
         activity = client.get_activity(args.activity_id)
@@ -323,6 +384,7 @@ def main() -> int:
     auth_parser = subparsers.add_parser("auth", help="Authentication setup")
     auth_subparsers = auth_parser.add_subparsers(dest="auth_command")
     auth_subparsers.add_parser("strava", help="Setup Strava OAuth tokens")
+    auth_subparsers.add_parser("garmin", help="Setup Garmin Connect tokens (with MFA)")
 
     # Strava commands
     strava_parser = subparsers.add_parser("strava", help="Strava operations")
@@ -368,6 +430,8 @@ def main() -> int:
     if args.command == "auth":
         if args.auth_command == "strava":
             return cmd_auth_strava(args)
+        if args.auth_command == "garmin":
+            return cmd_auth_garmin(args)
         auth_parser.print_help()
         return 0
 

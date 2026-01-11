@@ -124,19 +124,21 @@ class GarminClientError(Exception):
 
 
 class GarminClient:
-    """Wrapper for python-garminconnect with session management."""
+    """Wrapper for python-garminconnect with session management and token persistence."""
 
-    def __init__(self, config: GarminConfig) -> None:
+    def __init__(self, config: GarminConfig, token_dir: Path | None = None) -> None:
         """Initialize Garmin client.
 
         Args:
             config: Garmin credentials configuration.
+            token_dir: Directory to store OAuth tokens. Defaults to ~/.garminconnect.
         """
         self._config = config
         self._client: Garmin | None = None
+        self._token_dir = token_dir or Path.home() / ".garminconnect"
 
     def _get_client(self) -> Garmin:
-        """Get authenticated Garmin client, logging in if needed.
+        """Get authenticated Garmin client, loading saved tokens or logging in.
 
         Returns:
             Authenticated Garmin client.
@@ -147,7 +149,23 @@ class GarminClient:
         if self._client is None:
             try:
                 self._client = Garmin(self._config.email, self._config.password)
-                self._client.login()
+
+                token_dir_str = str(self._token_dir)
+                oauth1_path = self._token_dir / "oauth1_token.json"
+                oauth2_path = self._token_dir / "oauth2_token.json"
+
+                if oauth1_path.exists() and oauth2_path.exists():
+                    self._client.garth.load(token_dir_str)
+                    try:
+                        _ = self._client.garth.profile
+                    except Exception:
+                        self._client.login()
+                        self._client.garth.dump(token_dir_str)
+                else:
+                    self._client.login()
+                    self._token_dir.mkdir(parents=True, exist_ok=True)
+                    self._client.garth.dump(token_dir_str)
+
             except Exception as e:
                 raise GarminClientError(f"Failed to login to Garmin Connect: {e}") from e
         return self._client

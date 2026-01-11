@@ -311,13 +311,16 @@
               rust-bin.stable.latest.default
               rust-bin.stable.latest.rust-analyzer
 
-              # Python development (gramofonche-downloader)
+              # Python development (gramofonche-downloader, healthlib)
               python3
               python3Packages.ruff
               python3Packages.mypy
               python3Packages.pytest
               python3Packages.types-requests
               python3Packages.types-beautifulsoup4
+              python3Packages.garminconnect
+              python3Packages.garth
+              python3Packages.pyyaml
 
               # Network debugging (infra-specific)
               openssl
