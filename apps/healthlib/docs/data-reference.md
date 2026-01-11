@@ -653,6 +653,125 @@ Response Headers:
 
 ---
 
+## Gear Management
+
+### API Capabilities Comparison
+
+| Operation | Garmin | Strava |
+|-----------|--------|--------|
+| **List all gear** | ✅ `get_gear()` | ❌ (extract from activities) |
+| **Get specific gear** | ✅ `get_gear_stats()` | ✅ `GET /gear/:id` |
+| **Get gear for activity** | ✅ `get_activity_gear()` | ✅ (in activity response) |
+| **Create new gear** | ❌ | ❌ |
+| **Update gear properties** | ❌ | ❌ |
+| **Delete/retire gear** | ❌ | ❌ |
+| **Assign gear to activity** | ✅ `add_gear_to_activity()` | ✅ `PUT /activities/:id` |
+| **Remove gear from activity** | ✅ `remove_gear_from_activity()` | ✅ (set gear_id=none) |
+| **Set default gear per type** | ✅ `set_gear_default()` | ❌ |
+
+**Key Limitation**: Neither platform allows creating, updating, or deleting gear via API. Gear must be managed through web UI or mobile apps.
+
+### Garmin Gear
+
+```python
+# List all gear
+gear_list = garmin.get_gear(user_profile_number)
+
+# Get gear statistics
+stats = garmin.get_gear_stats(gear_uuid)
+
+# Get default gear settings
+defaults = garmin.get_gear_defaults(user_profile_number)
+
+# Get activities using specific gear
+activities = garmin.get_gear_activities(gear_uuid, limit=1000)
+
+# Get gear for an activity
+gear = garmin.get_activity_gear(activity_id)
+
+# Assign gear to activity
+garmin.add_gear_to_activity(gear_uuid, activity_id)
+
+# Remove gear from activity
+garmin.remove_gear_from_activity(gear_uuid, activity_id)
+
+# Set default gear for activity type
+garmin.set_gear_default("running", gear_uuid, default_gear=True)
+```
+
+#### Garmin Gear Fields
+
+```python
+{
+    "uuid": "abc123",              # Unique identifier
+    "gearPk": 12345,               # Numeric ID
+    "userProfilePk": 67890,        # Owner's profile ID
+    "gearMakeName": "Nike",        # Manufacturer
+    "gearModelName": "Pegasus 40", # Model
+    "gearTypeName": "Running Shoe",# Type
+    "displayName": "My Pegasus",   # Custom name
+    "customMakeModel": "",         # Custom description
+    "gearStatusName": "active",    # active or retired
+    "dateBegin": "2024-01-01",     # Start date
+    "dateEnd": null,               # End date (null if active)
+    "maximumMeters": 800000,       # Expected lifespan (meters)
+    "notified": false,             # Lifespan notification sent
+    "imageNameLarge": "...",       # Image URLs
+    "imageNameMedium": "...",
+    "imageNameSmall": "...",
+    "createDate": "2024-01-01",
+    "updateDate": "2024-01-15"
+}
+```
+
+### Strava Gear
+
+```python
+# Get specific gear (requires gear_id)
+gear = strava.get_gear(gear_id)
+
+# Assign gear to activity
+strava.update_activity(activity_id, gear_id=gear_id)
+
+# Remove gear from activity
+strava.update_activity(activity_id, gear_id="none")
+```
+
+#### Strava Gear Fields
+
+```python
+{
+    "id": "b105763",          # ID (b-prefix=bike, g-prefix=shoes)
+    "name": "Tarmac SL7",     # Display name
+    "brand_name": "Specialized",
+    "model_name": "Tarmac SL7",
+    "distance": 5432100,      # Total meters (auto-calculated)
+    "primary": true,          # Default gear
+    "frame_type": 3,          # Bikes only: 1=mtb, 2=cross, 3=road, 4=tt
+    "description": "",
+    "resource_state": 3       # 2=summary, 3=detail
+}
+```
+
+#### Strava Gear Workaround
+
+Since Strava has no "list all gear" endpoint, collect gear IDs from activities:
+
+```python
+# Collect unique gear IDs from activities
+gear_ids = set()
+for activity in strava.list_activities():
+    if activity.gear_id:
+        gear_ids.add(activity.gear_id)
+
+# Fetch details for each
+for gear_id in gear_ids:
+    gear = strava.get_gear(gear_id)
+    print(f"{gear.name}: {gear.distance/1000:.0f}km")
+```
+
+---
+
 ## Data Sync Considerations
 
 ### What Can Be Synced Garmin → Strava
