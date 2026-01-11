@@ -99,6 +99,34 @@
             mainProgram = "gramofonche-downloader";
           };
         };
+
+        # Python: Personal health data library (Garmin + Strava)
+        healthlib = prev.python3Packages.buildPythonApplication {
+          pname = "healthlib";
+          version = "0.1.0";
+          src = ./apps/healthlib;
+          format = "pyproject";
+
+          build-system = [ prev.python3Packages.setuptools ];
+
+          dependencies = with prev.python3Packages; [
+            garminconnect
+            garth
+            requests
+            pyyaml
+          ];
+
+          # Tests run during nix build
+          nativeCheckInputs = with prev.python3Packages; [
+            pytestCheckHook
+            pytest
+          ];
+
+          meta = {
+            description = "Personal library for interacting with Garmin and Strava APIs";
+            mainProgram = "healthlib";
+          };
+        };
       };
 
       # Generate pkgs for a given system
@@ -231,7 +259,7 @@
           pkgs = pkgsFor system;
         in
         {
-          inherit (pkgs) zesh gramofonche-downloader;
+          inherit (pkgs) zesh gramofonche-downloader healthlib;
           default = pkgs.zesh;
         }
       );
