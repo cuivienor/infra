@@ -1,0 +1,6 @@
+# SOPS configuration for healthlib secrets
+# Encrypts all *.sops.yaml files with age encryption
+
+creation_rules:
+  - path_regex: \.sops\.yaml$
+    age: age1tsqhkhhvqk9m5d4480f9m0jhdecfa5puyrpt6ye07kaeg6453v8sfdcuyx
