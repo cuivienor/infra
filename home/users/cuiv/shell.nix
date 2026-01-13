@@ -29,8 +29,6 @@
         # Modern replacements (eza, bat configured via programs.*)
         cat = "bat --paging=never";
         less = "bat --paging=always";
-        grep = "rg";
-        find = "fd";
 
         # Navigation
         ".." = "cd ..";
