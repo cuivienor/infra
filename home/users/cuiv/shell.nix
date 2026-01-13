@@ -113,6 +113,8 @@
         MANPAGER = "sh -c 'col -bx | bat -l man -p'";
         # Force Node.js to prefer IPv4 (devbox has no global IPv6 route)
         NODE_OPTIONS = "--dns-result-order=ipv4first";
+        # Disable Claude Code auto-updater notifications
+        DISABLE_AUTOUPDATER = "1";
       };
     };
 
