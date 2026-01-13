@@ -198,15 +198,70 @@ pub fn create_session(project: &Project) -> Result<ExitStatus> {
     Ok(status)
 }
 
+/// Build the command to create and switch to a new session (from inside zellij)
+/// Uses the zellij-switch plugin via `zellij pipe` with layout support
+pub fn build_create_switch_command(project: &Project) -> Command {
+    let mut cmd = Command::new("zellij");
+
+    let cwd_str = project.path.to_string_lossy();
+
+    // Check for custom layout, or use default layout if available
+    let layout_path = project.path.join(".zellij.kdl");
+    let layout = if layout_path.exists() {
+        Some(layout_path.to_string_lossy().to_string())
+    } else {
+        std::env::var_os("HOME")
+            .map(std::path::PathBuf::from)
+            .map(|home| home.join(".config/zellij/layouts/default.kdl"))
+            .filter(|p| p.exists())
+            .map(|p| p.to_string_lossy().to_string())
+    };
+
+    let payload = match layout {
+        Some(l) => format!(
+            "--session {} --cwd {} --layout {}",
+            project.name, cwd_str, l
+        ),
+        None => format!("--session {} --cwd {}", project.name, cwd_str),
+    };
+    let plugin = get_zellij_switch_plugin();
+
+    cmd.args(["pipe", "--plugin", &plugin, "--", &payload]);
+    cmd
+}
+
+/// Create and switch to a new session (from inside zellij)
+fn create_and_switch_session(project: &Project) -> Result<ExitStatus> {
+    let mut cmd = build_create_switch_command(project);
+
+    cmd.stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit());
+
+    let status = cmd.status().map_err(|e| {
+        anyhow!(
+            "Failed to create and switch to session '{}': {}",
+            project.name,
+            e
+        )
+    })?;
+
+    Ok(status)
+}
+
 /// Switch to a project's session
 ///
 /// If a session with the project's name already exists, connect to it
 /// (attach from outside zellij, or switch-session from inside zellij).
-/// Otherwise, create a new session.
+/// Otherwise, create a new session (via plugin if inside zellij, directly otherwise).
 pub fn switch_to_project(project: &Project) -> Result<ExitStatus> {
     if session_exists(&project.name)? {
         connect_to_session(&project.name, Some(&project.path))
+    } else if is_inside_zellij() {
+        // Inside zellij: use plugin to create+switch (avoids nesting)
+        create_and_switch_session(project)
     } else {
+        // Outside zellij: create session directly
         create_session(project)
     }
 }
@@ -436,6 +491,71 @@ mod tests {
 
         let cmd = build_create_command(&project);
         assert_eq!(cmd.get_current_dir(), Some(temp.path()));
+    }
+
+    // =========================================================================
+    // build_create_switch_command tests
+    // =========================================================================
+
+    #[test]
+    fn test_build_create_switch_command_uses_pipe() {
+        let temp = TempDir::new().unwrap();
+        let project = Project {
+            name: "my-project".to_string(),
+            path: temp.path().to_path_buf(),
+            repo_root: temp.path().to_path_buf(),
+            worktree_branch: None,
+            sparse_zone: None,
+        };
+
+        let cmd = build_create_switch_command(&project);
+        let args: Vec<_> = cmd.get_args().collect();
+
+        assert_eq!(cmd.get_program(), "zellij");
+        assert_eq!(args[0], "pipe");
+        assert_eq!(args[1], "--plugin");
+    }
+
+    #[test]
+    fn test_build_create_switch_command_includes_session_and_cwd() {
+        let temp = TempDir::new().unwrap();
+        let project = Project {
+            name: "my-project".to_string(),
+            path: temp.path().to_path_buf(),
+            repo_root: temp.path().to_path_buf(),
+            worktree_branch: None,
+            sparse_zone: None,
+        };
+
+        let cmd = build_create_switch_command(&project);
+        let args: Vec<_> = cmd.get_args().collect();
+
+        let payload = args.last().unwrap().to_string_lossy();
+        assert!(payload.contains("--session my-project"));
+        assert!(payload.contains("--cwd"));
+        assert!(payload.contains(temp.path().to_string_lossy().as_ref()));
+    }
+
+    #[test]
+    fn test_build_create_switch_command_with_custom_layout() {
+        let temp = TempDir::new().unwrap();
+        let layout_path = temp.path().join(".zellij.kdl");
+        std::fs::write(&layout_path, "layout {}").unwrap();
+
+        let project = Project {
+            name: "my-project".to_string(),
+            path: temp.path().to_path_buf(),
+            repo_root: temp.path().to_path_buf(),
+            worktree_branch: None,
+            sparse_zone: None,
+        };
+
+        let cmd = build_create_switch_command(&project);
+        let args: Vec<_> = cmd.get_args().collect();
+
+        let payload = args.last().unwrap().to_string_lossy();
+        assert!(payload.contains("--layout"));
+        assert!(payload.contains(".zellij.kdl"));
     }
 
     // =========================================================================
