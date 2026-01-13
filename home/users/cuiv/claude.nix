@@ -67,6 +67,9 @@
 
       # Extended thinking
       alwaysThinkingEnabled = true;
+
+      # Override default model (opus alias auto-updates to latest)
+      model = "claude-opus-4-5";
     };
 
     # User-level instructions
