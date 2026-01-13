@@ -68,7 +68,7 @@
       bind r source-file ~/.config/tmux/tmux.conf \; display "Config reloaded!"
 
       # t sessionizer keybinding
-      bind-key -r t run-shell "tmux neww ~/.local/scripts/t"
+      bind-key -r t neww ~/.config/scripts/t
     '';
   };
 }
