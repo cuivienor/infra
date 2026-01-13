@@ -18,7 +18,7 @@
 
     # oh-my-opencode as plugin
     plugin = [
-      "oh-my-opencode@latest"
+      "oh-my-opencode@3.0.0-beta.5"
     ];
   };
 
