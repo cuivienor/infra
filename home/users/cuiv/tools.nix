@@ -49,57 +49,124 @@ in
       zjstatus_path = "${zjstatusPackage}/bin/zjstatus.wasm";
     };
 
-    # t sessionizer script for tmux (fallback from zellij)
+    # t sessionizer script for tmux (from apps/session-manager/t)
     "scripts/t".source = pkgs.writeShellScript "t" ''
       #!/usr/bin/env bash
-      # Tmux sessionizer - finds projects and creates/attaches to sessions
+      # Shamelessly lifted from prime https://github.com/ThePrimeagen/tmux-sessionizer
+      # Tweaked using https://github.com/27medkamal/tmux-session-wizard/ as extra inspiration
 
-      # Project roots to search
-      ROOTS=(
-        "$HOME/dev"
-        "$HOME/world/trees"
-      )
-
-      # Build find args
-      FIND_ARGS=""
-      for root in "''${ROOTS[@]}"; do
-        if [[ -d "$root" ]]; then
-          FIND_ARGS="$FIND_ARGS $root"
+      switch_to() {
+        if [[ -z $TMUX ]]; then
+          ${pkgs.tmux}/bin/tmux attach-session -t "$1"
+        else
+          ${pkgs.tmux}/bin/tmux switch-client -t "$1"
         fi
-      done
+      }
 
-      if [[ -z "$FIND_ARGS" ]]; then
-        echo "No project roots found"
-        exit 1
-      fi
+      has_session() {
+        ${pkgs.tmux}/bin/tmux list-sessions | ${pkgs.gnugrep}/bin/grep -q "^$1:"
+      }
 
-      # Select project with fzf
+      tmux_init() {
+        if [ -f "$2/.t" ]; then
+          ${pkgs.tmux}/bin/tmux send-keys -t "$1" "source $2/.t" c-M
+        elif [ -f "$HOME/.t" ]; then
+          ${pkgs.tmux}/bin/tmux send-keys -t "$1" "source $HOME/.t" c-M
+        fi
+      }
+
+      # Function to find project directories
+      find_projects() {
+        {
+          # Hardcoded sparse checkout directory
+          [[ -d "/Users/cuiv/world/trees/root/src/areas/core/shopify" ]] && echo "/Users/cuiv/world/trees/root/src/areas/core/shopify"
+
+          # Shallow search in ~ and ~/dev (1 level deep, exclude hidden dirs)
+          # Look for git repos at this level
+          [[ -d "$HOME/dev" ]] && ${pkgs.fd}/bin/fd -t d -d 2 -H '^\.git$' . "$HOME/dev" 2>/dev/null | while read -r git_dir; do
+            echo "$(realpath "$(dirname "$git_dir")")"
+          done
+          ${pkgs.fd}/bin/fd -t d -d 2 -H '^\.git$' . "$HOME" 2>/dev/null | while read -r git_dir; do
+            echo "$(realpath "$(dirname "$git_dir")")"
+          done
+
+          # Search in src directories for git repositories at project level
+          local src_dirs=("$HOME/src" "$HOME/dev/src" "$HOME/work/src")
+          for src_dir in "''${src_dirs[@]}"; do
+            if [[ -d "$src_dir" ]]; then
+              # Find git repositories - limit depth to avoid going too deep into project subdirectories
+              ${pkgs.fd}/bin/fd -t d -d 4 -H '^\.git$' . "$src_dir" 2>/dev/null | while read -r git_dir; do
+                project_dir=$(realpath "$(dirname "$git_dir")")
+                # Calculate depth from src_dir to ensure we only get top-level projects
+                relative_path=''${project_dir#$src_dir/}
+                depth=$(echo "$relative_path" | tr '/' '\n' | wc -l)
+                # Only include projects at reasonable depth (1-3 levels: direct, org/repo, or host/org/repo)
+                if [[ $depth -le 3 ]]; then
+                  echo "$project_dir"
+                fi
+              done
+            fi
+          done
+        } | sort -u
+      }
+
       if [[ $# -eq 1 ]]; then
-        selected=$1
+        if [ -d "$1" ]; then
+          selected=$(realpath "$1")
+        else
+          selected=$(_ZO_FZF_OPTS="--tmux=center" ${pkgs.zoxide}/bin/zoxide query --interactive "$1")
+        fi
       else
-        selected=$(find $FIND_ARGS -mindepth 1 -maxdepth 2 -type d 2>/dev/null | fzf)
+        selected="$(find_projects | sort -u | ${pkgs.fzf}/bin/fzf --tmux=center)"
       fi
 
-      if [[ -z "$selected" ]]; then
+      if [[ -z $selected ]]; then
         exit 0
       fi
 
-      # Create session name from path
       selected_name=$(basename "$selected" | tr . _)
       tmux_running=$(pgrep tmux)
 
-      # Create or attach to session
-      if [[ -z $TMUX ]] && [[ -z "$tmux_running" ]]; then
-        tmux new-session -s "$selected_name" -c "$selected"
-        exit 0
+      if [[ -z $tmux_running ]] || ! has_session "$selected_name"; then
+        ${pkgs.tmux}/bin/tmux new-session -d -s "$selected_name" -c "$selected"
+        tmux_init "$selected_name" "$selected"
       fi
 
-      if ! tmux has-session -t="$selected_name" 2> /dev/null; then
-        tmux new-session -ds "$selected_name" -c "$selected"
-      fi
-
-      tmux switch-client -t "$selected_name"
+      switch_to "$selected_name"
     '';
+  };
+
+  # Default tmux layout (sourced by t script when no project-specific .t exists)
+  home.file.".t" = {
+    text = ''
+      #!/usr/bin/env bash
+
+      # Window 1: nvim
+      tmux send-keys "nvim ." c-M
+      tmux rename-window "nvim"
+
+      # Window 2: claude
+      tmux new-window -n claude
+      tmux send-keys "claude" c-M
+
+      # Window 3: opencode
+      tmux new-window -n opencode
+      tmux send-keys "opencode" c-M
+
+      # Window 4: git
+      tmux new-window -n git
+      tmux send-keys "lazygit" c-M
+
+      # Window 5: scratch
+      tmux new-window -n scratch
+
+      # Window 9: servers
+      tmux new-window -t 9 -n servers
+
+      # Start in nvim window
+      tmux select-window -t nvim
+    '';
+    executable = true;
   };
 
   home.packages = with pkgs; [
