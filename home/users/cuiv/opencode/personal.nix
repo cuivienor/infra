@@ -14,7 +14,7 @@
       "$schema" = "https://opencode.ai/config.json";
 
       plugin = [
-        "oh-my-opencode@latest"
+        "oh-my-opencode@3.0.0-beta.5"
         "opencode-antigravity-auth@1.1.2" # Gemini OAuth
         "opencode-openai-codex-auth@4.1.1" # ChatGPT OAuth
       ];

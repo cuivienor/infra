@@ -31,6 +31,12 @@
 
     # nixCats - Neovim configuration framework
     nixCats.url = "github:BirdeeHub/nixCats-nvim";
+
+    # sops-nix - Secrets management for NixOS
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -40,6 +46,7 @@
       home-manager,
       naersk,
       rust-overlay,
+      sops-nix,
       ...
     }@inputs:
     let
@@ -160,6 +167,7 @@
           specialArgs = { inherit inputs; };
           modules = [
             ./nixos/hosts/devbox/configuration.nix
+            sops-nix.nixosModules.sops
             home-manager.nixosModules.home-manager
             {
               # Apply overlays so local packages (pkgs.zesh, etc.) are available

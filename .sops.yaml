@@ -1,0 +1,22 @@
+# SOPS configuration for secrets in this monorepo
+# Encrypts secrets with age encryption
+
+keys:
+  # Terraform key - for IaC secrets
+  - &terraform age1tsqhkhhvqk9m5d4480f9m0jhdecfa5puyrpt6ye07kaeg6453v8sfdcuyx
+  # Devbox host key - derived from SSH host key
+  - &devbox age1z0c9d8yrz3j7ax3rupv53k2evlr5a595vxpwzck3t2d28q5jjcwsa0cujf
+
+creation_rules:
+  # Terraform secrets - terraform key only (backwards compatible)
+  - path_regex: ^terraform/.*\.sops\.yaml$
+    key_groups:
+      - age:
+          - *terraform
+
+  # NixOS secrets - both keys for redundancy
+  - path_regex: ^secrets/.*\.yaml$
+    key_groups:
+      - age:
+          - *terraform
+          - *devbox

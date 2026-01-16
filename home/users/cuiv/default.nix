@@ -9,10 +9,11 @@
 {
   imports = [
     ./git.nix
+    ./ssh.nix
     ./tools.nix
     ./shell.nix
     ./neovim.nix
-    ./claude.nix
+    # claude.nix removed - Claude settings managed outside Nix
     ./tmux.nix
     ./macos.nix
   ];

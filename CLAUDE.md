@@ -1,85 +1,135 @@
 # CLAUDE.md
 
-Guidance for Claude Code working in this infrastructure monorepo.
+Proxmox homelab infrastructure monorepo. Terraform provisions, Ansible configures, Nix manages dev environment.
 
-## Context Before Starting
+**Generated:** 2026-01-07 | **Commit:** 17b6c11 | **Branch:** main
 
-**Read first:** `docs/reference/current-state.md` - Complete infrastructure state (containers, IPs, hardware)
+## OVERVIEW
 
-This is a Proxmox homelab managed as Infrastructure as Code using Terraform (provisioning) and Ansible (configuration).
+Infrastructure as Code for personal homelab: 12 LXC containers on Proxmox, managed via Terraform (provisioning) + Ansible (configuration). Includes Go/Rust apps, NixOS configs, and dotfiles.
 
-## Development Environment
+## STRUCTURE
 
-### With Nix (Recommended)
-
-```bash
-direnv allow                      # Auto-load default shell
-nix develop .#media-pipeline      # Go toolchain
-nix develop .#session-manager     # Bash/shellcheck
+```
+infra/
+├── terraform/           # Container provisioning (4 root modules)
+│   ├── proxmox-homelab/ # LXC containers - MOST COMMON
+│   ├── tailscale/       # VPN ACLs, DNS
+│   ├── cloudflare/      # DNS records, tunnels
+│   └── lldap/           # LDAP user management
+├── ansible/             # Service configuration
+│   ├── playbooks/       # Entry points (22 playbooks)
+│   └── roles/           # Reusable modules (15+ roles)
+├── home/                # Home Manager (user environment)
+├── nixos/               # NixOS system configs (devbox)
+├── apps/
+│   ├── media-pipeline/  # Go TUI for media ripping
+│   └── zesh/            # Rust session manager
+├── dotfiles/            # GNU Stow packages
+├── images/              # Nix LXC template builds
+└── docs/                # Plans, reference, ideas
 ```
 
-### Without Nix
+## WHERE TO LOOK
 
-```bash
-./scripts/setup-dev.sh            # Install terraform, ansible, sops, etc.
-```
+| Task | Location | Notes |
+|------|----------|-------|
+| Create/modify containers | `terraform/proxmox-homelab/` | One `.tf` per container |
+| Install/configure software | `ansible/playbooks/<service>.yml` | Run from `ansible/` dir |
+| VPN ACLs, DNS split | `terraform/tailscale/` | Separate state file |
+| Dev environment tools | `flake.nix` → devShells | Single unified shell |
+| User shell/tools config | `home/users/cuiv/` | Modular nix files |
+| Media pipeline work | `apps/media-pipeline/` | Go + Bubbletea TUI |
+| Zellij session manager | `apps/zesh/` | Rust + skim picker |
+| Personal dotfiles | `dotfiles/stow/` | Per-app packages |
 
-## Zone Navigation
+## IaC DISCIPLINE (CRITICAL)
 
-Each zone has its own CLAUDE.md with zone-specific guidance:
+**All changes through Terraform or Ansible. SSH = read-only debugging.**
 
-| Zone | When to Read |
-|------|--------------|
-| `terraform/` | Provisioning containers, Tailscale ACLs |
-| `ansible/` | Configuring software, roles, playbooks |
-| `home/` | Home Manager configs, zellij, shell, user tools |
-| `apps/media-pipeline/` | Go media pipeline TUI |
-| `apps/zesh/` | Zellij session manager (Rust) |
-| `dotfiles/` | Stow packages, dotfiles |
+| Change | Tool | Never Do |
+|--------|------|----------|
+| Container specs | Terraform | `pct set` via SSH |
+| Packages, config | Ansible | `apt install` via SSH |
+| Services | Ansible | `systemctl` via SSH |
+| NixOS (devbox) | `nixos-rebuild switch` | Manual edits |
 
-**Skills:** See `.claude/skills/` for workflow checklists (terraform-workflow, ansible-workflow, nix-development).
-
-## IaC Discipline (CRITICAL)
-
-**All changes MUST go through Terraform or Ansible. SSH is read-only for debugging.**
-
-| Change Type | Tool |
-|-------------|------|
-| Container specs (CPU, memory, disk) | Terraform |
-| Software, packages, config files | Ansible |
-| Services, users, permissions | Ansible |
-
-**Never** run `apt`, `systemctl`, or edit files via SSH. Update IaC instead.
-
-## Quick Reference
-
-### Containers
+## CONTAINERS
 
 | CTID | Host | IP | Purpose |
 |------|------|-----|---------|
-| 300 | backup | .120 | Restic backups |
+| 300 | backup | .120 | Restic → Backblaze B2 |
 | 301 | samba | .121 | SMB shares |
 | 302 | ripper | .131 | MakeMKV (optical drive) |
 | 303 | analyzer | .133 | FileBot, media tools |
 | 304 | transcoder | .132 | FFmpeg (Intel Arc GPU) |
 | 305 | jellyfin | .130 | Media server (dual GPU) |
-| 310 | dns | .110 | AdGuard Home |
+| 307 | wishlist | .186 | Gift registry (Node.js) |
+| 308 | lldap | .114 | LDAP directory |
+| 310 | dns | .110 | AdGuard Home (backup) |
 | 311 | proxy | .111 | Caddy reverse proxy |
+| 312 | authelia | .112 | SSO (OIDC) |
 | 320 | devbox | .140 | NixOS dev environment |
 
-**SSH:** Use aliases from `~/.ssh/config` (e.g., `ssh ripper`, `ssh jellyfin`).
+**SSH:** `ssh ripper`, `ssh jellyfin`, etc. (aliases in `~/.ssh/config`)
 
-### Secrets
+## SECRETS
 
-| Type | Location | Edit Command |
-|------|----------|--------------|
+| Type | Location | Edit |
+|------|----------|------|
 | Terraform | `terraform/*/secrets.sops.yaml` | `sops <file>` |
 | Ansible | `ansible/vars/*_secrets.yml` | `ansible-vault edit <file>` |
 
-Keys: `terraform/.sops-key`, `ansible/.vault_pass` (gitignored, restore from Bitwarden)
+Keys: `terraform/.sops-key`, `ansible/.vault_pass` (gitignored → Bitwarden)
 
-## Conventions
+## COMMANDS
+
+```bash
+# Development
+direnv allow                              # Load Nix devShell
+nix develop                               # Manual shell entry
+
+# Infrastructure
+cd terraform/proxmox-homelab && terraform plan && terraform apply
+cd ansible && ansible-playbook playbooks/<service>.yml --check  # Dry run
+cd ansible && ansible-playbook playbooks/<service>.yml          # Apply
+
+# NixOS (on devbox)
+sudo nixos-rebuild switch --flake .#devbox
+
+# Apps
+cd apps/media-pipeline && make test && make build
+cd apps/zesh && cargo test && cargo build
+```
+
+## CONVENTIONS
 
 - **Commits:** `<type>: <description>` (feat, fix, docs, refactor, chore)
 - **Files:** `snake_case`
-- **Pre-commit:** Always runs - don't skip hooks
+- **Pre-commit:** Always runs. Never skip hooks.
+- **Ansible:** FQCN required (`ansible.builtin.apt` not `apt`)
+- **Go:** Standard fmt/vet. Table-driven tests.
+- **Rust:** `cargo clippy -- -D warnings` must pass
+
+## ANTI-PATTERNS (THIS PROJECT)
+
+- `apt`, `systemctl`, file edits via SSH → Use IaC
+- `terraform.tfvars` in git → Contains secrets
+- State file manual edits → Work with Peter to fix
+- Skipping pre-commit hooks → Never
+- Plaintext secrets anywhere → SOPS or Vault only
+
+## ZONE NAVIGATION
+
+Each zone has CLAUDE.md with specific guidance:
+
+| Zone | Read When |
+|------|-----------|
+| `terraform/CLAUDE.md` | Provisioning containers, ACLs |
+| `ansible/CLAUDE.md` | Configuring services, roles |
+| `home/CLAUDE.md` | Home Manager, zellij, shell |
+| `apps/media-pipeline/CLAUDE.md` | Go TUI development |
+| `apps/zesh/CLAUDE.md` | Rust session manager |
+| `dotfiles/CLAUDE.md` | Stow packages |
+
+**Skills:** `.claude/skills/` for workflows (homelab-iac, infra-nix, Rust)
