@@ -60,6 +60,9 @@
 
       # Additional init commands (renamed from initExtra in 25.11)
       initContent = ''
+        # GitHub CLI token for tools that need it (Claude Code, etc.)
+        export GH_TOKEN="$(gh auth token 2>/dev/null)"
+
         # Add local scripts to PATH
         export PATH="$HOME/.config/scripts:$PATH"
 
