@@ -1,7 +1,29 @@
 # home/profiles/shopify/shell.nix
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
+  # Bash configuration (for tools that spawn bash subshells)
+  programs.bash = {
+    enable = true;
+
+    # .bash_profile (login shells)
+    profileExtra = ''
+      # tec agent initialization
+      [[ -x /Users/cuiv/.local/state/tec/profiles/base/current/global/init ]] && eval "$(/Users/cuiv/.local/state/tec/profiles/base/current/global/init bash)"
+    '';
+
+    # .bashrc (interactive shells)
+    initExtra = ''
+      # tec agent initialization
+      [[ -x /Users/cuiv/.local/state/tec/profiles/base/current/global/init ]] && [[ $- == *i* ]] && eval "$(/Users/cuiv/.local/state/tec/profiles/base/current/global/init bash)"
+    '';
+  };
+
   programs.zsh.initContent = lib.mkAfter ''
     # ===========================================
     # Shopify Work Environment
