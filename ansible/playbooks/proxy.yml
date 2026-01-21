@@ -65,6 +65,9 @@
       - domain: "lldap.paniland.com"
         upstream: "lldap.home.arpa:17170"
         authelia_protected: true  # Admin interface - requires authentication
+      - domain: "mealie.paniland.com"
+        upstream: "192.168.1.187:9000"
+        # No authelia_protected - mealie has native OIDC authentication
 
   pre_tasks:
     - name: Display configuration

@@ -1,0 +1,132 @@
+---
+# Install dependencies for Mealie
+
+- name: Install build dependencies
+  ansible.builtin.apt:
+    name:
+      - build-essential
+      - libpq-dev
+      - libwebp-dev
+      - libsasl2-dev
+      - libldap2-dev
+      - libssl-dev
+      - libffi-dev
+      - curl
+      - gnupg
+      - git
+      - gosu
+      - iproute2
+    state: present
+    update_cache: true
+  become: true
+
+# Python 3 system packages (for venv creation and dev headers)
+- name: Install Python 3 base packages
+  ansible.builtin.apt:
+    name:
+      - python3
+      - python3-venv
+      - python3-dev
+      - python3-pip
+    state: present
+    update_cache: true
+  become: true
+
+- name: Download uv installer
+  ansible.builtin.get_url:
+    url: https://astral.sh/uv/install.sh
+    dest: /tmp/uv-install.sh
+    mode: '0755'
+  become: true
+
+- name: Install uv (Python package manager)
+  ansible.builtin.command: /tmp/uv-install.sh
+  args:
+    creates: /root/.local/bin/uv
+  become: true
+  environment:
+    INSTALLER_NO_MODIFY_PATH: "1"
+
+- name: Remove uv installer
+  ansible.builtin.file:
+    path: /tmp/uv-install.sh
+    state: absent
+  become: true
+
+- name: Copy uv to system path
+  ansible.builtin.copy:
+    src: /root/.local/bin/uv
+    dest: /usr/local/bin/uv
+    mode: '0755'
+    remote_src: true
+  become: true
+
+# Node.js for frontend build
+- name: Download NodeSource GPG key
+  ansible.builtin.get_url:
+    url: "https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key"
+    dest: /tmp/nodesource.gpg.key
+    mode: '0644'
+  become: true
+
+- name: Dearmor NodeSource GPG key
+  ansible.builtin.shell: |
+    gpg --dearmor < /tmp/nodesource.gpg.key > /usr/share/keyrings/nodesource.gpg
+  args:
+    creates: /usr/share/keyrings/nodesource.gpg
+  become: true
+
+- name: Remove temp GPG key
+  ansible.builtin.file:
+    path: /tmp/nodesource.gpg.key
+    state: absent
+  become: true
+
+- name: Add NodeSource repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_{{ mealie_nodejs_version }}.x nodistro main"
+    state: present
+    filename: nodesource
+  become: true
+
+- name: Install Node.js
+  ansible.builtin.apt:
+    name: nodejs
+    state: present
+    update_cache: true
+  become: true
+
+- name: Install yarn globally
+  ansible.builtin.command: npm install -g yarn
+  args:
+    creates: /usr/bin/yarn
+  become: true
+
+# Create mealie user and directories
+- name: Create mealie group
+  ansible.builtin.group:
+    name: "{{ mealie_group }}"
+    system: true
+  become: true
+
+- name: Create mealie user
+  ansible.builtin.user:
+    name: "{{ mealie_user }}"
+    group: "{{ mealie_group }}"
+    home: "{{ mealie_home }}"
+    shell: /bin/bash
+    system: true
+    create_home: true
+  become: true
+
+- name: Create mealie directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ mealie_user }}"
+    group: "{{ mealie_group }}"
+    mode: '0755'
+  loop:
+    - "{{ mealie_home }}"
+    - "{{ mealie_data_dir }}"
+  become: true

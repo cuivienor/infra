@@ -1,0 +1,29 @@
+---
+# Mealie Recipe Manager deployment
+# Usage: ansible-playbook playbooks/mealie.yml
+
+- name: Configure Mealie
+  hosts: mealie
+  become: true
+  vars_files:
+    - ../vars/mealie_secrets.yml
+
+  pre_tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+  roles:
+    - common
+    - mealie
+
+  post_tasks:
+    - name: Verify mealie is running
+      ansible.builtin.uri:
+        url: "http://localhost:{{ mealie_port }}/api/app/about"
+        status_code: 200
+      register: mealie_health
+      retries: 5
+      delay: 10
+      until: mealie_health.status == 200

@@ -19,10 +19,10 @@ mealie_db_user: mealie
 # mealie_db_password: set in secrets
 
 # PostgreSQL version
-postgresql_version: "16"
+mealie_postgresql_version: "16"
 
 # Node.js version for frontend build
-nodejs_version: "22"
+mealie_nodejs_version: "22"
 
 # OIDC settings
 mealie_oidc_enabled: true

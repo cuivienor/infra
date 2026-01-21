@@ -1,0 +1,125 @@
+---
+# Deploy Mealie application
+
+- name: Get latest Mealie release version
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/mealie-recipes/mealie/releases/latest
+    return_content: true
+  register: mealie_release
+  when: mealie_version == "latest"
+
+- name: Set Mealie version
+  ansible.builtin.set_fact:
+    mealie_actual_version: "{{ mealie_release.json.tag_name | default(mealie_version) }}"
+
+- name: Download Mealie release
+  ansible.builtin.unarchive:
+    src: "https://github.com/mealie-recipes/mealie/archive/refs/tags/{{ mealie_actual_version }}.tar.gz"
+    dest: "{{ mealie_home }}"
+    remote_src: true
+    owner: "{{ mealie_user }}"
+    group: "{{ mealie_group }}"
+    extra_opts:
+      - --strip-components=1
+  become: true
+  notify: Restart mealie
+
+- name: Install Python 3.12 with uv
+  ansible.builtin.command:
+    cmd: uv python install 3.12
+  become: true
+  register: uv_python_install
+  changed_when: "'Installed' in uv_python_install.stderr"
+
+- name: Check Python version in venv
+  ansible.builtin.shell: |
+    {{ mealie_home }}/venv/bin/python --version 2>&1 | grep -q "3.12"
+  args:
+    executable: /bin/bash
+  register: venv_python_check
+  failed_when: false
+  changed_when: false
+  become: true
+  become_user: "{{ mealie_user }}"
+
+- name: Remove old venv if not Python 3.12
+  ansible.builtin.file:
+    path: "{{ mealie_home }}/venv"
+    state: absent
+  when: venv_python_check.rc != 0
+  become: true
+
+- name: Create Python virtual environment with Python 3.12
+  ansible.builtin.shell: |
+    cd {{ mealie_home }}
+    uv venv --python 3.12 venv
+  args:
+    executable: /bin/bash
+    creates: "{{ mealie_home }}/venv/bin/python3.12"
+  become: true
+  become_user: "{{ mealie_user }}"
+
+- name: Install Python dependencies from pyproject.toml
+  ansible.builtin.shell: |
+    cd {{ mealie_home }}
+    source venv/bin/activate
+    uv pip install .
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: "{{ mealie_user }}"
+  changed_when: true
+
+- name: Install additional Python packages for PostgreSQL
+  ansible.builtin.shell: |
+    cd {{ mealie_home }}
+    source venv/bin/activate
+    uv pip install psycopg2-binary
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: "{{ mealie_user }}"
+  changed_when: true
+
+- name: Build frontend
+  ansible.builtin.shell: |
+    cd {{ mealie_home }}/frontend
+    yarn install
+    export NODE_OPTIONS="--max-old-space-size=1536"
+    yarn build
+  args:
+    executable: /bin/bash
+    creates: "{{ mealie_home }}/frontend/.output"
+  become: true
+  become_user: "{{ mealie_user }}"
+
+- name: Copy frontend build to mealie
+  ansible.builtin.copy:
+    src: "{{ mealie_home }}/frontend/.output/public/"
+    dest: "{{ mealie_home }}/mealie/static/"
+    remote_src: true
+    owner: "{{ mealie_user }}"
+    group: "{{ mealie_group }}"
+    mode: '0755'
+  become: true
+
+- name: Download NLTK data
+  ansible.builtin.shell: |
+    cd {{ mealie_home }}
+    source venv/bin/activate
+    python -m nltk.downloader -d {{ mealie_home }}/nltk_data averaged_perceptron_tagger_eng punkt_tab
+  args:
+    executable: /bin/bash
+    creates: "{{ mealie_home }}/nltk_data"
+  become: true
+  become_user: "{{ mealie_user }}"
+
+- name: Deploy environment file
+  ansible.builtin.template:
+    src: mealie.env.j2
+    dest: "{{ mealie_home }}/.env"
+    owner: "{{ mealie_user }}"
+    group: "{{ mealie_group }}"
+    mode: '0600'
+  become: true
+  notify: Restart mealie

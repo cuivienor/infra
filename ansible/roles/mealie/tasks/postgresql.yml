@@ -1,0 +1,59 @@
+---
+# PostgreSQL setup for Mealie
+
+- name: Add PostgreSQL APT key
+  ansible.builtin.get_url:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    dest: /usr/share/keyrings/postgresql.asc
+    mode: '0644'
+  become: true
+
+- name: Add PostgreSQL repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/postgresql.asc] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main"
+    state: present
+    filename: pgdg
+  become: true
+
+- name: Install PostgreSQL
+  ansible.builtin.apt:
+    name:
+      - "postgresql-{{ mealie_postgresql_version }}"
+      - "postgresql-client-{{ mealie_postgresql_version }}"
+      - python3-psycopg2
+    state: present
+    update_cache: true
+  become: true
+
+- name: Ensure PostgreSQL is running
+  ansible.builtin.systemd:
+    name: postgresql
+    state: started
+    enabled: true
+  become: true
+
+- name: Create mealie database user
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    name: "{{ mealie_db_user }}"
+    password: "{{ mealie_db_password }}"
+    state: present
+
+- name: Create mealie database
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_db:
+    name: "{{ mealie_db_name }}"
+    owner: "{{ mealie_db_user }}"
+    state: present
+
+- name: Grant database privileges
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_privs:
+    db: "{{ mealie_db_name }}"
+    role: "{{ mealie_db_user }}"
+    type: database
+    privs: ALL
+    state: present

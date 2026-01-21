@@ -1,0 +1,18 @@
+---
+# Main tasks for mealie role
+
+- name: Import installation tasks
+  ansible.builtin.import_tasks: install.yml
+  tags: ['mealie', 'install']
+
+- name: Import PostgreSQL tasks
+  ansible.builtin.import_tasks: postgresql.yml
+  tags: ['mealie', 'postgresql', 'database']
+
+- name: Import deployment tasks
+  ansible.builtin.import_tasks: deploy.yml
+  tags: ['mealie', 'deploy']
+
+- name: Import systemd tasks
+  ansible.builtin.import_tasks: systemd.yml
+  tags: ['mealie', 'systemd', 'service']

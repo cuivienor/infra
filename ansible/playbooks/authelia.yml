@@ -76,6 +76,21 @@
           - profile
           - email
         authorization_policy: one_factor
+      - client_id: mealie
+        client_name: Mealie
+        client_secret: "{{ vault_authelia_oidc_mealie_client_secret }}"
+        public: false
+        authorization_policy: one_factor
+        require_pkce: true
+        pkce_challenge_method: S256
+        redirect_uris:
+          - https://mealie.paniland.com/login
+          - https://mealie.paniland.com/login/callback
+        scopes:
+          - openid
+          - profile
+          - email
+          - groups
 
     # SMTP configuration for password reset emails (via Resend)
     authelia_notifier_type: "smtp"

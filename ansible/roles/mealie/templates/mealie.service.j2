@@ -1,0 +1,24 @@
+[Unit]
+Description=Mealie Recipe Manager
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User={{ mealie_user }}
+Group={{ mealie_group }}
+WorkingDirectory={{ mealie_home }}
+EnvironmentFile={{ mealie_home }}/.env
+ExecStart={{ mealie_home }}/venv/bin/python -m uvicorn mealie.app:app --host 0.0.0.0 --port {{ mealie_port }}
+Restart=always
+RestartSec=10
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths={{ mealie_home }} {{ mealie_data_dir }}
+
+[Install]
+WantedBy=multi-user.target
