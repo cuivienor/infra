@@ -9,7 +9,7 @@ User={{ mealie_user }}
 Group={{ mealie_group }}
 WorkingDirectory={{ mealie_home }}
 EnvironmentFile={{ mealie_home }}/.env
-ExecStart={{ mealie_home }}/venv/bin/python -m uvicorn mealie.app:app --host 0.0.0.0 --port {{ mealie_port }}
+ExecStart={{ mealie_home }}/venv/bin/python -m uvicorn mealie.app:app --host 0.0.0.0 --port {{ mealie_port }} --forwarded-allow-ips="*"
 Restart=always
 RestartSec=10
 
