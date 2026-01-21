@@ -36,6 +36,11 @@
     ];
   };
 
+  # Prefer IPv4 over IPv6 (no working IPv6 route in this LXC)
+  environment.etc."gai.conf".text = ''
+    precedence ::ffff:0:0/96 100
+  '';
+
   # Enable SSH
   services.openssh = {
     enable = true;
