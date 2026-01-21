@@ -57,6 +57,8 @@
         answer: "192.168.1.111"  # Via Caddy proxy for HTTPS
       - domain: "lldap.paniland.com"
         answer: "192.168.1.111"  # Via Caddy proxy for HTTPS
+      - domain: "mealie.paniland.com"
+        answer: "192.168.1.111"  # Via Caddy proxy for HTTPS
 
       # ===========================================
       # HOST/MACHINE ACCESS (direct, RFC 8375)
@@ -90,6 +92,8 @@
       # Personal & productivity containers
       - domain: "wishlist.home.arpa"
         answer: "192.168.1.186"
+      - domain: "mealie.home.arpa"
+        answer: "192.168.1.187"
       # Security/infrastructure containers
       - domain: "authelia.home.arpa"
         answer: "192.168.1.112"
