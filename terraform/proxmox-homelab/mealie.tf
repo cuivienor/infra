@@ -5,7 +5,7 @@
 resource "proxmox_virtual_environment_container" "mealie" {
   description = "Mealie - self-hosted recipe manager for multiple households"
   node_name   = "homelab"
-  vm_id       = 313
+  vm_id       = 314
 
   # Container initialization
   started = true

@@ -1,0 +1,41 @@
+---
+# Mealie default configuration
+
+# Application settings
+mealie_version: "latest"
+mealie_user: mealie
+mealie_group: mealie
+mealie_home: /opt/mealie
+mealie_data_dir: /opt/mealie/data
+mealie_port: 9000
+
+# Base URL (used for OIDC redirects)
+mealie_base_url: "https://mealie.paniland.com"
+
+# Database (PostgreSQL)
+mealie_db_engine: postgres
+mealie_db_name: mealie
+mealie_db_user: mealie
+# mealie_db_password: set in secrets
+
+# PostgreSQL version
+postgresql_version: "16"
+
+# Node.js version for frontend build
+nodejs_version: "22"
+
+# OIDC settings
+mealie_oidc_enabled: true
+mealie_oidc_configuration_url: "https://auth.paniland.com/.well-known/openid-configuration"
+mealie_oidc_client_id: "mealie"
+# mealie_oidc_client_secret: set in secrets
+mealie_oidc_auto_redirect: true
+mealie_oidc_provider_name: "Paniland SSO"
+mealie_oidc_remember_me: true
+
+# Security
+mealie_allow_signup: false
+mealie_token_time: 480  # 20 days in hours
+
+# Timezone
+mealie_timezone: "America/Los_Angeles"
