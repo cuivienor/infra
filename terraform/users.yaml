@@ -15,6 +15,7 @@ groups:
   # Service groups (control SSO access per service)
   jellyfin_users: {}
   wishlist_users: {}
+  mealie_users: {}     # Recipe manager access
   immich_users: {}     # Future
 
 users:
@@ -28,33 +29,33 @@ users:
   william:
     email: williamrgoldstein@gmail.com
     display_name: William Goldstein
-    groups: [tailscale, jellyfin_users, wishlist_users]
+    groups: [tailscale, jellyfin_users, wishlist_users, mealie_users]
 
   ani:
     email: stefanova.ani@gmail.com
     display_name: Ani Stefanova
-    groups: [tailscale, jellyfin_users, wishlist_users]
+    groups: [tailscale, jellyfin_users, wishlist_users, mealie_users]
 
   alastair:
     email: alastairdglennie@gmail.com
     display_name: Ally
-    groups: [tailscale, jellyfin_users, wishlist_users]
+    groups: [tailscale, jellyfin_users, wishlist_users, mealie_users]
 
   # Friends with tunnel-only access (no VPN)
   sarah:
     email: sweir27@gmail.com
     display_name: Sarah Weir
-    groups: [jellyfin_users, wishlist_users]
+    groups: [jellyfin_users, wishlist_users, mealie_users]
 
   maria:
     email: maria.stef.ivanova@gmail.com
     display_name: Maria Ivanova
-    groups: [jellyfin_users, wishlist_users]
+    groups: [jellyfin_users, wishlist_users, mealie_users]
 
   momchil:
     email: tomov90@gmail.com
     display_name: Momchil
-    groups: [jellyfin_users, wishlist_users]
+    groups: [jellyfin_users, wishlist_users, mealie_users]
 
   # Service accounts
   authelia:
