@@ -42,7 +42,12 @@
     extraConfig = ''
       # True color support
       set -ag terminal-overrides ",xterm-256color:RGB"
+      # OSC 52 clipboard capability for neovim integration
+      set -ag terminal-overrides ",*:Ms=\\E]52;c;%p2%s\\7"
       set -g allow-passthrough on
+
+      # OSC 52 clipboard support
+      set -s set-clipboard on
 
       # Vim-style pane navigation (handled by vim-tmux-navigator plugin)
       # Vim copy mode bindings
