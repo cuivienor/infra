@@ -32,6 +32,9 @@ mealie_oidc_client_id: "mealie"
 mealie_oidc_auto_redirect: true
 mealie_oidc_provider_name: "Paniland SSO"
 mealie_oidc_remember_me: true
+mealie_oidc_signup_enabled: true  # Auto-create users on first OIDC login
+mealie_oidc_admin_group: "admins"  # LLDAP group for Mealie admins
+mealie_oidc_user_group: "mealie_users"  # LLDAP group for Mealie users (optional)
 
 # Security
 mealie_allow_signup: false
