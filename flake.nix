@@ -277,11 +277,83 @@
         system:
         let
           pkgs = pkgsUnfreeFor system;
+
+          # Script to restore secrets from Bitwarden
+          infra-setup-secrets = pkgs.writeShellApplication {
+            name = "infra-setup-secrets";
+            runtimeInputs = with pkgs; [
+              bitwarden-cli
+              coreutils
+            ];
+            text = ''
+              set -euo pipefail
+
+              REPO_ROOT="''${INFRA_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || echo ".")}"
+              SOPS_KEY="$REPO_ROOT/terraform/.sops-key"
+              VAULT_PASS="$REPO_ROOT/ansible/.vault_pass"
+
+              # Check for BW_SESSION
+              if [[ -z "''${BW_SESSION:-}" ]]; then
+                echo "Error: BW_SESSION environment variable not set."
+                echo ""
+                echo "Run these commands first:"
+                echo "  bw login                              # if not logged in"
+                echo "  export BW_SESSION=\$(bw unlock --raw)  # unlock vault"
+                echo ""
+                echo "Then run this script again."
+                exit 1
+              fi
+
+              # Verify session is valid
+              if ! bw status --session "$BW_SESSION" 2>/dev/null | grep -q '"status":"unlocked"'; then
+                echo "Error: Bitwarden session is invalid or expired."
+                echo ""
+                echo "Run: export BW_SESSION=\$(bw unlock --raw)"
+                echo "Then run this script again."
+                exit 1
+              fi
+
+              echo "Restoring secrets from Bitwarden..."
+              echo ""
+
+              # SOPS age key
+              if [[ -f "$SOPS_KEY" ]]; then
+                echo "✓ SOPS age key already exists (terraform/.sops-key)"
+              else
+                echo "  Fetching SOPS age key..."
+                if bw get notes "homelab-sops-age-key" --session "$BW_SESSION" > "$SOPS_KEY" 2>/dev/null; then
+                  chmod 600 "$SOPS_KEY"
+                  echo "✓ Restored SOPS age key to terraform/.sops-key"
+                else
+                  echo "✗ Could not find 'homelab-sops-age-key' in Bitwarden"
+                fi
+              fi
+
+              # Ansible vault password
+              if [[ -f "$VAULT_PASS" ]]; then
+                echo "✓ Ansible vault password already exists (ansible/.vault_pass)"
+              else
+                echo "  Fetching Ansible vault password..."
+                if bw get notes "homelab-ansible-vault-pass" --session "$BW_SESSION" > "$VAULT_PASS" 2>/dev/null; then
+                  chmod 600 "$VAULT_PASS"
+                  echo "✓ Restored Ansible vault password to ansible/.vault_pass"
+                else
+                  echo "✗ Could not find 'homelab-ansible-vault-pass' in Bitwarden"
+                fi
+              fi
+
+              echo ""
+              echo "Done! Run 'direnv allow' to load environment variables."
+            '';
+          };
         in
         {
           # Default: unified shell supporting all zones
           default = pkgs.mkShell {
             buildInputs = with pkgs; [
+              # Infra scripts
+              infra-setup-secrets
+
               # Infrastructure as Code
               terraform
               ansible
@@ -308,6 +380,9 @@
               # Secret scanning
               trufflehog
               gitleaks
+
+              # Password management (for pulling secrets)
+              bitwarden-cli
 
               # Go development (media-pipeline)
               go
