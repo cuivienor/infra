@@ -81,26 +81,66 @@
   become_user: "{{ mealie_user }}"
   changed_when: true
 
-- name: Build frontend
+# Extract prebuilt frontend from Docker image (avoids memory-intensive yarn build)
+- name: Install skopeo for Docker image extraction
+  ansible.builtin.apt:
+    name: skopeo
+    state: present
+  become: true
+
+- name: Create temp directory for Docker image extraction
+  ansible.builtin.file:
+    path: /tmp/mealie-docker
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Download Mealie Docker image layers
   ansible.builtin.shell: |
-    cd {{ mealie_home }}/frontend
-    yarn install
-    export NODE_OPTIONS="--max-old-space-size=1536"
-    yarn build
+    cd /tmp/mealie-docker
+    skopeo copy docker://ghcr.io/mealie-recipes/mealie:{{ mealie_actual_version }} dir:mealie-image
   args:
     executable: /bin/bash
-    creates: "{{ mealie_home }}/frontend/.output"
+    creates: /tmp/mealie-docker/mealie-image/manifest.json
   become: true
-  become_user: "{{ mealie_user }}"
 
-- name: Copy frontend build to mealie
-  ansible.builtin.copy:
-    src: "{{ mealie_home }}/frontend/.output/public/"
-    dest: "{{ mealie_home }}/mealie/static/"
-    remote_src: true
+- name: Extract frontend from Docker image layers
+  ansible.builtin.shell: |
+    cd /tmp/mealie-docker/mealie-image
+    # Find the largest blob (contains the application) and extract frontend
+    largest_blob=$(ls -S | grep -v manifest | grep -v version | head -1)
+    if [ -n "$largest_blob" ]; then
+      gunzip -c "$largest_blob" 2>/dev/null | tar -xf - -C /tmp/mealie-docker opt/mealie/lib/python3.12/site-packages/mealie/frontend 2>/dev/null || true
+    fi
+  args:
+    executable: /bin/bash
+    creates: /tmp/mealie-docker/opt/mealie/lib/python3.12/site-packages/mealie/frontend/200.html
+  become: true
+
+- name: Ensure mealie frontend directory exists
+  ansible.builtin.file:
+    path: "{{ mealie_home }}/mealie/frontend"
+    state: directory
     owner: "{{ mealie_user }}"
     group: "{{ mealie_group }}"
     mode: '0755'
+  become: true
+
+- name: Copy extracted frontend to mealie
+  ansible.builtin.shell: |
+    if [ -d /tmp/mealie-docker/opt/mealie/lib/python3.12/site-packages/mealie/frontend ]; then
+      cp -r /tmp/mealie-docker/opt/mealie/lib/python3.12/site-packages/mealie/frontend/* {{ mealie_home }}/mealie/frontend/
+      chown -R {{ mealie_user }}:{{ mealie_group }} {{ mealie_home }}/mealie/frontend/
+    fi
+  args:
+    executable: /bin/bash
+  become: true
+  changed_when: true
+
+- name: Clean up Docker image extraction
+  ansible.builtin.file:
+    path: /tmp/mealie-docker
+    state: absent
   become: true
 
 - name: Download NLTK data
