@@ -28,5 +28,8 @@ variable "tunnel_services" {
     auth = {
       hostname = "auth.paniland.com"
     }
+    mealie = {
+      hostname = "mealie.paniland.com"
+    }
   }
 }
