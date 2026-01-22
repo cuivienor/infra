@@ -1,4 +1,4 @@
-# CT313: Mealie Recipe Manager
+# CT314: Mealie Recipe Manager
 # Self-hosted recipe management with PostgreSQL backend
 # Native deployment (Python/Node.js) with systemd management
 
