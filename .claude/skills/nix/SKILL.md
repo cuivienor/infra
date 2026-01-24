@@ -11,11 +11,46 @@ This repo uses Nix for development environments and the devbox container. See th
 
 ## DevShells
 
+This repo has a **single unified devShell** that provides all tools.
+
 | Shell | Purpose | Enter |
 |-------|---------|-------|
-| default | Terraform, Ansible, SOPS | `nix develop` or `direnv allow` |
-| media-pipeline | Go development | `nix develop .#media-pipeline` |
-| session-manager | Bash/shellcheck | `nix develop .#session-manager` |
+| default | All tools (Terraform, Ansible, Go, Rust, Python, etc.) | `direnv allow` (auto) or `nix develop` |
+
+### Verify DevShell is Active
+
+```bash
+# Check for Nix store path
+which terraform
+# Expected: /nix/store/.../bin/terraform
+
+# Or check environment
+echo $IN_NIX_SHELL
+# Expected: "impure" or "pure"
+```
+
+### Troubleshooting
+
+| Symptom | Solution |
+|---------|----------|
+| `command not found` for terraform/ansible/sops | Run `direnv allow` or `nix develop` |
+| `direnv: error .envrc` | Run `direnv allow` to trust the file |
+| SOPS decryption fails | Run `infra-setup-secrets` after `bw unlock` |
+| Ansible vault errors | Run `infra-setup-secrets` after `bw unlock` |
+
+### Secrets Setup (First Time)
+
+The devshell includes `infra-setup-secrets` to restore encryption keys:
+
+```bash
+bw login                              # If not logged in
+export BW_SESSION=$(bw unlock --raw)  # Unlock vault
+infra-setup-secrets                   # Restores keys from Bitwarden
+```
+
+This creates:
+- `terraform/.sops-key` - Age key for SOPS encryption
+- `ansible/.vault_pass` - Ansible vault password
 
 ### Add Package to DevShell
 

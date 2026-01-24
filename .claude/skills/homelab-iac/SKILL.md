@@ -102,13 +102,14 @@ Verify via SSH: `systemctl status <service>`, `journalctl -u <service>`.
 
 ## Nix DevShells
 
+**All commands require the devshell.** Verify with `which terraform`.
+
 ```bash
-direnv allow              # Auto-load default shell
-nix develop .#media-pipeline    # Go toolchain
-nix develop .#session-manager   # Bash/shellcheck
+direnv allow    # Auto-load (recommended)
+nix develop     # Manual entry
 ```
 
-Modify shells in `flake.nix`. Always test with `nix develop` before committing.
+If tools are missing, the devshell isn't loaded. See root CLAUDE.md for troubleshooting.
 
 ## Adding a New Container
 

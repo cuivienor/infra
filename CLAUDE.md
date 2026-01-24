@@ -30,6 +30,42 @@ infra/
 └── docs/                # Plans, reference, ideas
 ```
 
+## DEVSHELL (CRITICAL)
+
+**All commands require the Nix devshell.** Tools like `terraform`, `ansible`, `sops` are NOT installed system-wide.
+
+### Verify DevShell is Active
+
+```bash
+which terraform  # Should show /nix/store/... path
+```
+
+If you see "command not found", the devshell isn't loaded.
+
+### Load DevShell
+
+```bash
+direnv allow    # First time only - trusts .envrc
+# DevShell loads automatically when entering directory
+# You'll see: "🏗️ Infra devShell loaded (unified)"
+```
+
+### Common Errors (DevShell Not Loaded)
+
+| Error | Cause |
+|-------|-------|
+| `terraform: command not found` | DevShell not loaded |
+| `ansible: command not found` | DevShell not loaded |
+| `sops: command not found` | DevShell not loaded |
+| `Error decrypting` | Missing secrets - run `infra-setup-secrets` |
+
+### First-Time Secrets Setup
+
+```bash
+export BW_SESSION=$(bw unlock --raw)
+infra-setup-secrets    # Restores .sops-key and .vault_pass from Bitwarden
+```
+
 ## WHERE TO LOOK
 
 | Task | Location | Notes |

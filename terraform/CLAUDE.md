@@ -1,5 +1,7 @@
 # Terraform Zone
 
+> **Prerequisite:** All commands require the devshell. If `terraform` is not found, run `direnv allow` from repo root.
+
 Four independent root modules, each with own state. Run `terraform init` in each separately.
 
 ## STRUCTURE

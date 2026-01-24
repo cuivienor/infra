@@ -1,5 +1,7 @@
 # Ansible Zone
 
+> **Prerequisite:** All commands require the devshell. If `ansible` is not found, run `direnv allow` from repo root.
+
 Service configuration for LXC containers. **Always run from `ansible/` directory.**
 
 ## STRUCTURE
