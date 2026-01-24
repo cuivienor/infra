@@ -1,9 +1,6 @@
 # Authelia Configuration
 # Managed by Ansible - DO NOT EDIT MANUALLY
 
-# Default redirection URL (used in password reset emails)
-default_redirection_url: '{{ authelia_auth_url }}'
-
 # Server settings
 server:
   address: 'tcp://{{ authelia_address }}:{{ authelia_port }}/'

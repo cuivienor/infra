@@ -88,9 +88,14 @@
         transport http {
             tls_insecure_skip_verify
         }
+        header_up X-Forwarded-Host {{ target.domain }}
+        header_up X-Forwarded-Proto https
     }
 {% else %}
-    reverse_proxy {{ target.upstream }}
+    reverse_proxy {{ target.upstream }} {
+        header_up X-Forwarded-Host {{ target.domain }}
+        header_up X-Forwarded-Proto https
+    }
 {% endif %}
 {% endif %}
 
