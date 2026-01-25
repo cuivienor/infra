@@ -1,8 +1,11 @@
-{ config, pkgs, ... }:
+# home/profiles/personal/claude.nix
+# Claude Code binary + configuration for personal machines (not Shopify which uses company distribution)
+{ config, pkgs, lib, ... }:
 
 {
-  # Claude Code configuration
-  # Managed by Home Manager - syncs ~/.claude/ directory
+  home.packages = [
+    pkgs.claude-code
+  ];
 
   home.file = {
     # Main settings
@@ -73,10 +76,10 @@
     };
 
     # User-level instructions
-    ".claude/CLAUDE.md".source = ./claude/CLAUDE.md;
+    ".claude/CLAUDE.md".source = ../../users/cuiv/claude/CLAUDE.md;
 
     # Custom agents
-    ".claude/agents/bash-script-writer.md".source = ./claude/agents/bash-script-writer.md;
+    ".claude/agents/bash-script-writer.md".source = ../../users/cuiv/claude/agents/bash-script-writer.md;
 
     # ccstatusline configuration with Catppuccin Mocha colors
     ".config/ccstatusline/settings.json".text = builtins.toJSON {

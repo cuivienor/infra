@@ -3,8 +3,8 @@
 
 {
   # Personal profile - for non-work machines
-  # Currently just imports opencode personal config
   imports = [
+    ./claude.nix # Claude Code binary (native installer via Nix)
     ../../users/cuiv/opencode/personal.nix
   ];
 }
