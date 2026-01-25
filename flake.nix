@@ -37,6 +37,12 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Claude Code - pre-built native binaries from official releases
+    claude-code-overlay = {
+      url = "github:ryoppippi/claude-code-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -47,6 +53,7 @@
       naersk,
       rust-overlay,
       sops-nix,
+      claude-code-overlay,
       ...
     }@inputs:
     let
@@ -144,6 +151,7 @@
           overlays = [
             rustOverlay
             localPackagesOverlay
+            claude-code-overlay.overlays.default
           ];
         };
 
@@ -156,6 +164,7 @@
           overlays = [
             rustOverlay
             localPackagesOverlay
+            claude-code-overlay.overlays.default
           ];
         };
     in
@@ -174,6 +183,7 @@
               nixpkgs.overlays = [
                 rustOverlay
                 localPackagesOverlay
+                claude-code-overlay.overlays.default
               ];
 
               home-manager = {

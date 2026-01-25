@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "claude-code-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1769205690,
+        "narHash": "sha256-uR8YBrEFL/NbzUgomoALmnKdMPAEvraC8vm5coO8G/4=",
+        "owner": "ryoppippi",
+        "repo": "claude-code-overlay",
+        "rev": "30eb46e88126ed937fbb2bcb702c46d61f493b0a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ryoppippi",
+        "repo": "claude-code-overlay",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1765739568,
@@ -130,6 +150,7 @@
     },
     "root": {
       "inputs": {
+        "claude-code-overlay": "claude-code-overlay",
         "home-manager": "home-manager",
         "naersk": "naersk",
         "nixCats": "nixCats",
