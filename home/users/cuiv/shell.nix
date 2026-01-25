@@ -38,6 +38,7 @@
         # Git shortcuts
         g = "git";
         gs = "git status";
+        gst = "git status";
         gd = "git diff";
         ga = "git add";
         gc = "git commit";
@@ -49,17 +50,19 @@
         h = "history";
         ports = "ss -tuln";
 
-        # Safer operations
-        rm = "rm -i";
-        mv = "mv -i";
-        cp = "cp -i";
-
         # Reload config
         reload = "source ~/.zshrc";
       };
 
       # Additional init commands (renamed from initExtra in 25.11)
       initContent = ''
+        # Safer operations (only in interactive shells to avoid blocking automated tools)
+        if [[ $- == *i* ]]; then
+          alias rm='rm -i'
+          alias mv='mv -i'
+          alias cp='cp -i'
+        fi
+
         # GitHub CLI token for tools that need it (Claude Code, etc.)
         export GH_TOKEN="$(gh auth token 2>/dev/null)"
 
