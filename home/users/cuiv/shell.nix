@@ -24,13 +24,9 @@
         expireDuplicatesFirst = true;
       };
 
-      # Shell aliases
+      # Shell aliases (non-interactive safe - no command replacements)
       shellAliases = {
-        # Modern replacements (eza, bat configured via programs.*)
-        cat = "bat --paging=never";
-        less = "bat --paging=always";
-
-        # Navigation
+        # Navigation (these are safe - they use cd which will be real cd in non-interactive)
         ".." = "cd ..";
         "..." = "cd ../..";
         "...." = "cd ../../..";
@@ -56,11 +52,25 @@
 
       # Additional init commands (renamed from initExtra in 25.11)
       initContent = ''
-        # Safer operations (only in interactive shells to avoid blocking automated tools)
+        # Interactive-only setup (avoids confusing automated tools/agents)
         if [[ $- == *i* ]]; then
+          # Safer operations
           alias rm='rm -i'
           alias mv='mv -i'
           alias cp='cp -i'
+
+          # Modern tool replacements (only for humans)
+          alias cat='bat --paging=never'
+          alias less='bat --paging=always'
+
+          # eza aliases (replaces ls)
+          alias ls='eza --group-directories-first --header --icons=auto --git'
+          alias ll='eza -l --group-directories-first --header --icons=auto --git'
+          alias la='eza -la --group-directories-first --header --icons=auto --git'
+          alias lt='eza --tree --group-directories-first --header --icons=auto --git'
+
+          # Zoxide (smart cd) - only for interactive use
+          eval "$(zoxide init zsh --cmd cd)"
         fi
 
         # GitHub CLI token for tools that need it (Claude Code, etc.)

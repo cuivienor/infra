@@ -208,7 +208,7 @@ in
 
     eza = {
       enable = true;
-      enableZshIntegration = true;
+      enableZshIntegration = false; # Manual aliases in shell.nix for interactive-only
       icons = "auto";
       git = true;
       extraOptions = [
@@ -244,8 +244,7 @@ in
 
     zoxide = {
       enable = true;
-      enableZshIntegration = true;
-      options = [ "--cmd cd" ];
+      enableZshIntegration = false; # Manual init in shell.nix for interactive-only
     };
 
     gh = {
