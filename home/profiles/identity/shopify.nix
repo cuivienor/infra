@@ -1,10 +1,10 @@
-# home/profiles/shopify/git.nix
+# home/profiles/identity/shopify.nix
+# Shopify work identity
 { config, pkgs, lib, ... }:
 
 {
   programs.git = {
-    # Override email for work
-    settings.user.email = lib.mkForce "peter.petrov@shopify.com";
+    settings.user.email = "peter.petrov@shopify.com";
 
     # Include Shopify's dev gitconfig
     includes = [

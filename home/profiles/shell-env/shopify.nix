@@ -1,4 +1,5 @@
-# home/profiles/shopify/shell.nix
+# home/profiles/shell-env/shopify.nix
+# Shopify work shell environment (dev.sh, chruby, shadowenv, tec)
 {
   config,
   pkgs,

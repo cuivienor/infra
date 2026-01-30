@@ -1,5 +1,5 @@
-# home/profiles/personal/claude.nix
-# Claude Code binary + configuration for personal machines (not Shopify which uses company distribution)
+# home/profiles/ai-tools/claude.nix
+# Claude Code binary + configuration (for machines where employer doesn't manage this)
 { config, pkgs, lib, ... }:
 
 {

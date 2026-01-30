@@ -192,7 +192,8 @@
                 users.cuiv = {
                   imports = [
                     ./home/users/cuiv/default.nix
-                    ./home/profiles/personal/default.nix
+                    ./home/profiles/ai-tools/default.nix
+                    ./home/profiles/identity/personal.nix
                   ];
                 };
                 extraSpecialArgs = { inherit inputs; };
@@ -210,6 +211,8 @@
           pkgs = pkgsFor "x86_64-linux"; # Default, can override with --override-input
           modules = [
             ./home/users/cuiv/default.nix
+            ./home/profiles/ai-tools/default.nix
+            ./home/profiles/identity/personal.nix
             {
               home.username = "cuiv";
               home.homeDirectory = "/home/cuiv";
@@ -223,6 +226,8 @@
           pkgs = pkgsFor "x86_64-linux";
           modules = [
             ./home/users/cuiv/default.nix
+            ./home/profiles/ai-tools/default.nix
+            ./home/profiles/identity/personal.nix
             {
               home.username = "cuiv";
               home.homeDirectory = "/home/cuiv";
@@ -235,6 +240,8 @@
           pkgs = pkgsFor "aarch64-darwin";
           modules = [
             ./home/users/cuiv/default.nix
+            ./home/profiles/ai-tools/default.nix
+            ./home/profiles/identity/personal.nix
             {
               home.username = "cuiv";
               home.homeDirectory = "/Users/cuiv";
@@ -244,11 +251,13 @@
         };
 
         # Work MacBook with Shopify profile
+        # No ai-tools - Claude managed by Shopify
         "cuiv@work-macbook" = home-manager.lib.homeManagerConfiguration {
           pkgs = pkgsFor "aarch64-darwin";
           modules = [
             ./home/users/cuiv/default.nix
-            ./home/profiles/shopify/default.nix
+            ./home/profiles/identity/shopify.nix
+            ./home/profiles/shell-env/shopify.nix
             {
               home.username = "cuiv";
               home.homeDirectory = "/Users/cuiv";
@@ -261,6 +270,8 @@
           pkgs = pkgsFor "x86_64-darwin";
           modules = [
             ./home/users/cuiv/default.nix
+            ./home/profiles/ai-tools/default.nix
+            ./home/profiles/identity/personal.nix
             {
               home.username = "cuiv";
               home.homeDirectory = "/Users/cuiv";

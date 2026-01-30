@@ -6,10 +6,8 @@
 
     # Git settings (new 25.11 format)
     settings = {
-      user = {
-        name = "Peter Petrov";
-        email = "peter@petrovs.io";
-      };
+      # Name is universal; email comes from identity profile
+      user.name = "Peter Petrov";
 
       init.defaultBranch = "main";
       pull.rebase = true;
