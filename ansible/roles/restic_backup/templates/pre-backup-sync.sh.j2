@@ -52,16 +52,18 @@ ssh $SSH_OPTS root@{{ target.host }} "{{ target.pre_command }}" || log "WARNING:
 {% endif %}
 log "Syncing {{ target.name }}"
 mkdir -p "$BACKUP_DIR/{{ target.name }}"
+# Use --relative to preserve directory structure (e.g., /var/lib/couchdb/ -> vault/var/lib/couchdb/)
+# This prevents --delete from removing files synced from other paths
 {% for path in target.paths %}
 {% if target.excludes is defined and target.excludes | length > 0 %}
-rsync -az --delete{% for exc in target.excludes %} --exclude='{{ exc }}'{% endfor %} -e "ssh $SSH_OPTS" "root@{{ target.host }}:{{ path }}" "$BACKUP_DIR/{{ target.name }}/" || log "WARNING: Failed to sync {{ path }}"
+rsync -azR --delete{% for exc in target.excludes %} --exclude='{{ exc }}'{% endfor %} -e "ssh $SSH_OPTS" "root@{{ target.host }}:{{ path }}" "$BACKUP_DIR/{{ target.name }}/" || log "WARNING: Failed to sync {{ path }}"
 {% else %}
-rsync -az --delete -e "ssh $SSH_OPTS" "root@{{ target.host }}:{{ path }}" "$BACKUP_DIR/{{ target.name }}/" || log "WARNING: Failed to sync {{ path }}"
+rsync -azR --delete -e "ssh $SSH_OPTS" "root@{{ target.host }}:{{ path }}" "$BACKUP_DIR/{{ target.name }}/" || log "WARNING: Failed to sync {{ path }}"
 {% endif %}
 {% endfor %}
 {% if target.extra_paths is defined %}
 {% for path in target.extra_paths %}
-rsync -az --delete -e "ssh $SSH_OPTS" "root@{{ target.host }}:{{ path }}" "$BACKUP_DIR/{{ target.name }}/" || log "WARNING: Failed to sync {{ path }}"
+rsync -azR --delete -e "ssh $SSH_OPTS" "root@{{ target.host }}:{{ path }}" "$BACKUP_DIR/{{ target.name }}/" || log "WARNING: Failed to sync {{ path }}"
 {% endfor %}
 {% endif %}
 
