@@ -181,6 +181,8 @@ in
     zesh
     # Node.js for Claude Code
     nodejs_22
+    # Deno for LiveSync Bridge
+    deno
     # GitHub CLI
     gh
     # Note: openssl and dnsutils moved to devShell (infra-specific tools)

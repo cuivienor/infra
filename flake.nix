@@ -194,6 +194,7 @@
                     ./home/users/cuiv/default.nix
                     ./home/profiles/ai-tools/default.nix
                     ./home/profiles/identity/personal.nix
+                    ./home/profiles/vault-sync/default.nix
                   ];
                 };
                 extraSpecialArgs = { inherit inputs; };
@@ -213,6 +214,7 @@
             ./home/users/cuiv/default.nix
             ./home/profiles/ai-tools/default.nix
             ./home/profiles/identity/personal.nix
+            ./home/profiles/vault-sync/default.nix
             {
               home.username = "cuiv";
               home.homeDirectory = "/home/cuiv";
@@ -228,6 +230,7 @@
             ./home/users/cuiv/default.nix
             ./home/profiles/ai-tools/default.nix
             ./home/profiles/identity/personal.nix
+            ./home/profiles/vault-sync/default.nix
             {
               home.username = "cuiv";
               home.homeDirectory = "/home/cuiv";
