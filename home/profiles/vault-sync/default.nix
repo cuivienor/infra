@@ -1,10 +1,9 @@
 # home/profiles/vault-sync/default.nix
 # LiveSync Bridge for syncing ~/vault/ with CouchDB
 #
-# Prerequisites:
-# 1. Clone livesync-bridge: git clone --recursive https://github.com/vrtmrz/livesync-bridge ~/.local/share/livesync-bridge
-# 2. Edit ~/.config/livesync-bridge/config.json to add your passphrase
-# 3. Enable and start: systemctl --user enable --now livesync-bridge
+# Secrets managed via sops-nix (NixOS level):
+# - /run/secrets/vault-couchdb-password
+# - /run/secrets/vault-e2e-passphrase
 {
   config,
   pkgs,
@@ -12,35 +11,6 @@
   ...
 }:
 
-let
-  # LiveSync Bridge configuration
-  bridgeConfig = {
-    peers = [
-      {
-        type = "couchdb";
-        name = "remote";
-        database = "family-vault";
-        username = "peter";
-        password = "PASTE_PASSWORD_HERE";
-        url = "https://vault.paniland.com";
-        passphrase = "CHOOSE_E2E_PASSPHRASE";
-        obfuscatePassphrase = "";
-        baseDir = "";
-        customChunkSize = 0;
-        minimumChunkSize = 20;
-      }
-      {
-        type = "storage";
-        name = "local";
-        baseDir = "${config.home.homeDirectory}/vault";
-        scanOfflineChanges = true;
-        useChokidar = true; # Required for Linux
-      }
-    ];
-  };
-
-  configJson = pkgs.writeText "livesync-bridge-config.json" (builtins.toJSON bridgeConfig);
-in
 {
   # Create vault directory structure
   home.file = {
@@ -52,36 +22,66 @@ in
     "vault/shared/travel/.gitkeep".text = "";
   };
 
-  # Create initial config (user must edit to add passphrase)
-  xdg.configFile."livesync-bridge/config.sample.json" = {
-    source = configJson;
-  };
-
-  # Activation script to set up livesync-bridge
+  # Activation script to set up livesync-bridge and generate config from secrets
   home.activation.setupLiveSyncBridge = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     BRIDGE_DIR="${config.home.homeDirectory}/.local/share/livesync-bridge"
-    CONFIG_DIR="${config.xdg.configHome}/livesync-bridge"
+    CONFIG_FILE="$BRIDGE_DIR/dat/config.json"
+    PASSWORD_FILE="/run/secrets/vault-couchdb-password"
+    PASSPHRASE_FILE="/run/secrets/vault-e2e-passphrase"
 
     # Clone livesync-bridge if not present
     if [ ! -d "$BRIDGE_DIR" ]; then
       $DRY_RUN_CMD ${pkgs.git}/bin/git clone --recursive https://github.com/vrtmrz/livesync-bridge "$BRIDGE_DIR" || true
     fi
 
-    # Create config directory
-    $DRY_RUN_CMD mkdir -p "$CONFIG_DIR"
-
-    # Create dat directory for bridge (it expects config in dat/)
+    # Create dat directory for bridge
     $DRY_RUN_CMD mkdir -p "$BRIDGE_DIR/dat"
 
-    # Show setup instructions if config doesn't exist
-    if [ ! -f "$BRIDGE_DIR/dat/config.json" ]; then
+    # Generate config from sops secrets if they exist
+    if [ -f "$PASSWORD_FILE" ] && [ -f "$PASSPHRASE_FILE" ]; then
+      PASSWORD=$(cat "$PASSWORD_FILE")
+      PASSPHRASE=$(cat "$PASSPHRASE_FILE")
+
+      $DRY_RUN_CMD ${pkgs.jq}/bin/jq -n \
+        --arg password "$PASSWORD" \
+        --arg passphrase "$PASSPHRASE" \
+        --arg vault_dir "${config.home.homeDirectory}/vault" \
+        '{
+          peers: [
+            {
+              type: "couchdb",
+              name: "remote",
+              database: "family-vault",
+              username: "peter",
+              password: $password,
+              url: "https://vault.paniland.com",
+              passphrase: $passphrase,
+              obfuscatePassphrase: "",
+              baseDir: "",
+              customChunkSize: 0,
+              minimumChunkSize: 20
+            },
+            {
+              type: "storage",
+              name: "local",
+              baseDir: $vault_dir,
+              scanOfflineChanges: true,
+              useChokidar: true
+            }
+          ]
+        }' > "$CONFIG_FILE"
+
+      echo "LiveSync Bridge config generated from sops secrets"
+    else
       echo ""
-      echo "=== LiveSync Bridge Setup Required ==="
-      echo "1. Edit $CONFIG_DIR/config.sample.json"
-      echo "   - Set password to your CouchDB password"
-      echo "   - Choose an E2E passphrase (IMPORTANT: share with Ani)"
-      echo "2. Copy to: $BRIDGE_DIR/dat/config.json"
-      echo "3. Enable service: systemctl --user enable --now livesync-bridge"
+      echo "=== LiveSync Bridge: Waiting for sops secrets ==="
+      echo "Secrets not found at:"
+      echo "  - $PASSWORD_FILE"
+      echo "  - $PASSPHRASE_FILE"
+      echo ""
+      echo "Add to secrets/devbox.yaml via: sops secrets/devbox.yaml"
+      echo "  vault-couchdb-password: <peter's CouchDB password>"
+      echo "  vault-e2e-passphrase: <shared E2E passphrase>"
       echo ""
     fi
   '';
@@ -111,5 +111,4 @@ in
       WantedBy = [ "default.target" ];
     };
   };
-
 }

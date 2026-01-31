@@ -11,6 +11,16 @@
       mode = "0400";
       path = "/home/cuiv/.ssh/github-devbox";
     };
+
+    # Vault (LiveSync) secrets
+    secrets.vault-couchdb-password = {
+      owner = "cuiv";
+      mode = "0400";
+    };
+    secrets.vault-e2e-passphrase = {
+      owner = "cuiv";
+      mode = "0400";
+    };
   };
 
   # LXC container settings
