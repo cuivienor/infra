@@ -71,3 +71,7 @@ homelab_dotfiles_users:
 # needrestart configuration
 needrestart_enabled: true  # Install and configure needrestart for automatic service restarts
 # needrestart_kernel_check_mode: -1  # Uncomment to disable kernel restart hints (containers don't control kernel)
+
+# Backup SSH key (for backup container to rsync from this host)
+# Set this to the backup container's public key content to allow backup access
+backup_ssh_pubkey: ""  # Empty = don't add backup key

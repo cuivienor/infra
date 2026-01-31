@@ -83,3 +83,75 @@ backup_check_schedule: "weekly"  # Run 'restic check' weekly
 # Pre/post backup hooks
 backup_pre_hook: ""
 backup_post_hook: ""
+
+# ============================================
+# Service container backup sync configuration
+# ============================================
+# These containers have their data synced to /mnt/storage/backups/
+# before the Restic backup runs, preserving SSD performance.
+
+backup_sync_enabled: false  # Set to true to enable pre-backup sync from containers
+
+backup_sync_targets:
+  # LLDAP - User directory (SQLite + private key)
+  - name: lldap
+    host: 192.168.1.114
+    enabled: true
+    paths:
+      - /var/lib/lldap/
+      - /opt/lldap/lldap_config.toml
+
+  # Authelia - SSO (SQLite + config with OIDC key)
+  - name: authelia
+    host: 192.168.1.112
+    enabled: true
+    paths:
+      - /var/lib/authelia/
+      - /etc/authelia/
+
+  # Mealie - Recipes (PostgreSQL + data + env)
+  - name: mealie
+    host: 192.168.1.187
+    enabled: true
+    pre_command: "sudo -u postgres pg_dump mealie > /tmp/mealie_backup.sql"
+    paths:
+      - /opt/mealie/data/
+      - /opt/mealie/.env
+    extra_paths:
+      - /tmp/mealie_backup.sql
+
+  # Wishlist - Gift registry (SQLite + uploads)
+  - name: wishlist
+    host: 192.168.1.186
+    enabled: true
+    paths:
+      - /opt/wishlist/data/
+      - /opt/wishlist/uploads/
+
+  # Jellyfin - Media server (library metadata, config - NOT cache)
+  - name: jellyfin
+    host: 192.168.1.130
+    enabled: true
+    paths:
+      - /var/lib/jellyfin/
+      - /etc/jellyfin/
+    excludes:
+      - "*.cache*"
+      - "transcodes/"
+
+  # Caddy - Reverse proxy (TLS certs + config + API token)
+  - name: caddy
+    host: 192.168.1.111
+    enabled: true
+    paths:
+      - /var/lib/caddy/.local/share/caddy/
+      - /etc/caddy/
+      - /etc/default/caddy
+
+  # Vault/CouchDB - Family notes (database + config)
+  - name: vault
+    host: 192.168.1.150
+    enabled: true
+    paths:
+      - /var/lib/couchdb/
+      - /opt/couchdb/etc/local.d/

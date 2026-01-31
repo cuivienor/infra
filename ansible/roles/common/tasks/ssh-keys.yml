@@ -53,3 +53,12 @@
   loop: "{{ ssh_authorized_keys_users }}"
   # Skip for Proxmox root user - keys stored in /etc/pve/priv with special permissions
   failed_when: false
+
+# Add backup container's SSH key for rsync access
+- name: Add backup SSH key for root user
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ backup_ssh_pubkey }}"
+    state: present
+    comment: "backup-container-rsync"
+  when: backup_ssh_pubkey | length > 0

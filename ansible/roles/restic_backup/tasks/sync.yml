@@ -1,0 +1,84 @@
+---
+# Configure pre-backup sync from service containers
+
+- name: Install rsync for backup sync
+  ansible.builtin.apt:
+    name: rsync
+    state: present
+
+- name: Create backup sync directory
+  ansible.builtin.file:
+    path: /mnt/storage/backups
+    state: directory
+    mode: '0750'
+    owner: root
+    group: root
+
+- name: Generate pre-backup sync script
+  ansible.builtin.template:
+    src: pre-backup-sync.sh.j2
+    dest: "{{ restic_config_dir }}/scripts/pre-backup-sync.sh"
+    mode: '0750'
+    owner: root
+    group: root
+
+- name: Create pre-backup sync systemd service
+  ansible.builtin.copy:
+    content: |
+      [Unit]
+      Description=Pre-backup sync from service containers
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart={{ restic_config_dir }}/scripts/pre-backup-sync.sh
+      User=root
+      Nice=19
+      IOSchedulingClass=idle
+
+      # Logging
+      StandardOutput=journal
+      StandardError=journal
+      SyslogIdentifier=pre-backup-sync
+    dest: /etc/systemd/system/pre-backup-sync.service
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Create pre-backup sync systemd timer
+  ansible.builtin.copy:
+    content: |
+      [Unit]
+      Description=Timer for pre-backup sync (runs 30 min before Restic backup)
+
+      [Timer]
+      # Run at 2:30 AM daily (30 min before Restic backup at 3:00 AM)
+      OnCalendar=*-*-* 02:30:00
+      Persistent=true
+      RandomizedDelaySec=300
+
+      [Install]
+      WantedBy=timers.target
+    dest: /etc/systemd/system/pre-backup-sync.timer
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Enable pre-backup sync timer
+  ansible.builtin.systemd:
+    name: pre-backup-sync.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Display sync configuration summary
+  ansible.builtin.debug:
+    msg: |
+      Pre-backup sync configured:
+      - Script: {{ restic_config_dir }}/scripts/pre-backup-sync.sh
+      - Timer: pre-backup-sync.timer (runs at 2:30 AM)
+      - Targets: {{ backup_sync_targets | selectattr('enabled', 'defined') | selectattr('enabled') | map(attribute='name') | list | join(', ') }}
+
+      IMPORTANT: You must distribute the backup SSH public key to service containers.
+      Run the common role on service containers with backup_ssh_pubkey set.
+
+      Key location: {{ restic_config_dir }}/backup_ssh_pubkey

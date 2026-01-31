@@ -16,3 +16,13 @@
 - name: Include systemd timer tasks
   ansible.builtin.import_tasks: systemd.yml
   tags: ['restic', 'systemd']
+
+- name: Include SSH setup for container sync
+  ansible.builtin.import_tasks: ssh_setup.yml
+  tags: ['restic', 'sync', 'ssh']
+  when: backup_sync_enabled | bool
+
+- name: Include sync configuration tasks
+  ansible.builtin.import_tasks: sync.yml
+  tags: ['restic', 'sync']
+  when: backup_sync_enabled | bool

@@ -14,6 +14,9 @@
     backup_user: "root"
     backup_group: "root"
 
+    # Enable pre-backup sync from service containers
+    backup_sync_enabled: true
+
   pre_tasks:
     - name: Wait for container to be ready
       ansible.builtin.wait_for_connection:
@@ -40,6 +43,13 @@
       tags: ['backup', 'restic']
 
   post_tasks:
+    - name: Read backup SSH public key
+      ansible.builtin.slurp:
+        src: "{{ restic_config_dir | default('/etc/restic') }}/backup_ssh_pubkey"
+      register: backup_pubkey_file
+      ignore_errors: true
+      when: backup_sync_enabled | default(false)
+
     - name: Display backup container summary
       ansible.builtin.debug:
         msg:
@@ -52,15 +62,36 @@
           - ""
           - "Backup policy:"
           - "  - Name: data"
-          - "  - Schedule: daily"
+          - "  - Schedule: daily (3:00 AM)"
           - "  - Target: Backblaze B2 ({{ b2_bucket_data }})"
           - "  - Excludes: Movies, TV, media pipeline"
           - ""
-          - "Next steps:"
-          - "  1. Verify /mnt/storage is mounted: pct exec 300 -- ls -l /mnt/storage"
-          - "  2. Test backup: pct exec 300 -- systemctl start restic-backup-data.service"
-          - "  3. Check logs: pct exec 300 -- journalctl -u restic-backup-data.service -f"
-          - "  4. View snapshots: pct exec 300 -- /etc/restic/scripts/maintenance.sh snapshots data"
+          - "Pre-backup sync:"
+          - "  - Schedule: daily (2:30 AM)"
+          - "  - Syncs from: lldap, authelia, mealie, wishlist, jellyfin, caddy, vault"
+          - "  - Destination: /mnt/storage/backups/"
           - ""
-          - "Backrest UI (to be installed): http://{{ ansible_host }}:9898"
+          - "Commands:"
+          - "  Test sync: ssh backup /etc/restic/scripts/pre-backup-sync.sh"
+          - "  Test backup: ssh backup systemctl start restic-backup-data.service"
+          - "  View snapshots: ssh backup /etc/restic/scripts/maintenance.sh snapshots data"
+          - ""
           - "========================================="
+
+    - name: Display SSH key distribution instructions
+      ansible.builtin.debug:
+        msg:
+          - "========================================="
+          - "IMPORTANT: Distribute backup SSH key"
+          - "========================================="
+          - ""
+          - "Add this key to ansible/group_vars/lxc_containers.yml:"
+          - ""
+          - "backup_ssh_pubkey: \"{{ backup_pubkey_file.content | b64decode | trim }}\""
+          - ""
+          - "Then run the common role on all service containers:"
+          - "  ansible-playbook playbooks/site.yml --tags ssh-keys"
+          - ""
+          - "Or run individual playbooks for each service."
+          - "========================================="
+      when: backup_sync_enabled | default(false) and backup_pubkey_file is defined and backup_pubkey_file.content is defined
