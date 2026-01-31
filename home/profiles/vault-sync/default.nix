@@ -32,6 +32,10 @@
     # Clone livesync-bridge if not present
     if [ ! -d "$BRIDGE_DIR" ]; then
       $DRY_RUN_CMD ${pkgs.git}/bin/git clone --recursive https://github.com/vrtmrz/livesync-bridge "$BRIDGE_DIR" || true
+      # Install deno dependencies after fresh clone
+      if [ -d "$BRIDGE_DIR" ]; then
+        (cd "$BRIDGE_DIR" && $DRY_RUN_CMD ${pkgs.deno}/bin/deno install --allow-import 2>/dev/null || true)
+      fi
     fi
 
     # Create dat directory for bridge
