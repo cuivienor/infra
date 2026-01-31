@@ -12,16 +12,6 @@
 }:
 
 {
-  # Create vault directory structure
-  home.file = {
-    "vault/.gitkeep".text = "";
-    "vault/peter/.gitkeep".text = "";
-    "vault/ani/.gitkeep".text = "";
-    "vault/shared/.gitkeep".text = "";
-    "vault/shared/household/.gitkeep".text = "";
-    "vault/shared/travel/.gitkeep".text = "";
-  };
-
   # Activation script to set up livesync-bridge and generate config from secrets
   home.activation.setupLiveSyncBridge = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     BRIDGE_DIR="${config.home.homeDirectory}/.local/share/livesync-bridge"
