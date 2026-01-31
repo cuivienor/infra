@@ -1,0 +1,40 @@
+---
+# Install CouchDB package
+
+- name: Configure CouchDB installation (debconf)
+  ansible.builtin.debconf:
+    name: couchdb
+    question: "{{ item.question }}"
+    value: "{{ item.value }}"
+    vtype: "{{ item.vtype }}"
+  loop:
+    - question: couchdb/mode
+      value: standalone
+      vtype: select
+    - question: couchdb/bindaddress
+      value: "{{ couchdb_bind_address }}"
+      vtype: string
+    - question: couchdb/adminpass
+      value: "{{ couchdb_admin_password }}"
+      vtype: password
+    - question: couchdb/adminpass_again
+      value: "{{ couchdb_admin_password }}"
+      vtype: password
+    - question: couchdb/cookie
+      value: "{{ couchdb_cookie_secret }}"
+      vtype: password
+  become: true
+  no_log: true
+
+- name: Install CouchDB
+  ansible.builtin.apt:
+    name: couchdb
+    state: present
+  become: true
+  notify: Restart couchdb
+
+- name: Ensure CouchDB service is enabled
+  ansible.builtin.systemd:
+    name: couchdb
+    enabled: true
+  become: true

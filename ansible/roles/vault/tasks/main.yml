@@ -1,0 +1,18 @@
+---
+# Install and configure CouchDB for Obsidian LiveSync
+
+- name: Import repository tasks
+  ansible.builtin.import_tasks: repository.yml
+  tags: ['vault', 'couchdb', 'repository']
+
+- name: Import installation tasks
+  ansible.builtin.import_tasks: install.yml
+  tags: ['vault', 'couchdb', 'install']
+
+- name: Import configuration tasks
+  ansible.builtin.import_tasks: configure.yml
+  tags: ['vault', 'couchdb', 'configure']
+
+- name: Import database tasks
+  ansible.builtin.import_tasks: database.yml
+  tags: ['vault', 'couchdb', 'database']

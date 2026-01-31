@@ -1,0 +1,36 @@
+; CouchDB configuration for Obsidian LiveSync
+; Managed by Ansible - do not edit manually
+
+[couchdb]
+; Maximum document size (64MB for attachments)
+max_document_size = {{ couchdb_max_document_size }}
+
+[chttpd]
+; Bind to all interfaces for reverse proxy access
+bind_address = {{ couchdb_bind_address }}
+port = {{ couchdb_port }}
+
+; Enable CORS for LiveSync
+enable_cors = {{ couchdb_cors_enabled | lower }}
+
+[cors]
+; CORS settings required by Obsidian LiveSync
+origins = {{ couchdb_cors_origins }}
+credentials = {{ couchdb_cors_credentials | lower }}
+methods = {{ couchdb_cors_methods }}
+headers = {{ couchdb_cors_headers }}
+
+[httpd]
+; Use basic auth
+authentication_handlers = {couch_httpd_auth, default_authentication_handler}
+
+; Require valid user for all requests except CORS preflight
+WWW-Authenticate = Basic realm="couchdb"
+
+[couch_httpd_auth]
+; Session timeout (24 hours)
+timeout = 86400
+
+; Require authentication
+require_valid_user = true
+require_valid_user_except_for_up = true

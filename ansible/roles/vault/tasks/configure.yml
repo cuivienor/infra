@@ -1,0 +1,30 @@
+---
+# Configure CouchDB for LiveSync
+
+- name: Deploy CouchDB local configuration
+  ansible.builtin.template:
+    src: local.ini.j2
+    dest: "{{ couchdb_config_dir }}/local.d/10-livesync.ini"
+    owner: "{{ couchdb_user }}"
+    group: "{{ couchdb_group }}"
+    mode: '0640'
+  become: true
+  notify: Restart couchdb
+
+- name: Ensure CouchDB data directory exists
+  ansible.builtin.file:
+    path: "{{ couchdb_data_dir }}"
+    state: directory
+    owner: "{{ couchdb_user }}"
+    group: "{{ couchdb_group }}"
+    mode: '0750'
+  become: true
+
+- name: Wait for CouchDB to be ready
+  ansible.builtin.uri:
+    url: "http://localhost:{{ couchdb_port }}/"
+    status_code: 200
+  register: couchdb_health
+  retries: 10
+  delay: 5
+  until: couchdb_health.status == 200

@@ -1,0 +1,14 @@
+---
+# CouchDB handlers
+
+- name: Restart couchdb
+  ansible.builtin.systemd:
+    name: couchdb
+    state: restarted
+  become: true
+
+- name: Reload couchdb
+  ansible.builtin.systemd:
+    name: couchdb
+    state: reloaded
+  become: true

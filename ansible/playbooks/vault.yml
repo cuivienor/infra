@@ -1,0 +1,98 @@
+---
+# Vault (CouchDB) Setup for Obsidian LiveSync
+#
+# Deploys CouchDB as the backend for family knowledge vault.
+# Supports real-time sync across devices via LiveSync Bridge and Obsidian plugin.
+#
+# Features:
+# - CouchDB with CORS enabled for LiveSync protocol
+# - Per-user authentication (peter, ani)
+# - End-to-end encryption support (client-side)
+#
+# Usage:
+#   ansible-playbook ansible/playbooks/vault.yml
+#
+# After running:
+#   1. Configure LiveSync Bridge on devbox with sync user credentials
+#   2. Install Obsidian + LiveSync plugin on Ani's devices
+#   3. Add vault.paniland.com to Caddy proxy (run proxy.yml)
+
+- name: Configure Vault (CouchDB for LiveSync)
+  hosts: vault
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - ../vars/vault_secrets.yml
+
+  vars:
+    # Map secrets to role variables
+    couchdb_admin_user: "{{ vault_couchdb_admin_user }}"
+    couchdb_admin_password: "{{ vault_couchdb_admin_password }}"
+    couchdb_cookie_secret: "{{ vault_couchdb_cookie_secret }}"
+
+    # Sync users with passwords from secrets
+    couchdb_sync_users:
+      - name: peter
+        password: "{{ vault_couchdb_peter_password }}"
+      - name: ani
+        password: "{{ vault_couchdb_ani_password }}"
+
+  pre_tasks:
+    - name: Display configuration
+      ansible.builtin.debug:
+        msg: |
+          Configuring Vault (CouchDB) on: {{ inventory_hostname }}
+          IP: {{ ansible_host }}
+
+          Configuration:
+          - CouchDB Port: {{ couchdb_port | default(5984) }}
+          - Database: {{ couchdb_livesync_database | default('family-vault') }}
+          - Sync Users: peter, ani
+
+  roles:
+    - role: common
+      tags: ['common', 'base']
+    - role: vault
+      tags: ['vault', 'couchdb']
+
+  post_tasks:
+    - name: Wait for CouchDB port
+      ansible.builtin.wait_for:
+        port: "{{ couchdb_port | default(5984) }}"
+        delay: 5
+        timeout: 60
+
+    - name: Verify CouchDB is responding
+      ansible.builtin.uri:
+        url: "http://localhost:{{ couchdb_port | default(5984) }}/"
+        status_code: 200
+      register: couchdb_health
+      retries: 3
+      delay: 5
+      until: couchdb_health.status == 200
+
+    - name: Display final status
+      ansible.builtin.debug:
+        msg: |
+          Vault (CouchDB) Setup Complete
+
+          Host: {{ inventory_hostname }} ({{ ansible_host }})
+          CouchDB Version: {{ couchdb_health.json.version | default('unknown') }}
+
+          Endpoints:
+          - CouchDB API: http://{{ ansible_host }}:5984
+          - Fauxton UI: http://{{ ansible_host }}:5984/_utils (admin only)
+
+          Database: {{ couchdb_livesync_database | default('family-vault') }}
+          Sync Users: peter, ani
+
+          NEXT STEPS:
+          1. Add Caddy route: ansible-playbook playbooks/proxy.yml
+             (vault.paniland.com -> 192.168.1.150:5984)
+
+          2. Configure LiveSync Bridge on devbox:
+             - Install: npm install -g livesync-bridge (or Deno)
+             - Config: vault.paniland.com with sync user credentials
+
+          3. Configure Obsidian + LiveSync plugin on Ani's devices

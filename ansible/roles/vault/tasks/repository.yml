@@ -1,0 +1,31 @@
+---
+# Add Apache CouchDB repository
+
+- name: Install dependencies for APT repository
+  ansible.builtin.apt:
+    name:
+      - curl
+      - apt-transport-https
+      - gnupg
+      - ca-certificates
+    state: present
+    update_cache: true
+  become: true
+
+- name: Add Apache CouchDB GPG key
+  ansible.builtin.apt_key:
+    url: https://couchdb.apache.org/repo/keys.asc
+    state: present
+  become: true
+
+- name: Add Apache CouchDB repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://apache.jfrog.io/artifactory/couchdb-deb/ {{ ansible_distribution_release }} main"
+    state: present
+    filename: couchdb
+  become: true
+
+- name: Update apt cache after adding repository
+  ansible.builtin.apt:
+    update_cache: true
+  become: true

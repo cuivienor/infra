@@ -1,0 +1,43 @@
+---
+# Vault (CouchDB) default configuration
+
+# CouchDB version from Apache repository
+# Leave empty to use latest from APT
+couchdb_version: ""
+
+# Installation paths
+couchdb_data_dir: "/var/lib/couchdb"
+couchdb_config_dir: "/opt/couchdb/etc"
+couchdb_user: "couchdb"
+couchdb_group: "couchdb"
+
+# Server configuration
+couchdb_bind_address: "0.0.0.0"
+couchdb_port: 5984
+
+# Database name for LiveSync
+couchdb_livesync_database: "family-vault"
+
+# Sync users (created for LiveSync access)
+couchdb_sync_users:
+  - name: peter
+    # password: set in secrets
+  - name: ani
+    # password: set in secrets
+
+# Admin credentials - MUST be overridden in vault
+couchdb_admin_user: ""
+couchdb_admin_password: ""
+
+# Cookie secret for session auth
+couchdb_cookie_secret: ""
+
+# CORS settings (required for LiveSync)
+couchdb_cors_enabled: true
+couchdb_cors_origins: "*"
+couchdb_cors_credentials: true
+couchdb_cors_methods: "GET, PUT, POST, HEAD, DELETE"
+couchdb_cors_headers: "accept, authorization, content-type, origin, referer, x-csrf-token"
+
+# Memory settings (tuned for 1GB container)
+couchdb_max_document_size: "67108864"  # 64MB (for attachments)
