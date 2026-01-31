@@ -45,3 +45,35 @@
         names: "{{ couchdb_sync_users | map(attribute='name') | list }}"
         roles: []
     status_code: [200, 201]
+
+# Security hardening: Disable self-registration
+# This design doc prevents non-admins from creating users even if other controls fail
+- name: Get current _users validation design doc
+  ansible.builtin.uri:
+    url: "http://localhost:{{ couchdb_port }}/_users/_design/validate_self_registration"
+    method: GET
+    user: "{{ couchdb_admin_user }}"
+    password: "{{ couchdb_admin_password }}"
+    force_basic_auth: true
+    status_code: [200, 404]
+  register: validation_doc
+
+- name: Disable self-registration in _users database
+  ansible.builtin.uri:
+    url: "http://localhost:{{ couchdb_port }}/_users/_design/validate_self_registration"
+    method: PUT
+    user: "{{ couchdb_admin_user }}"
+    password: "{{ couchdb_admin_password }}"
+    force_basic_auth: true
+    body_format: json
+    body:
+      _id: "_design/validate_self_registration"
+      _rev: "{{ validation_doc.json._rev | default(omit) }}"
+      language: javascript
+      validate_doc_update: |
+        function(newDoc, oldDoc, userCtx) {
+          if (userCtx.roles.indexOf('_admin') === -1) {
+            throw({forbidden: 'Only admins can create or modify users'});
+          }
+        }
+    status_code: [200, 201]
